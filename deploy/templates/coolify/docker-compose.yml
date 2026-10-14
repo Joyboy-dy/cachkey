@@ -1,0 +1,62 @@
+# documentation: https://github.com/Joyboy-dy/cachkey/blob/main/docs/one-click-deployment.md
+# slogan: Open-source, self-hosted manager for secrets and environment variables.
+# category: security
+# tags: secrets,environment-variables,security,devops,self-hosted
+# logo: svgs/cachkey.svg
+# port: 3000
+
+# Cachkey for Coolify (« Docker Compose Empty »). Not in the official Coolify catalogue:
+# paste this file into a new resource. Coolify generates the domain and the secrets below
+# (SERVICE_* variables); fill in the email settings before the first deployment.
+# Health: both Cachkey images ship their own healthcheck.
+
+services:
+  web:
+    image: ghcr.io/joyboy-dy/cachkey-web:0.1.0
+    environment:
+      # Domain assigned by Coolify, routed to port 3000 of this service.
+      - APP_URL=${SERVICE_URL_WEB_3000}
+      - API_INTERNAL_URL=http://api:3001
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # Applies pending database migrations at startup, then serves /api.
+  api:
+    image: ghcr.io/joyboy-dy/cachkey-api:0.1.0
+    environment:
+      - APP_URL=${SERVICE_URL_WEB_3000}
+      - DATABASE_URL=postgresql://cachkey:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/cachkey
+      - BETTER_AUTH_SECRET=${SERVICE_PASSWORD_64_AUTH}
+      # 32 random bytes, base64-encoded: the master key encrypting every stored value.
+      # Back it up outside the server: without it, stored values cannot be read.
+      - ENCRYPTION_KEY=${SERVICE_REALBASE64_32_ENCRYPTION}
+      # Required: every address is confirmed by email before the first sign-in.
+      - EMAIL_PROVIDER=${EMAIL_PROVIDER:?smtp}
+      - EMAIL_FROM=${EMAIL_FROM:?Cachkey <no-reply@example.com>}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_USER=cachkey
+      - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+      - POSTGRES_DB=cachkey
+    volumes:
+      - cachkey-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cachkey -d cachkey"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  cachkey-postgres-data: {}

@@ -19,6 +19,7 @@ Cachkey garde les variables d'environnement et les secrets techniques de vos pro
 ## Héberger Cachkey
 
 - [Auto-hébergement](self-hosting.md) : Docker Compose, mises à jour, sauvegardes.
+- [Déploiement en un clic](one-click-deployment.md) : Dokploy, Coolify, état des catalogues.
 
 ## Contribuer
 

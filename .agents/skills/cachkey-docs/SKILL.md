@@ -22,6 +22,7 @@ files, so keep them self-contained and free of repository jargon.
 | `docs/api.md`                       | Public API `/api/v1`                                        | `publicApiRoutes` in `apps/api/src/tokens.ts`                 |
 | `docs/security.md`                  | Encryption, tokens, sessions, access control, operator duty | `crypto.ts`, `auth.ts`, `guards.ts`                           |
 | `docs/self-hosting.md`              | Compose install, update, backup, troubleshooting            | `deploy/`, `.env.production.example`                          |
+| `docs/one-click-deployment.md`      | Platforms (Dokploy, Coolify), catalogue status              | `deploy/compose.yaml`, `deploy/templates/`                    |
 | `docs/authentication.md`            | Internal auth architecture (contributors)                   | `apps/api/src/auth.ts`, web routes                            |
 | `CHANGELOG.md`                      | User-visible changes per version                            | —                                                             |
 
@@ -46,7 +47,9 @@ Add a page only for a new user need, and list it in `docs/README.md`.
 - Limits: `MAX_*` constants and `tokenLifetimes` match the numbers in the pages.
 - Roles: `memberRoles`, `invitableRoles` and `requireProject(..., "manage" | "write")` match
   the permission tables.
-- Env vars: `.env.production.example` matches `docs/self-hosting.md`.
+- Env vars: `.env.production.example` matches `docs/self-hosting.md`; `deploy/compose.yaml`
+  and both `deploy/templates/` pass the same variables and pin the same image version.
+- Catalogues: never write that Cachkey is in a platform catalogue before the PR is merged.
 - Links: every relative link in `docs/` resolves (`grep -o "](\([^)]*\.md\)" docs/*.md`).
 
 ## Style
