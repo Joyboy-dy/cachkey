@@ -6,7 +6,9 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
 
 ## [Non publié]
 
-Première version en préparation.
+## [0.1.0] — 2026-10-14
+
+Première version publique.
 
 ### Ajouté
 
@@ -39,3 +41,6 @@ Première version en préparation.
   sont refusés.
 - Avertissement contre l'hameçonnage sur la page d'autorisation d'un terminal.
 - Dépendances : plus aucune vulnérabilité connue (`bun audit`).
+
+[Non publié]: https://github.com/Joyboy-dy/cachkey/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Joyboy-dy/cachkey/releases/tag/v0.1.0
