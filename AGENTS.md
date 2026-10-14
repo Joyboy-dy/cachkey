@@ -1,0 +1,150 @@
+# AGENTS.md — Cachkey
+
+Durable rules for coding agents working on this repository. This file is a map: details
+live in `.agents/` and in the canonical docs listed below. Keep it under 150 lines.
+
+## Project
+
+Cachkey is an open-source (AGPL-3.0-only), self-hostable manager for technical secrets,
+API keys and environment variables. UI language: **French**. Brand: Cachkey brand kit 1.0.
+
+## Sources of truth
+
+| Topic                          | Where                                                    |
+| ------------------------------ | -------------------------------------------------------- |
+| Roadmap, current phase         | `docs/ROADMAP.md` — follow phases in order, update it    |
+| User docs (French) + changelog | `docs/README.md`, `CHANGELOG.md` — `cachkey-docs` skill  |
+| Authentication flows & routes  | `docs/authentication.md`                                 |
+| Human setup & commands         | `README.md` (≤ 150 lines)                                |
+| Environment variables          | `.env.example` (all vars), `.env.production.example`     |
+| Environment file rules         | `.agents/rules/environment.md`                           |
+| shadcn/ui, cursors, focus      | `.agents/rules/shadcn-ui.md`                             |
+| Installed agent skills         | `.agents/skills/` (see "Skills" below)                   |
+| Database schema                | `packages/db/prisma/schema.prisma`                       |
+| Shared validation (Zod)        | `packages/shared/src/`                                   |
+| Design tokens                  | `apps/web/src/styles.css` (+ `styles/customs.css`)       |
+
+## Architecture (Bun workspaces)
+
+- `apps/web` — TanStack Start (Router, Query, Form), Tailwind CSS v4, shadcn/ui.
+  The web server proxies every `/api/*` request to the API (`src/server/api.ts`):
+  one public origin, first-party cookies, no CORS.
+- `apps/api` — Elysia + Better Auth (`src/auth.ts`, organization plugin), env validated by
+  Zod (`src/env.ts`). Business routes are scoped to the session's active organisation;
+  access checks live in `src/guards.ts` (`requireProject`): owner/admin manage everything,
+  members only reach projects/environments granted to them (`ProjectAccess`). Every read or
+  change of a secret is written with `audit()` (`src/audit.ts`), never with its value.
+- Service tokens (`apps/api/src/tokens.ts`): read-only access to one environment, only a
+  SHA-256 hash stored, shown once. They open the public API `/api/v1` (Bearer), documented
+  with OpenAPI at `/api/v1/docs`; only `/api/v1` routes appear in the spec.
+- `apps/cli` — `cachkey` CLI (Bun, no dependency besides `@cachkey/shared`). `cachkey login`
+  uses Better Auth device authorization (approval page `/device`) and gets a session sent as
+  a Bearer token (`bearer` plugin); `x-cachkey-organization` picks the organisation per
+  request (`guards.ts`). Same rights as the user; actions logged with `via: "cli"`.
+  `.cachkey.json` (folder link) holds no secret. Service tokens still cover servers and CI.
+- `packages/db` — Prisma 7 (PostgreSQL). Only models actually needed by the current phase.
+- `packages/emails` — React Email templates + `EmailTransport` (SMTP/Mailpit, Resend).
+- `packages/shared` — Zod schemas shared by web and API.
+
+Rules:
+
+- Keep UI, auth logic, data access, validation and emails separated as above.
+- Extend the module that already owns a behaviour; no speculative abstractions.
+- Server/API validation is authoritative; client validation mirrors shared schemas.
+- TypeScript only, strict mode, no `any`. No new dependency when the platform or an
+  existing package solves the problem.
+- Search params are handled by TanStack Router (`validateSearch` + Zod). Do not add `nuqs`.
+- No Redis for now. No business features ahead of the roadmap phase.
+- Never commit real secrets. Redirect targets must go through `safeRedirectPath`.
+
+## User-facing content (mandatory)
+
+- Every text visible to users is written for users, never for developers.
+- Zod messages, errors, confirmations, toasts, notifications, labels, selects, filters
+  and all UI copy: clear, natural, short, jargon-free, in **French** by default.
+- Never expose environment variable names, internal keys, technical field names, raw
+  enums, payloads, backend identifiers, sensitive values or implementation details.
+- An error states the problem and, when useful, the expected action
+  (« Le numéro de téléphone est requis », not a property name).
+- Backend values stay distinct from UI labels: map them (`ADMIN` → « Administrateur »,
+  `MEMBER` → « Membre », `OWNER` → « Propriétaire »). Same for statuses, roles,
+  categories, filters, enums, `snake_case` values and constants.
+- The frontend may know the technical value to talk to the API but must not display it.
+- Better Auth error codes are translated in `apps/web/src/lib/auth/errors.ts`; unknown
+  codes fall back to a generic message.
+- Check every new or changed frontend text against these rules.
+
+## UI conventions
+
+- Respect the brand: Geist / Geist Mono, ink `#1A1A1A`, warm white `#FFF5F3`, orange
+  `#F97316` reserved for primary actions and markers, always with an ink label.
+  Official logo files only (`apps/web/public/brand`), never re-typed.
+- Use semantic tokens (`bg-primary`, `text-muted-foreground`, `border-input`…), never raw
+  colours in components. Field borders and focus rings must keep ≥ 3:1 contrast.
+- Forms use the kit in `apps/web/src/components/form/form.tsx` (TanStack Form +
+  shared Zod schema, `revalidateLogic`, focus on first invalid field, POST fallback).
+- Inline links use `textLinkVariants` (`components/ui/text-link.ts`).
+- UI icons: **Hugeicons only**, through `<Icon icon={…} />` (`components/ui/icon.tsx`,
+  icons from `@hugeicons/core-free-icons`). No lucide-react; after `shadcn add`, replace
+  the generated lucide imports.
+- Charts: **Bklit** only (`bunx shadcn add @bklit/<chart>` → `components/charts`, vendored,
+  not linted). Colours come from the `--chart-*` tokens mapped to the brand in `styles.css`.
+- Avatars: **DiceBear only**, generated locally (`lib/avatar.ts`): users = style **Clay**,
+  organisations = style **Shape Grid**. Never other styles, provider images or the HTTP API.
+- Brand marks (Google, GitHub…): drop SVGs in `apps/web/public/icons`, run `bun run icons:generate`; import from
+  `@/components/icons` (generated, never edited by hand). `bun run icons:migrate` rewrites
+  file-level icon imports to the barrel; `check:icons` (in `bun run check`) enforces it.
+- Light and dark themes are both mandatory: tokens in `styles.css` (`:root` / `.dark`),
+  never colours that only work on one theme; check every screen in both (`lib/theme.ts`).
+- Interfaces must work from 320 px wide without horizontal scroll; respect
+  `prefers-reduced-motion`.
+- shadcn/ui policy (cursors, `customs.css`, `data-slot` contracts): read
+  `.agents/rules/shadcn-ui.md` before touching `components/ui/` or global CSS.
+
+## Delivery
+
+- Everything container-related lives in `deploy/`: `Dockerfile` (targets `api` / `web`,
+  single-file bundles, non-root, healthchecks; the API runs `prisma migrate deploy` first),
+  `compose.yaml` (production), `compose.dev.yaml` (local services). Build context = repo root.
+  CI in `.github/workflows/`; images on GHCR. Guide: `docs/self-hosting.md`.
+
+## Environment
+
+- `.env.example`: every variable, example values only. `.env.local`: real local values.
+  `.env.prod`: real production values. Both real files are git-ignored.
+- Details and production rules: `.agents/rules/environment.md`.
+- `ENCRYPTION_KEY` (32 bytes, base64) wraps every project's data key: never rotate or lose it
+  without a re-encryption plan.
+- Secret values: only through `apps/api/src/crypto.ts`; never logged, never in list responses,
+  never in the TanStack Query cache (revealed on demand from the browser, `no-store`).
+- Local services: `bun run services:up` (PostgreSQL on 5433, Mailpit SMTP 1026 / UI 8026).
+
+## Commands
+
+```bash
+bun run dev          # web :3000 + api :3001
+bun run check        # format, lint, typecheck, tests, UI contracts — run before handing off
+bun run build        # production build (web + api)
+bun run db:migrate   # Prisma migration (dev)
+bun run dev:emails   # React Email preview :3002
+```
+
+Done = `check` + `build` pass, `bun run e2e` (Playwright, stack running) if a critical journey
+changed, changed UI exercised in a browser. Report what was not verified.
+
+## Git
+
+- Never commit or push without explicit approval from the user.
+- The remote is `github.com/Joyboy-dy/cachkey`; credentials are pinned to `Joyboy-dy`.
+- `.agents/note_prompts.md` is a personal scratchpad, git-ignored. Do not rely on it.
+
+## Skills
+
+Project skills live in `.agents/skills/` (lock: `skills-lock.json`; `cachkey-docs` is local):
+
+- `ux-ui-audit`, `frontend-aesthetics`, `chromatic-design` — UI audits, polish, colours.
+- `container-compose-ghcr-deployment` — any Docker, Compose or image CI change.
+- `form-ux-validation`, `responsive-interface-guardian` — any form, layout or responsive change.
+- `senior-frontend-engineering`, `codebase-architecture-guardian` — structure, ownership;
+  `ui-modern-2026` — newer CSS / platform features.
+- `cachkey-docs` — any user-visible change: update `docs/` and `CHANGELOG.md` with it.

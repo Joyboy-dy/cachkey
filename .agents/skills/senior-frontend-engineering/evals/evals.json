@@ -1,0 +1,29 @@
+{
+  "skill_name": "senior-frontend-engineering",
+  "evals": [
+    {
+      "id": "feature",
+      "prompt": "Implement a data-heavy frontend feature in this existing app using its current framework, API client, state approach and component system.",
+      "expectations": [
+        "Detects existing conventions",
+        "Defines ownership and async states",
+        "Reuses design-system primitives",
+        "Runs repository validation"
+      ]
+    },
+    {
+      "id": "refactor",
+      "prompt": "Refactor this difficult-to-test frontend module without changing public behavior.",
+      "expectations": [
+        "Preserves contracts",
+        "Reduces ownership/effect complexity incrementally",
+        "Adds regression coverage"
+      ]
+    },
+    {
+      "id": "boundary",
+      "prompt": "Only audit the color contrast of our theme tokens.",
+      "expectations": ["Hands primary task to chromatic-design/ux-ui-audit"]
+    }
+  ]
+}

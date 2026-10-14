@@ -12,14 +12,28 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as GuestRouteImport } from './routes/_guest'
+import { Route as DeviceRouteImport } from './routes/device'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedOrganizationRouteImport } from './routes/_authenticated/organization'
 import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
 import { Route as GuestCheckEmailRouteImport } from './routes/_guest/check-email'
 import { Route as GuestForgotPasswordRouteImport } from './routes/_guest/forgot-password'
 import { Route as GuestSignInRouteImport } from './routes/_guest/sign-in'
 import { Route as GuestSignUpRouteImport } from './routes/_guest/sign-up'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as InvitationIdRouteImport } from './routes/invitation.$id'
+import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account/index'
+import { Route as AuthenticatedAccountSecurityRouteImport } from './routes/_authenticated/account/security'
+import { Route as AuthenticatedAccountSessionsRouteImport } from './routes/_authenticated/account/sessions'
+import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects/index'
+import { Route as AuthenticatedProjectsSlugRouteImport } from './routes/_authenticated/projects/$slug'
+import { Route as AuthenticatedProjectsSlugIndexRouteImport } from './routes/_authenticated/projects/$slug/index'
+import { Route as AuthenticatedProjectsSlugSettingsRouteImport } from './routes/_authenticated/projects/$slug/settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,6 +48,16 @@ const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeviceRoute = DeviceRouteImport.update({
+  id: '/device',
+  path: '/device',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -44,6 +68,27 @@ const VerifyEmailRoute = VerifyEmailRouteImport.update({
   path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedOrganizationRoute =
+  AuthenticatedOrganizationRouteImport.update({
+    id: '/organization',
+    path: '/organization',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedWelcomeRoute = AuthenticatedWelcomeRouteImport.update({
   id: '/welcome',
   path: '/welcome',
@@ -74,88 +119,218 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvitationIdRoute = InvitationIdRouteImport.update({
+  id: '/invitation/$id',
+  path: '/invitation/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAccountIndexRoute =
+  AuthenticatedAccountIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountSecurityRoute =
+  AuthenticatedAccountSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedAccountSessionsRoute =
+  AuthenticatedAccountSessionsRouteImport.update({
+    id: '/sessions',
+    path: '/sessions',
+    getParentRoute: () => AuthenticatedAccountRoute,
+  } as any)
+const AuthenticatedProjectsIndexRoute =
+  AuthenticatedProjectsIndexRouteImport.update({
+    id: '/projects/',
+    path: '/projects/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedProjectsSlugRoute =
+  AuthenticatedProjectsSlugRouteImport.update({
+    id: '/projects/$slug',
+    path: '/projects/$slug',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedProjectsSlugIndexRoute =
+  AuthenticatedProjectsSlugIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedProjectsSlugRoute,
+  } as any)
+const AuthenticatedProjectsSlugSettingsRoute =
+  AuthenticatedProjectsSlugSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedProjectsSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/device': typeof DeviceRoute
+  '/onboarding': typeof OnboardingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/account': typeof AuthenticatedAccountRouteWithChildren
+  '/activity': typeof AuthenticatedActivityRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/organization': typeof AuthenticatedOrganizationRoute
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/check-email': typeof GuestCheckEmailRoute
   '/forgot-password': typeof GuestForgotPasswordRoute
   '/sign-in': typeof GuestSignInRoute
   '/sign-up': typeof GuestSignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/invitation/$id': typeof InvitationIdRoute
+  '/account/security': typeof AuthenticatedAccountSecurityRoute
+  '/account/sessions': typeof AuthenticatedAccountSessionsRoute
+  '/projects/$slug': typeof AuthenticatedProjectsSlugRouteWithChildren
+  '/account/': typeof AuthenticatedAccountIndexRoute
+  '/projects/': typeof AuthenticatedProjectsIndexRoute
+  '/projects/$slug/settings': typeof AuthenticatedProjectsSlugSettingsRoute
+  '/projects/$slug/': typeof AuthenticatedProjectsSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/device': typeof DeviceRoute
+  '/onboarding': typeof OnboardingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/activity': typeof AuthenticatedActivityRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/organization': typeof AuthenticatedOrganizationRoute
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/check-email': typeof GuestCheckEmailRoute
   '/forgot-password': typeof GuestForgotPasswordRoute
   '/sign-in': typeof GuestSignInRoute
   '/sign-up': typeof GuestSignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/invitation/$id': typeof InvitationIdRoute
+  '/account/security': typeof AuthenticatedAccountSecurityRoute
+  '/account/sessions': typeof AuthenticatedAccountSessionsRoute
+  '/account': typeof AuthenticatedAccountIndexRoute
+  '/projects': typeof AuthenticatedProjectsIndexRoute
+  '/projects/$slug/settings': typeof AuthenticatedProjectsSlugSettingsRoute
+  '/projects/$slug': typeof AuthenticatedProjectsSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_guest': typeof GuestRouteWithChildren
+  '/device': typeof DeviceRoute
+  '/onboarding': typeof OnboardingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRouteWithChildren
+  '/_authenticated/activity': typeof AuthenticatedActivityRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/organization': typeof AuthenticatedOrganizationRoute
   '/_authenticated/welcome': typeof AuthenticatedWelcomeRoute
   '/_guest/check-email': typeof GuestCheckEmailRoute
   '/_guest/forgot-password': typeof GuestForgotPasswordRoute
   '/_guest/sign-in': typeof GuestSignInRoute
   '/_guest/sign-up': typeof GuestSignUpRoute
   '/api/$': typeof ApiSplatRoute
+  '/invitation/$id': typeof InvitationIdRoute
+  '/_authenticated/account/security': typeof AuthenticatedAccountSecurityRoute
+  '/_authenticated/account/sessions': typeof AuthenticatedAccountSessionsRoute
+  '/_authenticated/projects/$slug': typeof AuthenticatedProjectsSlugRouteWithChildren
+  '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
+  '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
+  '/_authenticated/projects/$slug/settings': typeof AuthenticatedProjectsSlugSettingsRoute
+  '/_authenticated/projects/$slug/': typeof AuthenticatedProjectsSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/device'
+    | '/onboarding'
     | '/reset-password'
     | '/verify-email'
+    | '/account'
+    | '/activity'
+    | '/dashboard'
+    | '/organization'
     | '/welcome'
     | '/check-email'
     | '/forgot-password'
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/invitation/$id'
+    | '/account/security'
+    | '/account/sessions'
+    | '/projects/$slug'
+    | '/account/'
+    | '/projects/'
+    | '/projects/$slug/settings'
+    | '/projects/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/device'
+    | '/onboarding'
     | '/reset-password'
     | '/verify-email'
+    | '/activity'
+    | '/dashboard'
+    | '/organization'
     | '/welcome'
     | '/check-email'
     | '/forgot-password'
     | '/sign-in'
     | '/sign-up'
     | '/api/$'
+    | '/invitation/$id'
+    | '/account/security'
+    | '/account/sessions'
+    | '/account'
+    | '/projects'
+    | '/projects/$slug/settings'
+    | '/projects/$slug'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_guest'
+    | '/device'
+    | '/onboarding'
     | '/reset-password'
     | '/verify-email'
+    | '/_authenticated/account'
+    | '/_authenticated/activity'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/organization'
     | '/_authenticated/welcome'
     | '/_guest/check-email'
     | '/_guest/forgot-password'
     | '/_guest/sign-in'
     | '/_guest/sign-up'
     | '/api/$'
+    | '/invitation/$id'
+    | '/_authenticated/account/security'
+    | '/_authenticated/account/sessions'
+    | '/_authenticated/projects/$slug'
+    | '/_authenticated/account/'
+    | '/_authenticated/projects/'
+    | '/_authenticated/projects/$slug/settings'
+    | '/_authenticated/projects/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   GuestRoute: typeof GuestRouteWithChildren
+  DeviceRoute: typeof DeviceRoute
+  OnboardingRoute: typeof OnboardingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   ApiSplatRoute: typeof ApiSplatRoute
+  InvitationIdRoute: typeof InvitationIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -181,6 +356,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/device': {
+      id: '/device'
+      path: '/device'
+      fullPath: '/device'
+      preLoaderRoute: typeof DeviceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -194,6 +383,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/verify-email'
       preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/activity': {
+      id: '/_authenticated/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof AuthenticatedActivityRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/organization': {
+      id: '/_authenticated/organization'
+      path: '/organization'
+      fullPath: '/organization'
+      preLoaderRoute: typeof AuthenticatedOrganizationRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/welcome': {
       id: '/_authenticated/welcome'
@@ -237,15 +454,115 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invitation/$id': {
+      id: '/invitation/$id'
+      path: '/invitation/$id'
+      fullPath: '/invitation/$id'
+      preLoaderRoute: typeof InvitationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/account/': {
+      id: '/_authenticated/account/'
+      path: '/'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AuthenticatedAccountIndexRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/security': {
+      id: '/_authenticated/account/security'
+      path: '/security'
+      fullPath: '/account/security'
+      preLoaderRoute: typeof AuthenticatedAccountSecurityRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/account/sessions': {
+      id: '/_authenticated/account/sessions'
+      path: '/sessions'
+      fullPath: '/account/sessions'
+      preLoaderRoute: typeof AuthenticatedAccountSessionsRouteImport
+      parentRoute: typeof AuthenticatedAccountRoute
+    }
+    '/_authenticated/projects/': {
+      id: '/_authenticated/projects/'
+      path: '/projects'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof AuthenticatedProjectsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/projects/$slug': {
+      id: '/_authenticated/projects/$slug'
+      path: '/projects/$slug'
+      fullPath: '/projects/$slug'
+      preLoaderRoute: typeof AuthenticatedProjectsSlugRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/projects/$slug/': {
+      id: '/_authenticated/projects/$slug/'
+      path: '/'
+      fullPath: '/projects/$slug/'
+      preLoaderRoute: typeof AuthenticatedProjectsSlugIndexRouteImport
+      parentRoute: typeof AuthenticatedProjectsSlugRoute
+    }
+    '/_authenticated/projects/$slug/settings': {
+      id: '/_authenticated/projects/$slug/settings'
+      path: '/settings'
+      fullPath: '/projects/$slug/settings'
+      preLoaderRoute: typeof AuthenticatedProjectsSlugSettingsRouteImport
+      parentRoute: typeof AuthenticatedProjectsSlugRoute
+    }
   }
 }
 
+interface AuthenticatedAccountRouteChildren {
+  AuthenticatedAccountSecurityRoute: typeof AuthenticatedAccountSecurityRoute
+  AuthenticatedAccountSessionsRoute: typeof AuthenticatedAccountSessionsRoute
+  AuthenticatedAccountIndexRoute: typeof AuthenticatedAccountIndexRoute
+}
+
+const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
+  AuthenticatedAccountSecurityRoute: AuthenticatedAccountSecurityRoute,
+  AuthenticatedAccountSessionsRoute: AuthenticatedAccountSessionsRoute,
+  AuthenticatedAccountIndexRoute: AuthenticatedAccountIndexRoute,
+}
+
+const AuthenticatedAccountRouteWithChildren =
+  AuthenticatedAccountRoute._addFileChildren(AuthenticatedAccountRouteChildren)
+
+interface AuthenticatedProjectsSlugRouteChildren {
+  AuthenticatedProjectsSlugSettingsRoute: typeof AuthenticatedProjectsSlugSettingsRoute
+  AuthenticatedProjectsSlugIndexRoute: typeof AuthenticatedProjectsSlugIndexRoute
+}
+
+const AuthenticatedProjectsSlugRouteChildren: AuthenticatedProjectsSlugRouteChildren =
+  {
+    AuthenticatedProjectsSlugSettingsRoute:
+      AuthenticatedProjectsSlugSettingsRoute,
+    AuthenticatedProjectsSlugIndexRoute: AuthenticatedProjectsSlugIndexRoute,
+  }
+
+const AuthenticatedProjectsSlugRouteWithChildren =
+  AuthenticatedProjectsSlugRoute._addFileChildren(
+    AuthenticatedProjectsSlugRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRouteWithChildren
+  AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedOrganizationRoute: typeof AuthenticatedOrganizationRoute
   AuthenticatedWelcomeRoute: typeof AuthenticatedWelcomeRoute
+  AuthenticatedProjectsSlugRoute: typeof AuthenticatedProjectsSlugRouteWithChildren
+  AuthenticatedProjectsIndexRoute: typeof AuthenticatedProjectsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRouteWithChildren,
+  AuthenticatedActivityRoute: AuthenticatedActivityRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedOrganizationRoute: AuthenticatedOrganizationRoute,
   AuthenticatedWelcomeRoute: AuthenticatedWelcomeRoute,
+  AuthenticatedProjectsSlugRoute: AuthenticatedProjectsSlugRouteWithChildren,
+  AuthenticatedProjectsIndexRoute: AuthenticatedProjectsIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -272,9 +589,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   GuestRoute: GuestRouteWithChildren,
+  DeviceRoute: DeviceRoute,
+  OnboardingRoute: OnboardingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   ApiSplatRoute: ApiSplatRoute,
+  InvitationIdRoute: InvitationIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

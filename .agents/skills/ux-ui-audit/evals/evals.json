@@ -1,0 +1,28 @@
+{
+  "skill_name": "ux-ui-audit",
+  "evals": [
+    {
+      "id": "dashboard-audit",
+      "prompt": "Audit this existing dashboard across desktop/mobile, keyboard navigation, loading/empty/error states, and design consistency. Prioritize findings.",
+      "expectations": [
+        "Uses evidence and severity",
+        "Covers states and responsiveness",
+        "Separates automated/static findings from confirmed issues"
+      ]
+    },
+    {
+      "id": "source-only",
+      "prompt": "I only have source code. Perform the strongest audit possible and state what cannot be proven without rendering.",
+      "expectations": [
+        "Uses static triage cautiously",
+        "Does not claim full conformance",
+        "Labels runtime uncertainty"
+      ]
+    },
+    {
+      "id": "boundary-redesign",
+      "prompt": "Create a completely new visual art direction for this greenfield landing page.",
+      "expectations": ["Hands primary work to frontend-aesthetics"]
+    }
+  ]
+}

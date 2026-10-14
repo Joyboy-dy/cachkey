@@ -2,7 +2,8 @@ import { signInSchema } from "@cachkey/shared";
 import { revalidateLogic } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { CircleAlert, CircleCheck } from "lucide-react";
+import { AlertCircleIcon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 import { z } from "zod";
 import { AuthFooterLink, AuthHeader } from "@/components/auth/auth-shell";
@@ -14,6 +15,7 @@ import { getAuthErrorMessage, getOAuthErrorMessage } from "@/lib/auth/errors";
 import { publicConfigQueryOptions } from "@/lib/auth/public-config";
 import { DEFAULT_AUTHENTICATED_PATH, safeRedirectPath } from "@/lib/auth/redirect";
 import { sessionQueryKey } from "@/lib/auth/session";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 const searchSchema = z.object({
   redirect: z.string().optional().catch(undefined),
@@ -21,6 +23,8 @@ const searchSchema = z.object({
   error: z.string().optional().catch(undefined),
   /** Set after a successful password reset. */
   reset: z.literal("success").optional().catch(undefined),
+  /** Set after the account deletion link was followed. */
+  deleted: z.literal("1").optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/_guest/sign-in")({
@@ -76,16 +80,25 @@ function SignInPage() {
 
       {search.reset === "success" && !formError ? (
         <Alert variant="success" className="mb-6">
-          <CircleCheck />
+          <Icon icon={CheckmarkCircle02Icon} />
           <AlertDescription>
             Votre mot de passe a été modifié. Connectez-vous avec le nouveau.
           </AlertDescription>
         </Alert>
       ) : null}
 
+      {search.deleted && !formError ? (
+        <Alert variant="success" className="mb-6">
+          <Icon icon={CheckmarkCircle02Icon} />
+          <AlertDescription>
+            Votre compte a été supprimé. Merci d’avoir utilisé Cachkey.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       {formError ? (
         <Alert variant="destructive" className="mb-6">
-          <CircleAlert />
+          <Icon icon={AlertCircleIcon} />
           <AlertDescription>{formError}</AlertDescription>
         </Alert>
       ) : null}
@@ -110,10 +123,7 @@ function SignInPage() {
                 label="Mot de passe"
                 autoComplete="current-password"
                 labelAside={
-                  <Link
-                    to="/forgot-password"
-                    className="text-[13px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                  >
+                  <Link to="/forgot-password" className={textLinkVariants({ variant: "subtle" })}>
                     Mot de passe oublié ?
                   </Link>
                 }
@@ -129,7 +139,7 @@ function SignInPage() {
         <Link
           to="/sign-up"
           search={search.redirect ? { redirect: search.redirect } : {}}
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
+          className={textLinkVariants()}
         >
           Créer un compte
         </Link>

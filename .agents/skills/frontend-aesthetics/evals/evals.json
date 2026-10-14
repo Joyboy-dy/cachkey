@@ -1,0 +1,28 @@
+{
+  "skill_name": "frontend-aesthetics",
+  "evals": [
+    {
+      "id": "polish",
+      "prompt": "Polish this settings screen so it feels coherent with the rest of the product without changing its features.",
+      "expectations": [
+        "Inspects existing design language",
+        "Prioritizes hierarchy and spacing before effects",
+        "Validates responsive and interaction states"
+      ]
+    },
+    {
+      "id": "greenfield",
+      "prompt": "Design the visual direction for a new analytics page using the project's existing component library and tokens.",
+      "expectations": [
+        "Defines a small art direction",
+        "Reuses primitives",
+        "Avoids generic decorative excess"
+      ]
+    },
+    {
+      "id": "boundary",
+      "prompt": "Find why this component causes a circular dependency.",
+      "expectations": ["Hands structural issue to architecture skills"]
+    }
+  ]
+}

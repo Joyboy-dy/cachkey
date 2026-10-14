@@ -2,7 +2,8 @@ import { PASSWORD_MIN_LENGTH, resetPasswordSchema } from "@cachkey/shared";
 import { revalidateLogic } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { CircleAlert, CircleX, LockKeyhole } from "lucide-react";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 import { z } from "zod";
 import { AuthFooterLink, AuthHeader, AuthShell } from "@/components/auth/auth-shell";
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { sessionQueryKey } from "@/lib/auth/session";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 const searchSchema = z.object({
   token: z.string().optional().catch(undefined),
@@ -70,14 +72,13 @@ function ResetPasswordForm({ token }: { token: string }) {
   return (
     <>
       <AuthHeader
-        icon={<LockKeyhole />}
         title="Nouveau mot de passe"
         description="Choisissez un mot de passe que vous n’utilisez nulle part ailleurs. Vos sessions ouvertes seront fermées."
       />
 
       {formError ? (
         <Alert variant="destructive" className="mb-6">
-          <CircleAlert />
+          <Icon icon={AlertCircleIcon} />
           <AlertDescription>{formError}</AlertDescription>
         </Alert>
       ) : null}
@@ -110,7 +111,7 @@ function InvalidLink() {
   return (
     <>
       <AuthHeader
-        icon={<CircleX className="text-destructive" />}
+        tone="error"
         title="Lien invalide ou expiré"
         description="Ce lien de réinitialisation ne peut plus être utilisé. Les liens expirent après 1 heure et ne servent qu’une fois."
       />
@@ -118,10 +119,7 @@ function InvalidLink() {
         <Link to="/forgot-password">Demander un nouveau lien</Link>
       </Button>
       <AuthFooterLink>
-        <Link
-          to="/sign-in"
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
-        >
+        <Link to="/sign-in" className={textLinkVariants()}>
           Retour à la connexion
         </Link>
       </AuthFooterLink>

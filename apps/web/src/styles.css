@@ -1,5 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Project extensions (focus, cursors, motion) — not part of shadcn/ui spec. */
+@import "./styles/customs.css";
+
+/* shadcn/ui dark mode convention: `.dark` on <html> (set before paint, see lib/theme.ts). */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ── Geist (SIL OFL 1.1) — shipped with the Cachkey brand kit ─────────────── */
 @font-face {
@@ -49,6 +54,9 @@
   --popover-foreground: var(--cachkey-ink);
   --primary: var(--cachkey-orange);
   --primary-foreground: var(--cachkey-ink);
+  /* Pressed/hovered primary keeps an ink label above 5:1. */
+  --primary-hover: #ea6a0f;
+  --primary-active: #dc6410;
   --secondary: #f8e9e5;
   --secondary-foreground: var(--cachkey-ink);
   --muted: #f8e9e5;
@@ -60,8 +68,103 @@
   --success: #15803d;
   --success-foreground: #ffffff;
   --border: #ebe2df;
-  --input: #d8cdca;
+  /* Field boundaries and focus indicators need 3:1 against white (WCAG 1.4.11):
+     #9c918d = 3.07:1, #d4580f = 4.04:1 on cards, 3.77:1 on the page. */
+  --input: #9c918d;
+  --ring: #d4580f;
+  --glyph: var(--cachkey-ink);
+  /* App shell sidebar: white panel, warm hover, ink text; orange stays a marker only. */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #3d3835;
+  --sidebar-primary: var(--cachkey-orange);
+  --sidebar-primary-foreground: var(--cachkey-ink);
+  --sidebar-accent: #fbefeb;
+  --sidebar-accent-foreground: var(--cachkey-ink);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+  /* Charts (Bklit): ink for reads, brand orange for changes; follows the theme. */
+  --chart-1: var(--foreground);
+  --chart-2: var(--primary);
+  --chart-3: oklch(0.54 0 none);
+  --chart-4: oklch(0.71 0 none);
+  --chart-5: oklch(0.89 0 none);
+  --chart-background: var(--card);
+  --chart-foreground: var(--foreground);
+  --chart-foreground-muted: var(--muted-foreground);
+  --chart-line-primary: var(--chart-1);
+  --chart-line-secondary: var(--chart-2);
+  --chart-crosshair: var(--muted-foreground);
+  --chart-grid: var(--border);
+  --chart-brush-border: var(--chart-grid);
+  --chart-tooltip-background: var(--foreground);
+  --chart-tooltip-foreground: var(--background);
+  --chart-tooltip-muted: color-mix(in oklab, var(--background) 70%, transparent);
+  --chart-marker-background: var(--card);
+  --chart-marker-border: var(--border);
+  --chart-marker-foreground: var(--foreground);
+  --chart-label: var(--muted-foreground);
+  --chart-scale-01: oklch(0.98 0.003 106);
+  --chart-scale-02: oklch(0.92 0.008 106);
+  --chart-scale-03: oklch(0.82 0.015 106);
+  --chart-scale-04: oklch(0.68 0.02 106);
+  --chart-scale-05: oklch(0.55 0.025 106);
+  --chart-scale-pattern-color: oklch(0.96 0.005 106);
+}
+
+/*
+ * Dark theme — same brand roles on an ink base: warm white text, orange still reserved for
+ * primary actions/markers with an ink label (6.2:1). Contrasts (checked):
+ * text 16:1, muted 7.4:1, field border #6e6561 3.05:1 on cards, focus ring 6.2:1.
+ */
+.dark {
+  --background: #141210;
+  --foreground: var(--cachkey-warm-white);
+  --card: #1c1a18;
+  --card-foreground: var(--cachkey-warm-white);
+  --popover: #1f1c1a;
+  --popover-foreground: var(--cachkey-warm-white);
+  --primary-hover: #fb8a3c;
+  --primary-active: #ea6a0f;
+  --secondary: #2a2522;
+  --secondary-foreground: var(--cachkey-warm-white);
+  --muted: #2a2522;
+  --muted-foreground: #b0a7a3;
+  --accent: #2a2522;
+  --accent-foreground: var(--cachkey-warm-white);
+  --destructive: #f87171;
+  --destructive-foreground: var(--cachkey-ink);
+  --success: #4ade80;
+  --success-foreground: var(--cachkey-ink);
+  --border: #2e2a27;
+  --input: #6e6561;
   --ring: var(--cachkey-orange);
+  --sidebar: #181614;
+  --sidebar-foreground: #e8dedb;
+  --sidebar-accent: #2a2522;
+  --sidebar-accent-foreground: var(--cachkey-warm-white);
+  /* Cipher field glyphs (auth background). */
+  --glyph: var(--cachkey-warm-white);
+  --chart-1: var(--foreground);
+  --chart-2: var(--primary);
+  --chart-3: oklch(0.51 0 none);
+  --chart-4: oklch(0.39 0 none);
+  --chart-5: oklch(0.32 0 none);
+  --chart-background: var(--card);
+  --chart-foreground: var(--foreground);
+  --chart-foreground-muted: var(--muted-foreground);
+  --chart-crosshair: var(--muted-foreground);
+  --chart-grid: var(--border);
+  --chart-brush-border: var(--chart-grid);
+  --chart-marker-background: var(--card);
+  --chart-marker-border: var(--border);
+  --chart-marker-foreground: var(--foreground);
+  --chart-label: var(--muted-foreground);
+  --chart-scale-01: oklch(0.28 0.03 270);
+  --chart-scale-02: oklch(0.38 0.04 270);
+  --chart-scale-03: oklch(0.48 0.05 270);
+  --chart-scale-04: oklch(0.58 0.06 270);
+  --chart-scale-05: oklch(0.68 0.07 270);
+  --chart-scale-pattern-color: oklch(0.145 0 0);
 }
 
 @theme inline {
@@ -76,6 +179,8 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -94,51 +199,42 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-scale-pattern-color: var(--chart-scale-pattern-color);
+  --color-chart-scale-05: var(--chart-scale-05);
+  --color-chart-scale-04: var(--chart-scale-04);
+  --color-chart-scale-03: var(--chart-scale-03);
+  --color-chart-scale-02: var(--chart-scale-02);
+  --color-chart-scale-01: var(--chart-scale-01);
+  --color-chart-label: var(--chart-label);
+  --color-chart-marker-foreground: var(--chart-marker-foreground);
+  --color-chart-marker-border: var(--chart-marker-border);
+  --color-chart-marker-background: var(--chart-marker-background);
+  --color-chart-tooltip-muted: var(--chart-tooltip-muted);
+  --color-chart-tooltip-foreground: var(--chart-tooltip-foreground);
+  --color-chart-tooltip-background: var(--chart-tooltip-background);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-crosshair: var(--chart-crosshair);
+  --color-chart-foreground-muted: var(--chart-foreground-muted);
+  --color-chart-foreground: var(--chart-foreground);
+  --color-chart-background: var(--chart-background);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
 }
 
 @layer base {
   * {
     @apply border-border;
-  }
-
-  /*
-   * Focus — one global, discreet indicator. Shown for keyboard navigation only
-   * (:focus-visible), never on mouse click. :where() keeps specificity at zero so
-   * components can still adjust it (e.g. a negative offset inside a field).
-   */
-  :where(*):focus {
-    outline: none;
-  }
-  :where(a, button, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-  /* Text fields style their own focus (orange border + light halo): see components/ui/input.tsx. */
-
-  /* Cursor — every enabled interactive control shows a pointer; disabled ones do not. */
-  :where(
-    button,
-    summary,
-    select,
-    [role="button"],
-    [role="tab"],
-    [role="menuitem"],
-    [role="option"],
-    [role="checkbox"],
-    [role="switch"],
-    input[type="checkbox"],
-    input[type="radio"],
-    input[type="submit"],
-    input[type="button"],
-    input[type="reset"],
-    input[type="file"],
-    label[for]:has(+ :is(input[type="checkbox"], input[type="radio"]))
-  ):not(:disabled, [aria-disabled="true"]) {
-    cursor: pointer;
-  }
-  :where(:disabled, [aria-disabled="true"]) {
-    cursor: not-allowed;
   }
   html {
     -webkit-font-smoothing: antialiased;
@@ -147,25 +243,10 @@
   body {
     @apply bg-background font-sans text-foreground;
   }
-}
 
-/* Brand motion: whole-sign fade-in, 180–240 ms; disabled for reduced motion. */
-@keyframes cachkey-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-.animate-brand-in {
-  animation: cachkey-fade-in 220ms ease-out both;
-}
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  /* shadcn/ui official cursor baseline (equivalent of `shadcn init --pointer`). */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }

@@ -1,0 +1,99 @@
+/*
+ * Cachkey UI extensions — NOT PART OF SHADCN/UI SPEC.
+ * Canonical shadcn/ui base (theme, tokens, official cursor baseline) lives in ../styles.css.
+ * Any selector based on a `data-slot` must exist in components/ui/*.tsx and is checked by
+ * `bun run check:ui` (scripts/check-ui-cursor-contracts.mjs).
+ */
+
+@layer base {
+  /*
+   * Focus — one global, discreet indicator, shown for keyboard navigation only
+   * (:focus-visible). :where() keeps specificity at zero so components can adjust it
+   * (e.g. a negative offset inside a field). Text fields style their own focus
+   * (border + light halo): see components/ui/input.tsx.
+   */
+  :where(*):focus {
+    outline: none;
+  }
+  :where(a, button, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /*
+   * Cursor extensions beyond the shadcn/ui baseline: native and ARIA controls.
+   * Disabled states keep their native mechanism (`disabled:cursor-not-allowed`,
+   * `pointer-events: none`) — never overridden here. ARIA disabled is matched on the
+   * explicit "true" value, since some libraries set aria-disabled="false".
+   */
+  :where(
+    summary,
+    select,
+    input[type="checkbox"],
+    input[type="radio"],
+    input[type="submit"],
+    input[type="button"],
+    input[type="reset"],
+    input[type="file"]
+  ):not(:disabled) {
+    cursor: pointer;
+  }
+  :where(
+    [role="tab"],
+    [role="menuitem"],
+    [role="option"],
+    [role="checkbox"],
+    [role="radio"],
+    [role="switch"]
+  ):not([aria-disabled="true"], [data-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
+/*
+ * shadcn/ui « new-york » dropdown and select presets: items ship with the `cursor-default` utility,
+ * which beats the base layer above. Unlayered on purpose so it wins. Radix marks disabled
+ * items with an empty `data-disabled` attribute.
+ */
+:is(
+  [data-slot="dropdown-menu-item"],
+  [data-slot="dropdown-menu-checkbox-item"],
+  [data-slot="dropdown-menu-radio-item"],
+  [data-slot="dropdown-menu-sub-trigger"],
+  [data-slot="select-item"]
+):not([data-disabled]) {
+  cursor: pointer;
+}
+
+/*
+ * Theme switch (lib/theme.ts): a View Transition cross-fades the whole page once, on the
+ * compositor. Slightly longer and eased so light ↔ dark feels soft rather than abrupt.
+ * Scoped to theme changes only; reduced motion skips the transition entirely (in JS).
+ */
+:root[data-theme-transition]::view-transition-old(root),
+:root[data-theme-transition]::view-transition-new(root) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Brand motion: whole-sign fade-in, 180–240 ms; disabled for reduced motion. */
+@keyframes cachkey-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-brand-in {
+  animation: cachkey-fade-in 220ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

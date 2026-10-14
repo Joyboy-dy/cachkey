@@ -1,0 +1,32 @@
+{
+  "skill_name": "container-compose-ghcr-deployment",
+  "evals": [
+    {
+      "id": "ghcr-pipeline",
+      "prompt": "Containerize this existing API and publish release/commit images to GHCR in GitHub Actions without leaking environment files.",
+      "expectations": [
+        "Inspects real build/start scripts and runtime first",
+        "Separates secrets/runtime config from image build",
+        "Uses repository-derived GHCR context instead of invented owner names",
+        "Plans real image validation"
+      ]
+    },
+    {
+      "id": "compose-review",
+      "prompt": "Review this Compose stack because the API starts before its database is ready and local data keeps disappearing.",
+      "expectations": [
+        "Distinguishes startup ordering from readiness",
+        "Checks health and volume semantics",
+        "Avoids destructive volume changes"
+      ]
+    },
+    {
+      "id": "boundary-deploy",
+      "prompt": "Deploy my frontend somewhere; there are no container files and I did not ask for Docker.",
+      "expectations": [
+        "Does not force containerization",
+        "Requests or inspects the actual deployment target"
+      ]
+    }
+  ]
+}

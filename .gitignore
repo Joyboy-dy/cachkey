@@ -5,9 +5,17 @@ dist/
 .tanstack/
 .vinxi/
 *.tsbuildinfo
+# Real environment values (local and production) are never committed.
 .env
 .env.*
 !.env.example
+!.env.production.example
+
+# Personal agent notes
+.agents/note_prompts.md
 .DS_Store
 coverage/
+# Playwright output
+e2e/test-results/
+e2e/playwright-report/
 .react-email/

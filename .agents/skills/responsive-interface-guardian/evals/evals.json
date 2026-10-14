@@ -1,0 +1,31 @@
+{
+  "skill_name": "responsive-interface-guardian",
+  "evals": [
+    {
+      "id": "responsive-collision-audit",
+      "prompt": "Audit and fix this existing responsive interface: the navbar wraps at intermediate widths, cards become too narrow, and a sticky CTA overlaps content on mobile. Preserve the design system and validate the critical viewport matrix.",
+      "expectations": [
+        "Audits constraints before changing breakpoints",
+        "Uses content-driven composition changes instead of hiding overflow",
+        "Reports every required viewport as validated, revalidated, or not tested"
+      ]
+    },
+    {
+      "id": "long-content-and-media",
+      "prompt": "Make this product page robust at phone, tablet, desktop, 150% zoom, translated copy that is 30% longer, and slow or missing media without changing the visual identity.",
+      "expectations": [
+        "Checks long content, zoom, media ratios, and dynamic states",
+        "Prefers fluid sizing and structural fixes over fixed heights or truncation",
+        "Distinguishes automated checks from visual inspection"
+      ]
+    },
+    {
+      "id": "boundary-greenfield-art-direction",
+      "prompt": "Invent a completely new visual identity and art direction for a greenfield landing page.",
+      "expectations": [
+        "Does not claim ownership of greenfield art direction",
+        "Hands primary visual direction work to frontend-aesthetics"
+      ]
+    }
+  ]
+}

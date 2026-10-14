@@ -1,10 +1,12 @@
 {
   "name": "cachkey",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "e2e"
   ],
   "scripts": {
     "dev": "bun run --filter './apps/*' dev",
@@ -12,17 +14,24 @@
     "dev:api": "bun run --filter @cachkey/api dev",
     "dev:emails": "bun run --filter @cachkey/emails dev",
     "build": "bun run --filter './apps/*' build",
-    "typecheck": "bun run --filter '*' typecheck",
+    "typecheck": "bun run --filter '*' typecheck && tsc -p scripts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "services:up": "docker compose -f docker-compose.dev.yml up -d",
-    "services:down": "docker compose -f docker-compose.dev.yml down",
+    "services:up": "docker compose -f deploy/compose.dev.yaml up -d",
+    "services:down": "docker compose -f deploy/compose.dev.yaml down",
     "db:generate": "bun run --filter @cachkey/db generate",
     "db:migrate": "bun run --filter @cachkey/db migrate",
     "db:deploy": "bun run --filter @cachkey/db deploy",
-    "db:studio": "bun run --filter @cachkey/db studio"
+    "db:studio": "bun run --filter @cachkey/db studio",
+    "test": "bun test",
+    "e2e": "bun run --filter @cachkey/e2e test",
+    "check:ui": "node scripts/check-ui-cursor-contracts.mjs",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test && bun run check:ui && bun run check:icons",
+    "icons:generate": "bun scripts/icons/generate-icons.ts",
+    "icons:migrate": "bun scripts/icons/migrate-icons.ts",
+    "check:icons": "bun scripts/icons/migrate-icons.ts --check"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -34,5 +43,10 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "typescript": "~6.0",
     "typescript-eslint": "^8.71.2"
+  },
+  "overrides": {
+    "next": "16.3.8",
+    "mysql2": "3.24.6",
+    "deepmerge-ts": "8.0.2"
   }
 }

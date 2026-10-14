@@ -16,6 +16,14 @@ const envSchema = z
     BETTER_AUTH_SECRET: z
       .string()
       .min(32, "BETTER_AUTH_SECRET must contain at least 32 characters."),
+    /** Master key of the secrets envelope encryption: 32 bytes, base64-encoded. */
+    ENCRYPTION_KEY: z
+      .string()
+      .trim()
+      .refine(
+        (value) => Buffer.from(value, "base64").length === 32,
+        "ENCRYPTION_KEY must be 32 random bytes encoded in base64 (openssl rand -base64 32).",
+      ),
 
     GOOGLE_CLIENT_ID: optional,
     GOOGLE_CLIENT_SECRET: optional,

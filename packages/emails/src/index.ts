@@ -1,4 +1,11 @@
-export { renderPasswordChanged, renderResetPassword, renderVerifyEmail } from "./render";
+export {
+  renderConfirmEmailChange,
+  renderDeleteAccount,
+  renderInvitation,
+  renderPasswordChanged,
+  renderResetPassword,
+  renderVerifyEmail,
+} from "./render";
 export type { RenderedEmail } from "./render";
 export { createResendTransport } from "./transports/resend";
 export type { ResendConfig } from "./transports/resend";

@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "skills": {
+    "chromatic-design": {
+      "source": "joyboy-dy/felicio-ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/chromatic-design/SKILL.md",
+      "computedHash": "6c79dd01099900034ef328a850cd2c4c2abe673d965621ebca46e783009ff762"
+    },
+    "codebase-architecture-guardian": {
+      "source": "joyboy-dy/felicio-ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/codebase-architecture-guardian/SKILL.md",
+      "computedHash": "e75657fe44263f1acdd9d767ab7d0970773c3301f069f478e944f85f1543394d"
+    },
+    "container-compose-ghcr-deployment": {
+      "source": "joyboy-dy/felicio-ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/container-compose-ghcr-deployment/SKILL.md",
+      "computedHash": "223507aebb68484b358e2e257b2a69348f2f510828f217adab9346a9d18d349c"
+    },
+    "form-ux-validation": {
+      "source": "joyboy-dy/felicio-ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/form-ux-validation/SKILL.md",
+      "computedHash": "98f1dd5e38b7ee880c2a52f22ee375d39621a7691038aedcd0bdefe329250396"
+    },
+    "frontend-aesthetics": {
+      "source": "joyboy-dy/felicio-ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-aesthetics/SKILL.md",
+      "computedHash": "9cca2f340294a39c7881564f812306f6f4b4c287b4650027d578a9310a543b14"
+    },
+    "responsive-interface-guardian": {
+      "source": "joyboy-dy/felicio-ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/responsive-interface-guardian/SKILL.md",
+      "computedHash": "2995fdb47ac74118eed30ed43e017af212ff0c74cb5c3498cc54e6d67ad1121a"
+    },
+    "senior-frontend-engineering": {
+      "source": "joyboy-dy/felicio-ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/senior-frontend-engineering/SKILL.md",
+      "computedHash": "dc79143d21471393e590b5c3d4257d3c085a7c16cbcd740c92398699f4c07070"
+    },
+    "ui-modern-2026": {
+      "source": "joyboy-dy/felicio-ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ui-modern-2026/SKILL.md",
+      "computedHash": "d4eb824d13d6a532cb40ea6b167ac25eafcfe3c1d58bceb2e5a99c3ef70486c6"
+    },
+    "ux-ui-audit": {
+      "source": "joyboy-dy/felicio-ai-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ux-ui-audit/SKILL.md",
+      "computedHash": "2f0352379d8c908043261b3f3f7ed4a2534357beaf0dc138471f2feb570c1394"
+    }
+  }
+}

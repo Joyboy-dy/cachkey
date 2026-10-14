@@ -15,6 +15,75 @@ const messages: Record<string, string> = {
   TOKEN_EXPIRED: "Ce lien a expiré.",
   EMAIL_ALREADY_VERIFIED: "Cette adresse email est déjà confirmée.",
   FAILED_TO_CREATE_USER: "Impossible de créer le compte pour le moment.",
+  FAILED_TO_UPDATE_USER: "Impossible d’enregistrer vos modifications pour le moment.",
+  CREDENTIAL_ACCOUNT_NOT_FOUND: "Aucun mot de passe n’est encore défini pour ce compte.",
+  PASSWORD_ALREADY_SET: "Un mot de passe est déjà défini pour ce compte.",
+  USER_ALREADY_HAS_PASSWORD: "Un mot de passe est déjà défini pour ce compte.",
+  FAILED_TO_UNLINK_LAST_ACCOUNT:
+    "Impossible de retirer votre seule méthode de connexion. Ajoutez-en une autre d’abord.",
+  ACCOUNT_NOT_FOUND: "Cette connexion n’existe plus.",
+  SOCIAL_ACCOUNT_ALREADY_LINKED: "Ce compte est déjà relié à un autre utilisateur.",
+  LINKED_ACCOUNT_ALREADY_EXISTS: "Ce compte est déjà relié.",
+  SESSION_EXPIRED: "Votre session a expiré. Reconnectez-vous pour continuer.",
+  SESSION_NOT_FRESH: "Pour des raisons de sécurité, reconnectez-vous avant cette action.",
+  UNAUTHORIZED: "Votre session a expiré. Reconnectez-vous pour continuer.",
+  CHANGE_EMAIL_DISABLED: "Le changement d’adresse email n’est pas disponible.",
+  UNREADABLE_TEXT: "Ce texte contient des caractères illisibles. Saisissez-le à nouveau.",
+  VALIDATION_ERROR: "Certaines informations sont invalides.",
+  FORBIDDEN: "Vous n’avez pas les droits nécessaires pour cette action.",
+  NO_ACTIVE_ORGANIZATION: "Sélectionnez d’abord une organisation.",
+  PROJECT_NOT_FOUND: "Ce projet n’existe pas ou a été supprimé.",
+  ENVIRONMENT_NOT_FOUND: "Cet environnement n’existe pas ou a été supprimé.",
+  TOO_MANY_ENVIRONMENTS: "Ce projet a atteint le nombre maximal d’environnements (20).",
+  SECRET_NOT_FOUND: "Cette variable n’existe plus. Actualisez la page.",
+  SECRET_ALREADY_EXISTS: "Une variable porte déjà ce nom dans cet environnement.",
+  TOO_MANY_TOKENS: "Ce projet a atteint le nombre maximal de jetons d’accès (50).",
+  TOKEN_NOT_FOUND: "Ce jeton n’existe pas ou a déjà été révoqué.",
+  TOO_MANY_SECRETS: "Cet environnement a atteint le nombre maximal de variables (500).",
+  VERSION_NOT_FOUND: "Cette version n’existe plus.",
+  ORGANIZATION_ALREADY_EXISTS: "Cet identifiant d’organisation est déjà utilisé.",
+  ORGANIZATION_SLUG_ALREADY_TAKEN: "Cet identifiant d’organisation est déjà utilisé.",
+  YOU_HAVE_REACHED_THE_MAXIMUM_NUMBER_OF_ORGANIZATIONS:
+    "Vous avez atteint le nombre maximal d’organisations.",
+  ORGANIZATION_NOT_FOUND: "Cette organisation n’existe plus.",
+  YOU_ARE_NOT_ALLOWED_TO_UPDATE_THIS_ORGANIZATION:
+    "Vous n’avez pas les droits nécessaires pour modifier cette organisation.",
+  YOU_ARE_NOT_ALLOWED_TO_DELETE_THIS_ORGANIZATION:
+    "Seul le propriétaire peut supprimer cette organisation.",
+  YOU_ARE_NOT_ALLOWED_TO_UPDATE_THIS_MEMBER: "Vous ne pouvez pas modifier le rôle de ce membre.",
+  YOU_ARE_NOT_ALLOWED_TO_DELETE_THIS_MEMBER: "Vous ne pouvez pas retirer ce membre.",
+  YOU_CANNOT_LEAVE_THE_ORGANIZATION_AS_THE_ONLY_OWNER:
+    "Vous êtes le seul propriétaire : supprimez l’organisation ou nommez un autre propriétaire.",
+  YOU_CANNOT_LEAVE_THE_ORGANIZATION_WITHOUT_AN_OWNER:
+    "L’organisation doit garder au moins un propriétaire.",
+  YOU_ARE_NOT_A_MEMBER_OF_THIS_ORGANIZATION: "Vous ne faites pas partie de cette organisation.",
+  YOU_ARE_NOT_ALLOWED_TO_ACCESS_THIS_ORGANIZATION:
+    "Vous ne faites pas partie de cette organisation.",
+  YOU_ARE_NOT_ALLOWED_TO_CREATE_A_NEW_ORGANIZATION:
+    "Vous ne pouvez pas créer de nouvelle organisation.",
+  MEMBER_NOT_FOUND: "Ce membre ne fait plus partie de l’organisation.",
+  OWNERSHIP_TRANSFER_REQUIRED:
+    "Le rôle de propriétaire ne change que par un transfert de propriété.",
+  OWNER_ROLE_NOT_INVITABLE: "On ne peut pas inviter quelqu’un comme propriétaire.",
+  CONFIRMATION_MISMATCH: "La confirmation ne correspond pas au nom de l’organisation.",
+  ACCESS_NOT_NEEDED: "Les propriétaires et administrateurs ont déjà accès à tous les projets.",
+  INVITATION_NOT_FOUND: "Cette invitation n’existe plus.",
+  INVITATION_FOR_ANOTHER_EMAIL: "Cette invitation a été envoyée à une autre adresse email.",
+  USER_IS_ALREADY_A_MEMBER_OF_THIS_ORGANIZATION:
+    "Cette personne fait déjà partie de l’organisation.",
+  USER_IS_ALREADY_INVITED_TO_THIS_ORGANIZATION: "Cette personne a déjà été invitée.",
+  YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_ORGANIZATION:
+    "Vous n’avez pas les droits nécessaires pour inviter des personnes.",
+  YOU_ARE_NOT_ALLOWED_TO_INVITE_USER_WITH_THIS_ROLE: "Vous ne pouvez pas inviter avec ce rôle.",
+  INVITATION_LIMIT_REACHED:
+    "Trop d’invitations en attente. Annulez-en avant d’en envoyer d’autres.",
+  ORGANIZATION_MEMBERSHIP_LIMIT_REACHED: "L’organisation a atteint son nombre maximal de membres.",
+  YOU_ARE_NOT_THE_RECIPIENT_OF_THE_INVITATION:
+    "Cette invitation a été envoyée à une autre adresse email.",
+  INVITATION_EXPIRED: "Cette invitation a expiré. Demandez-en une nouvelle.",
+  YOU_ARE_NOT_ALLOWED_TO_CANCEL_THIS_INVITATION: "Vous ne pouvez pas annuler cette invitation.",
+  EMAIL_VERIFICATION_REQUIRED_BEFORE_ACCEPTING_OR_REJECTING_INVITATION:
+    "Confirmez d’abord votre adresse email pour répondre à l’invitation.",
 };
 
 const oauthMessages: Record<string, string> = {

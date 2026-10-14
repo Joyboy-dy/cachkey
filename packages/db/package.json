@@ -1,6 +1,7 @@
 {
   "name": "@cachkey/db",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
@@ -8,9 +9,9 @@
   "scripts": {
     "generate": "prisma generate",
     "postinstall": "prisma generate",
-    "migrate": "bun --env-file=../../.env prisma migrate dev",
-    "deploy": "bun --env-file=../../.env prisma migrate deploy",
-    "studio": "bun --env-file=../../.env prisma studio",
+    "migrate": "bun --env-file=../../.env.local prisma migrate dev",
+    "deploy": "bun --env-file=../../.env.local prisma migrate deploy",
+    "studio": "bun --env-file=../../.env.local prisma studio",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -1,13 +1,15 @@
 import { forgotPasswordSchema } from "@cachkey/shared";
 import { revalidateLogic } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { CircleAlert, KeyRound } from "lucide-react";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 import { AuthFooterLink, AuthHeader } from "@/components/auth/auth-shell";
 import { useAppForm } from "@/components/form/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { authClient } from "@/lib/auth/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 export const Route = createFileRoute("/_guest/forgot-password")({
   head: () => ({ meta: [{ title: "Mot de passe oublié · Cachkey" }] }),
@@ -43,14 +45,13 @@ function ForgotPasswordPage() {
   return (
     <>
       <AuthHeader
-        icon={<KeyRound />}
         title="Mot de passe oublié"
         description="Indiquez l’adresse email de votre compte. Nous vous enverrons un lien pour choisir un nouveau mot de passe."
       />
 
       {formError ? (
         <Alert variant="destructive" className="mb-6">
-          <CircleAlert />
+          <Icon icon={AlertCircleIcon} />
           <AlertDescription>{formError}</AlertDescription>
         </Alert>
       ) : null}
@@ -73,10 +74,7 @@ function ForgotPasswordPage() {
       </form.AppForm>
 
       <AuthFooterLink>
-        <Link
-          to="/sign-in"
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
-        >
+        <Link to="/sign-in" className={textLinkVariants()}>
           Retour à la connexion
         </Link>
       </AuthFooterLink>

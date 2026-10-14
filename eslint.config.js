@@ -11,8 +11,13 @@ export default tseslint.config(
       "**/.output/**",
       "**/.tanstack/**",
       "**/.react-email/**",
+      "e2e/test-results/**",
+      "e2e/playwright-report/**",
       "**/src/generated/**",
       "**/routeTree.gen.ts",
+      ".agents/**",
+      // Bklit charts, vendored from its shadcn registry (`shadcn add @bklit/…`): kept as published.
+      "apps/web/src/components/charts/**",
     ],
   },
   js.configs.recommended,

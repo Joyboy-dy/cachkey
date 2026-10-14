@@ -1,7 +1,8 @@
 import { PASSWORD_MIN_LENGTH, signUpSchema } from "@cachkey/shared";
 import { revalidateLogic } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { CircleAlert } from "lucide-react";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 import { z } from "zod";
 import { AuthFooterLink, AuthHeader } from "@/components/auth/auth-shell";
@@ -12,6 +13,7 @@ import { authClient } from "@/lib/auth/auth-client";
 import { getAuthErrorMessage, getOAuthErrorMessage } from "@/lib/auth/errors";
 import { publicConfigQueryOptions } from "@/lib/auth/public-config";
 import { DEFAULT_AUTHENTICATED_PATH, safeRedirectPath } from "@/lib/auth/redirect";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 const searchSchema = z.object({
   redirect: z.string().optional().catch(undefined),
@@ -66,7 +68,7 @@ function SignUpPage() {
 
       {formError ? (
         <Alert variant="destructive" className="mb-6">
-          <CircleAlert />
+          <Icon icon={AlertCircleIcon} />
           <AlertDescription>{formError}</AlertDescription>
         </Alert>
       ) : null}
@@ -113,7 +115,7 @@ function SignUpPage() {
         <Link
           to="/sign-in"
           search={search.redirect ? { redirect: search.redirect } : {}}
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
+          className={textLinkVariants()}
         >
           Se connecter
         </Link>

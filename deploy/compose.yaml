@@ -1,0 +1,68 @@
+# Cachkey — self-hosted deployment.
+#
+#   cp .env.production.example .env.prod   # then fill in the secrets
+#   docker compose -f deploy/compose.yaml --env-file .env.prod up -d   # from the repo root
+#
+# Images come from GitHub Container Registry; `docker compose build` builds them from this
+# repository instead. Only the web app is published on the host: the API and PostgreSQL stay
+# on the internal network. Put a TLS reverse proxy (Caddy, Traefik, nginx…) in front of it.
+name: cachkey
+
+x-app-environment: &app-environment
+  APP_URL: ${APP_URL:?Set APP_URL in .env.prod}
+  DATABASE_URL: postgresql://cachkey:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.prod}@postgres:5432/cachkey
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env.prod}
+  ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env.prod}
+  EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+  EMAIL_FROM: ${EMAIL_FROM:-Cachkey <no-reply@cachkey.local>}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_SECURE: ${SMTP_SECURE:-false}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  RESEND_API_KEY: ${RESEND_API_KEY:-}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+  GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+  GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cachkey
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.prod}
+      POSTGRES_DB: cachkey
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cachkey -d cachkey"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    image: ghcr.io/joyboy-dy/cachkey-api:${CACHKEY_VERSION:-latest}
+    build: { context: .., dockerfile: deploy/Dockerfile, target: api }
+    restart: unless-stopped
+    environment: *app-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    image: ghcr.io/joyboy-dy/cachkey-web:${CACHKEY_VERSION:-latest}
+    build: { context: .., dockerfile: deploy/Dockerfile, target: web }
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://api:3001
+    ports:
+      # Bound to localhost: the reverse proxy reaches it, the outside world does not.
+      - "${CACHKEY_BIND:-127.0.0.1}:${CACHKEY_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

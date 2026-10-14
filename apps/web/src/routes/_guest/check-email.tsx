@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { MailCheck } from "lucide-react";
 import { z } from "zod";
 import { AuthFooterLink, AuthHeader } from "@/components/auth/auth-shell";
 import { ResendVerificationButton } from "@/components/auth/resend-verification";
 import { Button } from "@/components/ui/button";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 const searchSchema = z.object({
   email: z.string().optional().catch(undefined),
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_guest/check-email")({
 function CheckEmailPage() {
   const { email, reason } = Route.useSearch();
   const recipient = email ? (
-    <span className="font-medium text-foreground">{email}</span>
+    <span className="font-medium wrap-anywhere text-foreground">{email}</span>
   ) : (
     "votre adresse"
   );
@@ -29,7 +29,6 @@ function CheckEmailPage() {
     return (
       <>
         <AuthHeader
-          icon={<MailCheck />}
           title="Vérifiez vos emails"
           description={
             <>
@@ -46,10 +45,7 @@ function CheckEmailPage() {
           <Link to="/forgot-password">Refaire une demande</Link>
         </Button>
         <AuthFooterLink>
-          <Link
-            to="/sign-in"
-            className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
-          >
+          <Link to="/sign-in" className={textLinkVariants()}>
             Retour à la connexion
           </Link>
         </AuthFooterLink>
@@ -60,7 +56,6 @@ function CheckEmailPage() {
   return (
     <>
       <AuthHeader
-        icon={<MailCheck />}
         title="Confirmez votre adresse"
         description={
           <>
@@ -74,10 +69,7 @@ function CheckEmailPage() {
       </p>
       {email ? <ResendVerificationButton email={email} initialCooldown={30} /> : null}
       <AuthFooterLink>
-        <Link
-          to="/sign-in"
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
-        >
+        <Link to="/sign-in" className={textLinkVariants()}>
           Retour à la connexion
         </Link>
       </AuthFooterLink>

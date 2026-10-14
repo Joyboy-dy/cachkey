@@ -1,6 +1,5 @@
 import { resendVerificationSchema } from "@cachkey/shared";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CircleCheck, CircleX } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 import { AuthFooterLink, AuthHeader, AuthShell } from "@/components/auth/auth-shell";
@@ -10,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DEFAULT_AUTHENTICATED_PATH } from "@/lib/auth/redirect";
 import { sessionQueryOptions } from "@/lib/auth/session";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 const searchSchema = z.object({
   /** Set by Better Auth when the verification token is invalid or expired. */
@@ -40,7 +40,7 @@ function VerifyEmailPage() {
       ) : (
         <>
           <AuthHeader
-            icon={<CircleCheck className="text-success" />}
+            tone="success"
             title="Adresse confirmée"
             description="Votre adresse email est vérifiée. Votre compte Cachkey est actif."
           />
@@ -64,7 +64,7 @@ function VerificationFailed() {
   return (
     <>
       <AuthHeader
-        icon={<CircleX className="text-destructive" />}
+        tone="error"
         title="Lien invalide ou expiré"
         description="Ce lien de confirmation ne peut plus être utilisé. Saisissez votre adresse pour en recevoir un nouveau."
       />
@@ -89,10 +89,7 @@ function VerificationFailed() {
         )}
       </div>
       <AuthFooterLink>
-        <Link
-          to="/sign-in"
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
-        >
+        <Link to="/sign-in" className={textLinkVariants()}>
           Retour à la connexion
         </Link>
       </AuthFooterLink>

@@ -1,0 +1,31 @@
+{
+  "skill_name": "chromatic-design",
+  "evals": [
+    {
+      "id": "theme-contrast",
+      "prompt": "Audit the light and dark theme color tokens in this existing app and identify contrast risks without redesigning the layout.",
+      "expectations": [
+        "Inspects existing token/theme mechanism first",
+        "Checks semantic foreground/surface pairs in each theme",
+        "Does not force a color-space migration"
+      ]
+    },
+    {
+      "id": "new-palette",
+      "prompt": "Create a semantic color system for a new product UI with accessible light and dark themes.",
+      "expectations": [
+        "Defines semantic roles before values",
+        "Includes interaction/status roles",
+        "Includes a contrast validation plan"
+      ]
+    },
+    {
+      "id": "boundary-layout",
+      "prompt": "Rework the dashboard information hierarchy and card layout; the colors are already approved.",
+      "expectations": [
+        "Does not take ownership of the layout redesign",
+        "Hands visual composition to frontend-aesthetics"
+      ]
+    }
+  ]
+}

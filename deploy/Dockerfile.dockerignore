@@ -1,0 +1,28 @@
+# Build context of the production images (see Dockerfile). Dependencies and outputs are
+# rebuilt inside the image; secrets and local data never enter it.
+.git
+.github
+**/node_modules
+**/dist
+**/.output
+**/.nitro
+**/.tanstack
+**/.vinxi
+**/.react-email
+**/*.tsbuildinfo
+**/coverage
+e2e/test-results
+e2e/playwright-report
+packages/db/src/generated
+
+# Real environment files (examples stay out too: images are configured at runtime).
+.env
+.env.*
+
+# Agent and editor files
+.agents
+.claude
+.vscode
+.idea
+**/.DS_Store
+*.log

@@ -1,0 +1,28 @@
+{
+  "skill_name": "ui-modern-2026",
+  "evals": [
+    {
+      "id": "container",
+      "prompt": "This reusable card relies on many viewport breakpoints. Evaluate whether container queries can simplify it under our browser policy.",
+      "expectations": [
+        "Checks browser/tooling policy",
+        "Preserves baseline when needed",
+        "Uses feature to solve a concrete problem"
+      ]
+    },
+    {
+      "id": "native-overlay",
+      "prompt": "Can we replace custom overlay JavaScript with a platform primitive without losing focus/keyboard behavior?",
+      "expectations": [
+        "Compares behavioral contract",
+        "Checks accessibility and compatibility",
+        "Does not replace blindly"
+      ]
+    },
+    {
+      "id": "boundary",
+      "prompt": "Make this landing page visually more premium but do not change implementation primitives.",
+      "expectations": ["Hands art direction to frontend-aesthetics"]
+    }
+  ]
+}
