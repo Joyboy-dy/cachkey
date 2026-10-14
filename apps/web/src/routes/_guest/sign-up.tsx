@@ -1,7 +1,8 @@
 import { PASSWORD_MIN_LENGTH, signUpSchema } from "@cachkey/shared";
 import { revalidateLogic } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { CircleAlert } from "lucide-react";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 import { z } from "zod";
 import { AuthFooterLink, AuthHeader } from "@/components/auth/auth-shell";
@@ -67,7 +68,7 @@ function SignUpPage() {
 
       {formError ? (
         <Alert variant="destructive" className="mb-6">
-          <CircleAlert />
+          <Icon icon={AlertCircleIcon} />
           <AlertDescription>{formError}</AlertDescription>
         </Alert>
       ) : null}

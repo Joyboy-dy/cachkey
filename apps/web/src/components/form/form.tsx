@@ -1,5 +1,6 @@
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loading03Icon, ViewIcon, ViewOffSlashIcon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 import { type ReactNode, useId, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -153,7 +154,11 @@ function PasswordField({
           aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
           aria-pressed={visible}
         >
-          {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          {visible ? (
+            <Icon icon={ViewOffSlashIcon} className="size-4" />
+          ) : (
+            <Icon icon={ViewIcon} className="size-4" />
+          )}
         </button>
       </div>
     </FieldShell>
@@ -197,7 +202,20 @@ function Form({ children, className }: { children: ReactNode; className?: string
   );
 }
 
-function SubmitButton({ children, className }: { children: ReactNode; className?: string }) {
+type SubmitButtonProps = {
+  children: ReactNode;
+  className?: string;
+  /** Auth pages use the default full-width `lg` button; settings use compact ones. */
+  size?: "default" | "lg";
+  variant?: "default" | "ink" | "destructive";
+};
+
+function SubmitButton({
+  children,
+  className,
+  size = "lg",
+  variant = "default",
+}: SubmitButtonProps) {
   const form = useFormContext();
   const hydrated = useHydrated();
   return (
@@ -205,11 +223,12 @@ function SubmitButton({ children, className }: { children: ReactNode; className?
       {(isSubmitting) => (
         <Button
           type="submit"
-          size="lg"
+          size={size}
+          variant={variant}
           className={cn("w-full", className)}
           disabled={!hydrated || isSubmitting}
         >
-          {isSubmitting ? <Loader2 className="animate-spin" aria-hidden /> : null}
+          {isSubmitting ? <Icon icon={Loading03Icon} className="animate-spin" aria-hidden /> : null}
           {children}
         </Button>
       )}

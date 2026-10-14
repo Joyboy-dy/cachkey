@@ -71,9 +71,16 @@ Rules:
 - Forms use the kit in `apps/web/src/components/form/form.tsx` (TanStack Form +
   shared Zod schema, `revalidateLogic`, focus on first invalid field, POST fallback).
 - Inline links use `textLinkVariants` (`components/ui/text-link.ts`).
-- Icons: drop SVGs in `apps/web/public/icons`, run `bun run icons:generate`; import from
+- UI icons: **Hugeicons only**, through `<Icon icon={…} />` (`components/ui/icon.tsx`,
+  icons from `@hugeicons/core-free-icons`). No lucide-react; after `shadcn add`, replace
+  the generated lucide imports.
+- Avatars: **DiceBear only**, generated locally (`lib/avatar.ts`): users = style **Clay**,
+  organisations = style **Shape Grid**. Never other styles, provider images or the HTTP API.
+- Brand marks (Google, GitHub…): drop SVGs in `apps/web/public/icons`, run `bun run icons:generate`; import from
   `@/components/icons` (generated, never edited by hand). `bun run icons:migrate` rewrites
   file-level icon imports to the barrel; `check:icons` (in `bun run check`) enforces it.
+- Light and dark themes are both mandatory: tokens in `styles.css` (`:root` / `.dark`),
+  never colours that only work on one theme; check every screen in both (`lib/theme.ts`).
 - Interfaces must work from 320 px wide without horizontal scroll; respect
   `prefers-reduced-motion`.
 - shadcn/ui policy (cursors, `customs.css`, `data-slot` contracts): read

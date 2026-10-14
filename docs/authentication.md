@@ -24,16 +24,19 @@ Navigateur ──▶ apps/web (TanStack Start, APP_URL)
 
 | Route              | Accès     | Rôle                                                            |
 | ------------------ | --------- | --------------------------------------------------------------- |
-| `/`                | tous      | Redirige vers `/welcome` ou `/sign-in`                          |
+| `/`                | tous      | Redirige vers `/dashboard` ou `/sign-in`                        |
 | `/sign-in`         | invité    | Email + mot de passe, Google, GitHub                            |
 | `/sign-up`         | invité    | Création de compte                                              |
 | `/forgot-password` | invité    | Demande de lien de réinitialisation                             |
 | `/check-email`     | invité    | Confirmation d'envoi (`reason=verify` ou `reset`) + renvoi      |
 | `/verify-email`    | tous      | Arrivée du lien de vérification (succès ou `?error=`)           |
 | `/reset-password`  | tous      | Saisie du nouveau mot de passe (`?token=`) ou lien invalide     |
-| `/welcome`         | connecté  | Page de bienvenue temporaire                                    |
+| `/dashboard`       | connecté  | Vue d'ensemble (`/welcome` y redirige)                          |
+| `/account`         | connecté  | Profil : avatar, nom, email, suppression du compte              |
+| `/account/security`| connecté  | Mot de passe, méthodes de connexion (Google, GitHub)            |
+| `/account/sessions`| connecté  | Appareils connectés et révocation                               |
 
-Les pages invité redirigent vers `/welcome` (ou `?redirect=`) si une session existe.
+Les pages invité redirigent vers `/dashboard` (ou `?redirect=`) si une session existe.
 Les pages protégées (layout `_authenticated`) redirigent vers `/sign-in?redirect=<chemin>`.
 Le paramètre `redirect` n'accepte que des chemins relatifs (`safeRedirectPath`) pour éviter
 les redirections ouvertes.
@@ -63,13 +66,39 @@ non) → email → `/api/auth/reset-password/:token` → `/reset-password?token=
 
 **Déconnexion** — `signOut`, purge du cache de session, retour à `/sign-in`.
 
+**Changement d'email** — `changeEmail` (compte vérifié) → lien envoyé à l'adresse actuelle →
+lien de vérification envoyé à la nouvelle → mise à jour. Retour sur `/account?email=confirmed`
+(ou `?error=`). Une adresse déjà utilisée reçoit la même réponse (pas d'énumération).
+
+**Mot de passe** — `changePassword` (option `revokeOtherSessions`) ; un email de notification
+est envoyé (hook `after` dans `auth.ts`). Les comptes sans mot de passe (Google / GitHub)
+utilisent `POST /api/account/set-password` (Elysia, `auth.api.setPassword` étant réservé au
+serveur).
+
+**Méthodes de connexion** — `listAccounts`, `linkSocial` (retour sur
+`/account/security?linked=1` ou `?error=`), `unlinkAccount` ; la dernière méthode ne peut pas
+être retirée. Ces actions demandent une session récente (moins d'un jour).
+
+**Sessions** — `listSessions`, `revokeSession`, `revokeOtherSessions`. Le navigateur et le
+système sont déduits du user-agent (`lib/user-agent.ts`), jamais affichés bruts.
+
+**Suppression** — `deleteUser` envoie un lien (1 h) ; son ouverture supprime le compte et
+redirige vers `/sign-in?deleted=1`.
+
 ## Règles
 
 - Mot de passe : 10 à 128 caractères (`packages/shared/src/auth-schemas.ts`, aligné sur la
   configuration Better Auth).
 - Sessions : 7 jours, prolongées toutes les 24 h d'activité. Cookies `httpOnly`, `Secure`
   automatiquement lorsque `APP_URL` est en HTTPS.
-- Liens de vérification et de réinitialisation : 1 heure, usage unique.
+- Liens de vérification, de réinitialisation, de changement d'email et de suppression :
+  1 heure.
+- Rate limiting : stocké en base (`rate_limits`), 100 requêtes / min par IP et par route,
+  3 à 5 / min pour les actions sensibles. Le serveur web transmet l'IP cliente
+  (`x-forwarded-for`), y compris pour la lecture de session côté serveur.
+- Avatar : DiceBear généré localement (`lib/avatar.ts`), style « Clay » uniquement ; seule la
+  graine est stockée (`avatarSeed`, l'id de l'utilisateur par défaut). Les organisations
+  utiliseront « Shape Grid ». L'image fournie par Google / GitHub n'est pas utilisée.
 - Formulaires : soumission désactivée avant l'hydratation et repli natif en `POST`, pour qu'aucun
   identifiant ne puisse se retrouver dans une URL.
 - Les erreurs serveur ne sont jamais affichées brutes : les codes Better Auth sont traduits
@@ -78,7 +107,7 @@ non) → email → `/api/auth/reset-password/:token` → `/reset-password?token=
 ## Emails
 
 `packages/emails` contient les templates React Email (vérification, réinitialisation, mot de
-passe modifié) et deux transports implémentant `EmailTransport` :
+passe modifié / ajouté, confirmation de changement d'email, suppression de compte) et deux transports implémentant `EmailTransport` :
 
 - `smtp` (nodemailer) — Mailpit en développement, ou tout relais SMTP ;
 - `resend` — API HTTP Resend, sélectionné avec `EMAIL_PROVIDER=resend`.

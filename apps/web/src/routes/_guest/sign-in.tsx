@@ -2,7 +2,8 @@ import { signInSchema } from "@cachkey/shared";
 import { revalidateLogic } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { CircleAlert, CircleCheck } from "lucide-react";
+import { AlertCircleIcon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 import { z } from "zod";
 import { AuthFooterLink, AuthHeader } from "@/components/auth/auth-shell";
@@ -22,6 +23,8 @@ const searchSchema = z.object({
   error: z.string().optional().catch(undefined),
   /** Set after a successful password reset. */
   reset: z.literal("success").optional().catch(undefined),
+  /** Set after the account deletion link was followed. */
+  deleted: z.literal("1").optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/_guest/sign-in")({
@@ -77,16 +80,25 @@ function SignInPage() {
 
       {search.reset === "success" && !formError ? (
         <Alert variant="success" className="mb-6">
-          <CircleCheck />
+          <Icon icon={CheckmarkCircle02Icon} />
           <AlertDescription>
             Votre mot de passe a été modifié. Connectez-vous avec le nouveau.
           </AlertDescription>
         </Alert>
       ) : null}
 
+      {search.deleted && !formError ? (
+        <Alert variant="success" className="mb-6">
+          <Icon icon={CheckmarkCircle02Icon} />
+          <AlertDescription>
+            Votre compte a été supprimé. Merci d’avoir utilisé Cachkey.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       {formError ? (
         <Alert variant="destructive" className="mb-6">
-          <CircleAlert />
+          <Icon icon={AlertCircleIcon} />
           <AlertDescription>{formError}</AlertDescription>
         </Alert>
       ) : null}

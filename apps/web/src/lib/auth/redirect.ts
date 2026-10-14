@@ -1,4 +1,4 @@
-export const DEFAULT_AUTHENTICATED_PATH = "/welcome";
+export const DEFAULT_AUTHENTICATED_PATH = "/dashboard";
 
 /**
  * Accepts only same-origin relative paths to prevent open redirects

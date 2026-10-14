@@ -1,5 +1,5 @@
 // Cachkey database schema.
-// Phase 1 only contains the models required by Better Auth.
+// Models required by Better Auth (users, sessions, accounts, verifications, rate limits).
 // Field names follow Better Auth's defaults; table names are mapped to snake_case.
 
 generator client {
@@ -19,6 +19,8 @@ model User {
   email         String    @unique
   emailVerified Boolean   @default(false) @map("email_verified")
   image         String?
+  /// Seed of the DiceBear « Clay » avatar (see apps/web/src/lib/avatar.ts).
+  avatarSeed    String?   @map("avatar_seed")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   sessions      Session[]
@@ -74,4 +76,14 @@ model Verification {
 
   @@index([identifier])
   @@map("verifications")
+}
+
+/// Better Auth rate limiting, persisted in PostgreSQL (no Redis). One row per IP + route.
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt @map("last_request")
+
+  @@map("rate_limits")
 }

@@ -1,4 +1,5 @@
-import { Loader2 } from "lucide-react";
+import { Loading03Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/auth-client";
@@ -52,7 +53,7 @@ export function ResendVerificationButton({
         disabled={isPending || cooldown > 0}
         onClick={resend}
       >
-        {isPending ? <Loader2 className="animate-spin" aria-hidden /> : null}
+        {isPending ? <Icon icon={Loading03Icon} className="animate-spin" aria-hidden /> : null}
         {cooldown > 0 ? `Renvoyer l’email (${cooldown} s)` : "Renvoyer l’email"}
       </Button>
       <p className="min-h-5 text-center text-[13px]" aria-live="polite">

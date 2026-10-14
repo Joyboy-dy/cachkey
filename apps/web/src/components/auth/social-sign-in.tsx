@@ -1,6 +1,7 @@
 import type { SocialProviderId } from "@cachkey/shared";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loading03Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 import { type ReactNode, useState } from "react";
 import { GithubIcon, GoogleIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,11 @@ export function SocialSignIn({ callbackPath, errorPath, onError }: SocialSignInP
             disabled={pending !== null}
             onClick={() => signIn(id)}
           >
-            {pending === id ? <Loader2 className="animate-spin" aria-hidden /> : providers[id].icon}
+            {pending === id ? (
+              <Icon icon={Loading03Icon} className="animate-spin" aria-hidden />
+            ) : (
+              providers[id].icon
+            )}
             {providers[id].label}
           </Button>
         ))}

@@ -15,6 +15,20 @@ const messages: Record<string, string> = {
   TOKEN_EXPIRED: "Ce lien a expiré.",
   EMAIL_ALREADY_VERIFIED: "Cette adresse email est déjà confirmée.",
   FAILED_TO_CREATE_USER: "Impossible de créer le compte pour le moment.",
+  FAILED_TO_UPDATE_USER: "Impossible d’enregistrer vos modifications pour le moment.",
+  CREDENTIAL_ACCOUNT_NOT_FOUND: "Aucun mot de passe n’est encore défini pour ce compte.",
+  PASSWORD_ALREADY_SET: "Un mot de passe est déjà défini pour ce compte.",
+  USER_ALREADY_HAS_PASSWORD: "Un mot de passe est déjà défini pour ce compte.",
+  FAILED_TO_UNLINK_LAST_ACCOUNT:
+    "Impossible de retirer votre seule méthode de connexion. Ajoutez-en une autre d’abord.",
+  ACCOUNT_NOT_FOUND: "Cette connexion n’existe plus.",
+  SOCIAL_ACCOUNT_ALREADY_LINKED: "Ce compte est déjà relié à un autre utilisateur.",
+  LINKED_ACCOUNT_ALREADY_EXISTS: "Ce compte est déjà relié.",
+  SESSION_EXPIRED: "Votre session a expiré. Reconnectez-vous pour continuer.",
+  SESSION_NOT_FRESH: "Pour des raisons de sécurité, reconnectez-vous avant cette action.",
+  UNAUTHORIZED: "Votre session a expiré. Reconnectez-vous pour continuer.",
+  CHANGE_EMAIL_DISABLED: "Le changement d’adresse email n’est pas disponible.",
+  VALIDATION_ERROR: "Certaines informations sont invalides.",
 };
 
 const oauthMessages: Record<string, string> = {

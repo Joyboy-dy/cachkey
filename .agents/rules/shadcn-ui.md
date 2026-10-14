@@ -8,7 +8,10 @@
 - `apps/web/src/styles/customs.css` — every Cachkey extension (focus indicator, extra
   cursors, motion), imported from `styles.css`, headed "not part of shadcn/ui spec".
 - Components are added with the shadcn CLI, then adapted to the brand. Check imports
-  after `shadcn add`: the CLI once mis-resolved the `cn` alias (must be `@/lib/utils`).
+  after `shadcn add`: the CLI resolves the `cn` alias to a bogus `cn` npm package (imports
+  must be `@/lib/utils`; remove the package). It may also emit lucide icons and English
+  sr-only labels: switch to `<Icon>` (Hugeicons) and French labels. Never let it overwrite
+  `button`, `input`, `label`, `separator`, `alert` (brand-adapted).
 
 ## Cursor policy
 

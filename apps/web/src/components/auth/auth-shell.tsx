@@ -17,7 +17,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <Logo />
         </Link>
 
-        <div className="rounded-2xl border bg-card p-6 shadow-[0_1px_2px_rgb(26_26_26/0.04),0_16px_48px_-20px_rgb(26_26_26/0.14)] transition-[border-color,box-shadow] duration-300 focus-within:border-primary/25 focus-within:shadow-[0_1px_2px_rgb(26_26_26/0.04),0_20px_56px_-24px_rgb(249_115_22/0.14)] sm:p-9">
+        <div className="rounded-2xl border bg-card p-6 shadow-[0_1px_2px_rgb(26_26_26/0.04),0_16px_48px_-20px_rgb(26_26_26/0.14)] transition-[border-color,box-shadow] duration-300 focus-within:border-primary/25 focus-within:shadow-[0_1px_2px_rgb(26_26_26/0.04),0_20px_56px_-24px_rgb(249_115_22/0.14)] sm:p-9 dark:shadow-none">
           {children}
         </div>
       </main>

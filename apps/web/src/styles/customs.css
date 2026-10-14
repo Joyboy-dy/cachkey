@@ -51,6 +51,17 @@
   }
 }
 
+/*
+ * Theme switch (lib/theme.ts): a View Transition cross-fades the whole page once, on the
+ * compositor. Slightly longer and eased so light ↔ dark feels soft rather than abrupt.
+ * Scoped to theme changes only; reduced motion skips the transition entirely (in JS).
+ */
+:root[data-theme-transition]::view-transition-old(root),
+:root[data-theme-transition]::view-transition-new(root) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Brand motion: whole-sign fade-in, 180–240 ms; disabled for reduced motion. */
 @keyframes cachkey-fade-in {
   from {

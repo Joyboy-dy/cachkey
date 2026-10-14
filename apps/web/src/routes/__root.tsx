@@ -10,6 +10,7 @@ import {
 import type { ReactNode } from "react";
 import { AuthHeader, AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import appCss from "../styles.css?url";
 
 export type RouterContext = {
@@ -26,7 +27,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         name: "description",
         content: "Cachkey — gestion open source et auto-hébergeable des secrets techniques.",
       },
-      { name: "theme-color", content: "#1A1A1A" },
+      { name: "theme-color", content: "#FFF5F3", media: "(prefers-color-scheme: light)" },
+      { name: "theme-color", content: "#141210", media: "(prefers-color-scheme: dark)" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -43,8 +45,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr">
+    // The theme script sets `class="dark"` before paint, hence suppressHydrationWarning.
+    <html lang="fr" suppressHydrationWarning>
       <head>
+        {/* Static, trusted script (no user input): applies the theme before the first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
       <body>

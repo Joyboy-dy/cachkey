@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { MailCheck } from "lucide-react";
+import { MailValidation01Icon } from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 import { z } from "zod";
 import { AuthFooterLink, AuthHeader } from "@/components/auth/auth-shell";
 import { ResendVerificationButton } from "@/components/auth/resend-verification";
@@ -30,7 +31,7 @@ function CheckEmailPage() {
     return (
       <>
         <AuthHeader
-          icon={<MailCheck />}
+          icon={<Icon icon={MailValidation01Icon} />}
           title="Vérifiez vos emails"
           description={
             <>
@@ -58,7 +59,7 @@ function CheckEmailPage() {
   return (
     <>
       <AuthHeader
-        icon={<MailCheck />}
+        icon={<Icon icon={MailValidation01Icon} />}
         title="Confirmez votre adresse"
         description={
           <>

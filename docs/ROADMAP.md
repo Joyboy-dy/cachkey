@@ -33,19 +33,28 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 - Gestion des erreurs (codes Better Auth traduits), états de chargement.
 - Page de bienvenue authentifiée temporaire.
 
-## Phase 2 — Compte utilisateur ⏳
+## Phase 2 — Shell applicatif & compte utilisateur ✅
 
-- Page profil (nom, avatar), changement d'email avec re-vérification.
-- Changement de mot de passe, définition d'un mot de passe pour les comptes OAuth.
-- Comptes liés (lier / délier Google, GitHub).
-- Liste des sessions actives et révocation.
-- Suppression de compte.
-- Rate limiting Better Auth persistant en base (sans Redis).
+- Shell : sidebar repliable (état mémorisé), top bar avec fil d'Ariane, zone de contenu.
+- Pages : vue d'ensemble (premiers pas), projets (état vide), mon compte (Profil, Sécurité, Appareils).
+- Profil : nom, avatar DiceBear « Clay » (propositions, rendu local), changement d'email avec
+  double confirmation (ancienne puis nouvelle adresse).
+- Mot de passe : modification (option « déconnecter les autres appareils »), ajout d'un mot de
+  passe pour les comptes créés via Google / GitHub (`POST /api/account/set-password`).
+- Méthodes de connexion : relier / dissocier Google et GitHub (jamais la dernière méthode).
+- Appareils connectés : liste lisible, déconnexion d'un appareil ou de tous les autres.
+- Suppression de compte confirmée par email.
+- Rate limiting Better Auth persistant en base (`rate_limits`, sans Redis), règles renforcées
+  sur les actions sensibles.
+- Icônes : Hugeicons (`components/ui/icon.tsx`) partout, hors logos de marque.
+- Thème : suit l'appareil par défaut ; bouton soleil / lune dans la top bar du dashboard
+  (bascule directe, choix mémorisé en cookie, appliqué avant l'affichage, fondu via View
+  Transitions).
 
 ## Phase 3 — Organisations & projets ⏳
 
 - Modèle Organisation (espace d'équipe) et appartenance.
-- CRUD projets, navigation applicative (shell / dashboard réel).
+- CRUD projets (la page Projets existe déjà dans le shell).
 - Rôles de base (owner, admin, member).
 
 ## Phase 4 — Environnements & secrets ⏳
@@ -85,6 +94,11 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 
 ## Journal
 
+- **2026-10-14** — Phase 2 terminée. Vérifié : format, lint, types, tests, build ; en réel
+  (API + Mailpit + navigateur) : avatar, nom, changement d'email en deux étapes, modification
+  et ajout de mot de passe (emails de notification), liste et révocation des sessions,
+  suppression de compte, rate limiting en base (429). Non testé en réel : relier / dissocier
+  Google et GitHub (identifiants OAuth requis).
 - **2026-10-14** — Audit via les skills projet (`.agents/skills`) : contrastes WCAG des champs et du focus, accessibilité des formulaires, responsive 320 px, tests unitaires, `bun run check`, règles d’environnement (`.env.local`, `.env.production.example`), `AGENTS.md` et `.agents/rules/`.
 - **2026-10-14** — Refonte des pages d’authentification : mise en page centrée, fond « cipher field » animé (canvas, sans dépendance), logo au-dessus du formulaire, révélation des caractères au survol.
 - **2026-10-12** — Phases 0 et 1 réalisées : fondation monorepo et authentification complète.

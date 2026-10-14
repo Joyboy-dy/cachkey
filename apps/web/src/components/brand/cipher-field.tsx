@@ -43,9 +43,11 @@ export function CipherField({ className }: { className?: string }) {
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
 
-    const styles = getComputedStyle(document.documentElement);
-    const ink = styles.getPropertyValue("--cachkey-ink").trim() || "#1a1a1a";
-    const orange = styles.getPropertyValue("--cachkey-orange").trim() || "#f97316";
+    const readColor = (name: string, fallback: string) =>
+      getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+    // Glyph colour follows the theme (light: ink, dark: warm white).
+    let ink = readColor("--glyph", "#1a1a1a");
+    const orange = readColor("--cachkey-orange", "#f97316");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let columns = 0;
@@ -90,6 +92,19 @@ export function CipherField({ className }: { className?: string }) {
       }
       return indices;
     }
+
+    function redrawAll() {
+      for (let index = 0; index < cells.length; index++) drawCell(index);
+    }
+
+    const themeObserver = new MutationObserver(() => {
+      ink = readColor("--glyph", "#1a1a1a");
+      redrawAll();
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
 
     function resize() {
       if (!canvas || !context) return;
@@ -171,6 +186,7 @@ export function CipherField({ className }: { className?: string }) {
     return () => {
       stop();
       observer.disconnect();
+      themeObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("pointermove", onPointerMove);
       document.documentElement.removeEventListener("pointerleave", onPointerLeave);
