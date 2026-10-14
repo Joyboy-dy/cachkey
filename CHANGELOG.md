@@ -18,7 +18,8 @@ Première version en préparation.
   variables chiffrées (AES-256-GCM, une clé par projet) ; import et export `.env` ;
   historique des valeurs et restauration.
 - Accès par projet en lecture ou écriture, limitable à certains environnements.
-- Journal d'activité filtrable (lectures, modifications, structure, personnes).
+- Journal d'activité filtrable (consultations, modifications, projets et environnements,
+  membres et accès).
 - Vue d'ensemble : projets, points à surveiller, activité des 14 derniers jours.
 - Jetons d'accès en lecture seule, limités à un environnement, avec expiration.
 - API publique `/api/v1` (lecture des variables) documentée en OpenAPI.

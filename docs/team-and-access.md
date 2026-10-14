@@ -41,8 +41,9 @@ quel projet et quel environnement. Le journal note notamment :
   commande ») ;
 - invitations, changements de rôle, accès accordés ou retirés, jetons créés ou révoqués.
 
-Les événements se filtrent par projet et par type : lectures, modifications, structure
-(projets, environnements, jetons) et personnes.
+Les événements se filtrent par projet et par type : « Consultations », « Modifications »,
+« Projets et environnements », « Membres et accès » (invitations, rôles, accès aux projets,
+jetons d'accès créés ou révoqués).
 
 ## Appareils connectés
 

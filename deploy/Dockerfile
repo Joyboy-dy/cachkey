@@ -26,6 +26,7 @@ COPY apps/cli/package.json apps/cli/
 COPY packages/db/package.json packages/db/
 COPY packages/emails/package.json packages/emails/
 COPY packages/shared/package.json packages/shared/
+COPY e2e/package.json e2e/
 # The db package's postinstall runs `prisma generate`, which needs the schema.
 COPY packages/db/prisma packages/db/prisma
 COPY packages/db/prisma.config.ts packages/db/

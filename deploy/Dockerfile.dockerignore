@@ -11,6 +11,8 @@
 **/.react-email
 **/*.tsbuildinfo
 **/coverage
+e2e/test-results
+e2e/playwright-report
 packages/db/src/generated
 
 # Real environment files (examples stay out too: images are configured at runtime).
