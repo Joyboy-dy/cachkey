@@ -1,7 +1,7 @@
 import { forgotPasswordSchema } from "@cachkey/shared";
 import { revalidateLogic } from "@tanstack/react-form";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircleIcon, Key01Icon } from "@hugeicons/core-free-icons";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 import { AuthFooterLink, AuthHeader } from "@/components/auth/auth-shell";
@@ -45,7 +45,6 @@ function ForgotPasswordPage() {
   return (
     <>
       <AuthHeader
-        icon={<Icon icon={Key01Icon} />}
         title="Mot de passe oublié"
         description="Indiquez l’adresse email de votre compte. Nous vous enverrons un lien pour choisir un nouveau mot de passe."
       />

@@ -31,7 +31,7 @@ function AccountLayout() {
         </ul>
       </nav>
 
-      <div className="mt-8 grid max-w-3xl gap-6">
+      <div className="mt-8 grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6">
         <Outlet />
       </div>
     </PageContainer>

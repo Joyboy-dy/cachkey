@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useMatches } from "@tanstack/react-router";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,10 +12,24 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { findAccountSection, findNavItem } from "./navigation";
 import { ThemeToggle } from "./theme-toggle";
 
+/** Second breadcrumb level: account section, or a `crumb` returned by the route's loader. */
+function useSubCrumb(pathname: string, parent: string | undefined): string | undefined {
+  const crumb = useMatches({
+    select: (matches) => {
+      const data: unknown = matches.at(-1)?.loaderData;
+      return data && typeof data === "object" && "crumb" in data && typeof data.crumb === "string"
+        ? data.crumb
+        : undefined;
+    },
+  });
+  if (parent === "/account") return findAccountSection(pathname)?.label;
+  return crumb;
+}
+
 export function AppTopbar() {
   const pathname = useLocation({ select: (location) => location.pathname });
   const current = findNavItem(pathname);
-  const section = current?.to === "/account" ? findAccountSection(pathname) : undefined;
+  const sub = useSubCrumb(pathname, current?.to);
   const label = current?.label ?? "Cachkey";
 
   return (
@@ -24,7 +38,7 @@ export function AppTopbar() {
       <Separator orientation="vertical" className="data-[orientation=vertical]:h-5" />
       <Breadcrumb className="min-w-0">
         <BreadcrumbList className="flex-nowrap">
-          {section && current ? (
+          {sub && current ? (
             <>
               <BreadcrumbItem className="hidden sm:inline-flex">
                 <BreadcrumbLink asChild>
@@ -32,8 +46,8 @@ export function AppTopbar() {
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden sm:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="truncate font-medium">{section.label}</BreadcrumbPage>
+              <BreadcrumbItem className="min-w-0">
+                <BreadcrumbPage className="truncate font-medium">{sub}</BreadcrumbPage>
               </BreadcrumbItem>
             </>
           ) : (

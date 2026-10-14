@@ -28,7 +28,9 @@ environment variables. UI language: **French**. Brand: Cachkey brand kit 1.0.
 - `apps/web` — TanStack Start (Router, Query, Form), Tailwind CSS v4, shadcn/ui.
   The web server proxies every `/api/*` request to the API (`src/server/api.ts`):
   one public origin, first-party cookies, no CORS.
-- `apps/api` — Elysia + Better Auth (`src/auth.ts`), env validated by Zod (`src/env.ts`).
+- `apps/api` — Elysia + Better Auth (`src/auth.ts`, organization plugin), env validated by
+  Zod (`src/env.ts`). Business routes are scoped to the session's active organisation and
+  check the caller's role (`src/workspace.ts`); owner/admin write, member reads.
 - `packages/db` — Prisma 7 (PostgreSQL). Only models actually needed by the current phase.
 - `packages/emails` — React Email templates + `EmailTransport` (SMTP/Mailpit, Resend).
 - `packages/shared` — Zod schemas shared by web and API.

@@ -13,6 +13,7 @@ import {
 } from "@cachkey/shared";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { createAuthMiddleware } from "better-auth/api";
+import { organization } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./db";
 import { sendEmail } from "./email";
@@ -156,6 +157,31 @@ export const auth = betterAuth({
       "/delete-user": { window: 60, max: 3 },
       "/request-password-reset": { window: 60, max: 3 },
       "/send-verification-email": { window: 60, max: 3 },
+    },
+  },
+
+  plugins: [
+    organization({
+      creatorRole: "owner",
+      // Invitations arrive with phase 5; until then members are managed by owners/admins.
+      organizationLimit: 20,
+      membershipLimit: 100,
+    }),
+  ],
+
+  databaseHooks: {
+    session: {
+      create: {
+        // Open each new session on the user's first organisation (if any).
+        before: async (session) => {
+          const membership = await prisma.member.findFirst({
+            where: { userId: session.userId },
+            orderBy: { createdAt: "asc" },
+            select: { organizationId: true },
+          });
+          return { data: { ...session, activeOrganizationId: membership?.organizationId ?? null } };
+        },
+      },
     },
   },
 

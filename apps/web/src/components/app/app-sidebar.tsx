@@ -16,10 +16,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { AuthSession } from "@/lib/auth/session";
+import type { Workspace } from "@cachkey/shared";
 import { findNavItem, NAV_SECTIONS } from "./navigation";
+import { OrgSwitcher } from "./org-switcher";
 import { UserMenu } from "./user-menu";
 
-export function AppSidebar({ user }: { user: AuthSession["user"] }) {
+type AppSidebarProps = {
+  user: AuthSession["user"];
+  workspace: Workspace;
+  organization: NonNullable<Workspace["active"]>;
+};
+
+export function AppSidebar({ user, workspace, organization }: AppSidebarProps) {
   const pathname = useLocation({ select: (location) => location.pathname });
   const activeItem = findNavItem(pathname);
   const { setOpenMobile } = useSidebar();
@@ -38,7 +46,11 @@ export function AppSidebar({ user }: { user: AuthSession["user"] }) {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="pt-2">
+      <div className="px-2 pt-1 pb-2">
+        <OrgSwitcher workspace={workspace} active={organization} />
+      </div>
+
+      <SidebarContent className="pt-1">
         {NAV_SECTIONS.map((section) => (
           <SidebarGroup key={section.label}>
             <SidebarGroupLabel className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">

@@ -51,11 +51,19 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
   (bascule directe, choix mémorisé en cookie, appliqué avant l'affichage, fondu via View
   Transitions).
 
-## Phase 3 — Organisations & projets ⏳
+## Phase 3 — Organisations & projets ✅
 
-- Modèle Organisation (espace d'équipe) et appartenance.
-- CRUD projets (la page Projets existe déjà dans le shell).
-- Rôles de base (owner, admin, member).
+- Organisations via le plugin `organization` de Better Auth (tables `organizations`,
+  `members`, `invitations`, organisation active sur la session). Avatar DiceBear « Shape Grid ».
+- Onboarding (`/onboarding`) : création de la première organisation ou choix parmi les siennes ;
+  le dashboard exige une organisation active. À chaque connexion, la première organisation est
+  activée automatiquement.
+- Sélecteur d'organisation dans la sidebar (changement, création).
+- Page Organisation : nom, membres et rôles (changement de rôle, retrait), quitter, supprimer.
+- Rôles : propriétaire et administrateur gèrent l'organisation et les projets, membre en lecture.
+  Contrôlés côté API (`apps/api/src/workspace.ts`).
+- Projets : CRUD (`/api/projects`), identifiant d'URL unique par organisation et stable au
+  renommage, liste, détail, paramètres, suppression confirmée par le nom.
 
 ## Phase 4 — Environnements & secrets ⏳
 
@@ -94,6 +102,11 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 
 ## Journal
 
+- **2026-10-14** — Phase 3 terminée. Vérifié : format, lint, types, tests, build ; en réel
+  (API + navigateur) : onboarding, création / changement / suppression d'organisation, CRUD
+  projets (identifiants uniques, validation, 404), rôles (membre refusé en écriture : 403,
+  administrateur autorisé, changement de rôle depuis l'interface), 320 px. Non couvert : ajout
+  de membres par invitation (phase 5).
 - **2026-10-14** — Phase 2 terminée. Vérifié : format, lint, types, tests, build ; en réel
   (API + Mailpit + navigateur) : avatar, nom, changement d'email en deux étapes, modification
   et ajout de mot de passe (emails de notification), liste et révocation des sessions,

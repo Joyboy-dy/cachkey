@@ -2,7 +2,7 @@ import { PASSWORD_MIN_LENGTH, resetPasswordSchema } from "@cachkey/shared";
 import { revalidateLogic } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircleIcon, CancelCircleIcon, LockPasswordIcon } from "@hugeicons/core-free-icons";
+import { AlertCircleIcon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 import { z } from "zod";
@@ -72,7 +72,6 @@ function ResetPasswordForm({ token }: { token: string }) {
   return (
     <>
       <AuthHeader
-        icon={<Icon icon={LockPasswordIcon} />}
         title="Nouveau mot de passe"
         description="Choisissez un mot de passe que vous n’utilisez nulle part ailleurs. Vos sessions ouvertes seront fermées."
       />
@@ -112,7 +111,7 @@ function InvalidLink() {
   return (
     <>
       <AuthHeader
-        icon={<Icon icon={CancelCircleIcon} className="text-destructive" />}
+        tone="error"
         title="Lien invalide ou expiré"
         description="Ce lien de réinitialisation ne peut plus être utilisé. Les liens expirent après 1 heure et ne servent qu’une fois."
       />

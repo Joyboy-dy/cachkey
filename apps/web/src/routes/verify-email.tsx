@@ -1,7 +1,5 @@
 import { resendVerificationSchema } from "@cachkey/shared";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CancelCircleIcon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
-import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 import { z } from "zod";
 import { AuthFooterLink, AuthHeader, AuthShell } from "@/components/auth/auth-shell";
@@ -42,7 +40,7 @@ function VerifyEmailPage() {
       ) : (
         <>
           <AuthHeader
-            icon={<Icon icon={CheckmarkCircle02Icon} className="text-success" />}
+            tone="success"
             title="Adresse confirmée"
             description="Votre adresse email est vérifiée. Votre compte Cachkey est actif."
           />
@@ -66,7 +64,7 @@ function VerificationFailed() {
   return (
     <>
       <AuthHeader
-        icon={<Icon icon={CancelCircleIcon} className="text-destructive" />}
+        tone="error"
         title="Lien invalide ou expiré"
         description="Ce lien de confirmation ne peut plus être utilisé. Saisissez votre adresse pour en recevoir un nouveau."
       />

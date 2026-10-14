@@ -1,4 +1,4 @@
-import { getRequestIP } from "@tanstack/react-start/server";
+import { getRequestHeader, getRequestIP, setResponseHeader } from "@tanstack/react-start/server";
 
 /** Internal URL of the Elysia API (never exposed to the browser). */
 export function getApiUrl(): string {
@@ -40,4 +40,22 @@ export async function proxyToApi(request: Request): Promise<Response> {
     statusText: upstream.statusText,
     headers: responseHeaders,
   });
+}
+
+/**
+ * Server-side GET to the API on behalf of the current visitor: forwards their cookies and
+ * IP (Better Auth rate-limits per IP), and passes refreshed session cookies back.
+ * Returns null when the visitor has no cookie at all.
+ */
+export async function fetchApiAsVisitor(path: string): Promise<Response | null> {
+  const cookie = getRequestHeader("cookie");
+  if (!cookie) return null;
+  const headers = new Headers({ cookie });
+  const clientIp = getRequestIP({ xForwardedFor: true });
+  if (clientIp) headers.set("x-forwarded-for", clientIp);
+
+  const response = await fetch(new URL(path, getApiUrl()), { headers });
+  const setCookies = response.headers.getSetCookie();
+  if (setCookies.length > 0) setResponseHeader("set-cookie", setCookies);
+  return response;
 }

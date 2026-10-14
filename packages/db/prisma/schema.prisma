@@ -1,5 +1,6 @@
 // Cachkey database schema.
-// Models required by Better Auth (users, sessions, accounts, verifications, rate limits).
+// Better Auth models (users, sessions, accounts, verifications, rate limits, organizations)
+// and Cachkey business models (projects).
 // Field names follow Better Auth's defaults; table names are mapped to snake_case.
 
 generator client {
@@ -25,6 +26,9 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   sessions      Session[]
   accounts      Account[]
+  memberships   Member[]
+  invitations   Invitation[]
+  projects      Project[]
 
   @@map("users")
 }
@@ -35,6 +39,8 @@ model Session {
   expiresAt DateTime @map("expires_at")
   ipAddress String?  @map("ip_address")
   userAgent String?  @map("user_agent")
+  /// Organisation currently selected in the interface (Better Auth organization plugin).
+  activeOrganizationId String? @map("active_organization_id")
   userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now()) @map("created_at")
@@ -86,4 +92,71 @@ model RateLimit {
   lastRequest BigInt @map("last_request")
 
   @@map("rate_limits")
+}
+
+/// Workspace shared by a team. Created by its owner; members join through invitations (phase 5).
+model Organization {
+  id          String       @id
+  name        String
+  slug        String       @unique
+  logo        String?
+  metadata    String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  members     Member[]
+  invitations Invitation[]
+  projects    Project[]
+
+  @@map("organizations")
+}
+
+/// Membership of a user in an organisation. Roles: owner, admin, member.
+model Member {
+  id             String       @id
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String       @map("user_id")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("member")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("members")
+}
+
+/// Invitation to join an organisation (used from phase 5; required by the plugin schema).
+model Invitation {
+  id             String       @id
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  teamId         String?      @map("team_id")
+  status         String       @default("pending")
+  expiresAt      DateTime     @map("expires_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  inviterId      String       @map("inviter_id")
+  inviter        User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitations")
+}
+
+/// A project groups the environments and secrets of one application (secrets: phase 4).
+model Project {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  /// URL identifier, unique inside the organisation.
+  slug           String
+  description    String?
+  createdById    String?      @map("created_by_id")
+  createdBy      User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@unique([organizationId, slug])
+  @@map("projects")
 }

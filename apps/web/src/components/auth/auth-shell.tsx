@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { CipherField } from "@/components/brand/cipher-field";
 import { Logo } from "@/components/brand/logo";
+import { cn } from "@/lib/utils";
 
 /**
  * Centred layout shared by every authentication screen: the logo above the form card,
@@ -17,7 +18,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <Logo />
         </Link>
 
-        <div className="rounded-2xl border bg-card p-6 shadow-[0_1px_2px_rgb(26_26_26/0.04),0_16px_48px_-20px_rgb(26_26_26/0.14)] transition-[border-color,box-shadow] duration-300 focus-within:border-primary/25 focus-within:shadow-[0_1px_2px_rgb(26_26_26/0.04),0_20px_56px_-24px_rgb(249_115_22/0.14)] sm:p-9 dark:shadow-none">
+        <div className="relative overflow-hidden rounded-2xl border bg-card p-6 shadow-[0_1px_2px_rgb(26_26_26/0.04),0_16px_48px_-20px_rgb(26_26_26/0.14)] transition-[border-color,box-shadow] duration-300 focus-within:border-primary/25 focus-within:shadow-[0_1px_2px_rgb(26_26_26/0.04),0_20px_56px_-24px_rgb(249_115_22/0.14)] sm:p-9 dark:shadow-none">
           {children}
         </div>
       </main>
@@ -32,16 +33,24 @@ export function AuthShell({ children }: { children: ReactNode }) {
 type AuthHeaderProps = {
   title: string;
   description?: ReactNode;
-  icon?: ReactNode;
+  /**
+   * Outcome screens only: a thin coloured line along the top edge of the card (green for
+   * success, red for an error). No icon or label — the title already says it in words.
+   */
+  tone?: "success" | "error";
 };
 
-export function AuthHeader({ title, description, icon }: AuthHeaderProps) {
+export function AuthHeader({ title, description, tone }: AuthHeaderProps) {
   return (
     <header className="mb-7">
-      {icon ? (
-        <div className="mb-5 flex size-11 items-center justify-center rounded-lg border bg-secondary text-foreground [&_svg]:size-5">
-          {icon}
-        </div>
+      {tone ? (
+        <span
+          aria-hidden
+          className={cn(
+            "absolute inset-x-0 top-0 h-0.5",
+            tone === "success" ? "bg-success/70" : "bg-destructive/70",
+          )}
+        />
       ) : null}
       <h1 className="text-2xl leading-[30px] font-bold tracking-tight text-balance">{title}</h1>
       {description ? (

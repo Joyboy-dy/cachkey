@@ -5,6 +5,7 @@ import { type ReactNode, useId, useRef, useState, useSyncExternalStore } from "r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 /**
@@ -98,6 +99,43 @@ function TextField({ label, type = "text", ...inputProps }: TextFieldProps) {
         placeholder={inputProps.placeholder}
         autoFocus={inputProps.autoFocus}
         spellCheck={false}
+      />
+    </FieldShell>
+  );
+}
+
+type TextareaFieldProps = {
+  label: string;
+  placeholder?: string;
+  description?: string;
+  /** Optional fields are announced as such (no `aria-required`). */
+  optional?: boolean;
+};
+
+function TextareaField({ label, placeholder, description, optional }: TextareaFieldProps) {
+  const field = useFieldContext<string>();
+  const id = useId();
+  const errors = errorMessages(field.state.meta.errors);
+  const invalid = errors.length > 0;
+
+  return (
+    <FieldShell
+      id={id}
+      label={optional ? `${label} (facultatif)` : label}
+      description={description}
+      errors={errors}
+    >
+      <Textarea
+        id={id}
+        name={field.name}
+        value={field.state.value}
+        onChange={(event) => field.handleChange(event.target.value)}
+        onBlur={field.handleBlur}
+        aria-invalid={invalid}
+        aria-required={optional ? undefined : true}
+        aria-describedby={describedBy(id, invalid, description)}
+        placeholder={placeholder}
+        rows={3}
       />
     </FieldShell>
   );
@@ -239,7 +277,7 @@ function SubmitButton({
 export const { useAppForm } = createFormHook({
   fieldContext,
   formContext,
-  fieldComponents: { TextField, PasswordField },
+  fieldComponents: { TextField, TextareaField, PasswordField },
   formComponents: { Form, SubmitButton },
 });
 

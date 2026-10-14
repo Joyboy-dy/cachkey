@@ -29,6 +29,30 @@ const messages: Record<string, string> = {
   UNAUTHORIZED: "Votre session a expiré. Reconnectez-vous pour continuer.",
   CHANGE_EMAIL_DISABLED: "Le changement d’adresse email n’est pas disponible.",
   VALIDATION_ERROR: "Certaines informations sont invalides.",
+  FORBIDDEN: "Vous n’avez pas les droits nécessaires pour cette action.",
+  NO_ACTIVE_ORGANIZATION: "Sélectionnez d’abord une organisation.",
+  PROJECT_NOT_FOUND: "Ce projet n’existe pas ou a été supprimé.",
+  ORGANIZATION_ALREADY_EXISTS: "Cet identifiant d’organisation est déjà utilisé.",
+  ORGANIZATION_SLUG_ALREADY_TAKEN: "Cet identifiant d’organisation est déjà utilisé.",
+  YOU_HAVE_REACHED_THE_MAXIMUM_NUMBER_OF_ORGANIZATIONS:
+    "Vous avez atteint le nombre maximal d’organisations.",
+  ORGANIZATION_NOT_FOUND: "Cette organisation n’existe plus.",
+  YOU_ARE_NOT_ALLOWED_TO_UPDATE_THIS_ORGANIZATION:
+    "Vous n’avez pas les droits nécessaires pour modifier cette organisation.",
+  YOU_ARE_NOT_ALLOWED_TO_DELETE_THIS_ORGANIZATION:
+    "Seul le propriétaire peut supprimer cette organisation.",
+  YOU_ARE_NOT_ALLOWED_TO_UPDATE_THIS_MEMBER: "Vous ne pouvez pas modifier le rôle de ce membre.",
+  YOU_ARE_NOT_ALLOWED_TO_DELETE_THIS_MEMBER: "Vous ne pouvez pas retirer ce membre.",
+  YOU_CANNOT_LEAVE_THE_ORGANIZATION_AS_THE_ONLY_OWNER:
+    "Vous êtes le seul propriétaire : supprimez l’organisation ou nommez un autre propriétaire.",
+  YOU_CANNOT_LEAVE_THE_ORGANIZATION_WITHOUT_AN_OWNER:
+    "L’organisation doit garder au moins un propriétaire.",
+  YOU_ARE_NOT_A_MEMBER_OF_THIS_ORGANIZATION: "Vous ne faites pas partie de cette organisation.",
+  YOU_ARE_NOT_ALLOWED_TO_ACCESS_THIS_ORGANIZATION:
+    "Vous ne faites pas partie de cette organisation.",
+  YOU_ARE_NOT_ALLOWED_TO_CREATE_A_NEW_ORGANIZATION:
+    "Vous ne pouvez pas créer de nouvelle organisation.",
+  MEMBER_NOT_FOUND: "Ce membre ne fait plus partie de l’organisation.",
 };
 
 const oauthMessages: Record<string, string> = {

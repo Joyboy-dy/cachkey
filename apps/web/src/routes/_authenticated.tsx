@@ -4,15 +4,23 @@ import { AppTopbar } from "@/components/app/app-topbar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { sessionQueryOptions } from "@/lib/auth/session";
 import { getSidebarOpen } from "@/lib/sidebar-state";
+import { workspaceQueryOptions } from "@/lib/workspace";
 
-/** Every child route requires a valid session and renders inside the application shell. */
+/**
+ * Every child route requires a valid session and an active organisation, and renders
+ * inside the application shell. Without an organisation the user goes to /onboarding.
+ */
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ context, location }) => {
     const session = await context.queryClient.fetchQuery(sessionQueryOptions());
     if (!session) {
       throw redirect({ to: "/sign-in", search: { redirect: location.href } });
     }
-    return { session };
+    const workspace = await context.queryClient.fetchQuery(workspaceQueryOptions());
+    if (!workspace.active) {
+      throw redirect({ to: "/onboarding" });
+    }
+    return { session, workspace, organization: workspace.active };
   },
   // Read once: afterwards SidebarProvider owns the state (and rewrites the cookie).
   loader: async () => ({ sidebarOpen: await getSidebarOpen() }),
@@ -21,12 +29,12 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AppShell() {
-  const { session } = Route.useRouteContext();
+  const { session, workspace, organization } = Route.useRouteContext();
   const { sidebarOpen } = Route.useLoaderData();
 
   return (
     <SidebarProvider defaultOpen={sidebarOpen}>
-      <AppSidebar user={session.user} />
+      <AppSidebar user={session.user} workspace={workspace} organization={organization} />
       <SidebarInset className="min-w-0">
         <AppTopbar />
         <main className="flex-1">

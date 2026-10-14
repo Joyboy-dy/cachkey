@@ -31,13 +31,17 @@ Navigateur ──▶ apps/web (TanStack Start, APP_URL)
 | `/check-email`     | invité    | Confirmation d'envoi (`reason=verify` ou `reset`) + renvoi      |
 | `/verify-email`    | tous      | Arrivée du lien de vérification (succès ou `?error=`)           |
 | `/reset-password`  | tous      | Saisie du nouveau mot de passe (`?token=`) ou lien invalide     |
+| `/onboarding`      | connecté  | Créer ou choisir une organisation (si aucune n'est active)      |
 | `/dashboard`       | connecté  | Vue d'ensemble (`/welcome` y redirige)                          |
+| `/projects`        | connecté  | Projets de l'organisation active ; `/projects/$slug` : détail   |
+| `/organization`    | connecté  | Nom, membres et rôles, quitter / supprimer l'organisation       |
 | `/account`         | connecté  | Profil : avatar, nom, email, suppression du compte              |
 | `/account/security`| connecté  | Mot de passe, méthodes de connexion (Google, GitHub)            |
 | `/account/sessions`| connecté  | Appareils connectés et révocation                               |
 
 Les pages invité redirigent vers `/dashboard` (ou `?redirect=`) si une session existe.
-Les pages protégées (layout `_authenticated`) redirigent vers `/sign-in?redirect=<chemin>`.
+Les pages protégées (layout `_authenticated`) redirigent vers `/sign-in?redirect=<chemin>`,
+puis vers `/onboarding` tant qu'aucune organisation n'est active.
 Le paramètre `redirect` n'accepte que des chemins relatifs (`safeRedirectPath`) pour éviter
 les redirections ouvertes.
 
