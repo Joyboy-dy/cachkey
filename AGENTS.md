@@ -129,8 +129,8 @@ bun run db:migrate   # Prisma migration (dev)
 bun run dev:emails   # React Email preview :3002
 ```
 
-Before declaring work done: `bun run check` and `bun run build` pass, and the changed
-flows were exercised in a browser when UI is involved. Report what was not verified.
+Done = `check` + `build` pass, `bun run e2e` (Playwright, stack running) if a critical journey
+changed, changed UI exercised in a browser. Report what was not verified.
 
 ## Git
 
@@ -140,11 +140,11 @@ flows were exercised in a browser when UI is involved. Report what was not verif
 
 ## Skills
 
-Project skills live in `.agents/skills/` (lock file: `skills-lock.json`; `cachkey-docs` is local):
+Project skills live in `.agents/skills/` (lock: `skills-lock.json`; `cachkey-docs` is local):
 
 - `ux-ui-audit`, `frontend-aesthetics`, `chromatic-design` — UI audits, polish, colours.
 - `container-compose-ghcr-deployment` — any Docker, Compose or image CI change.
 - `form-ux-validation`, `responsive-interface-guardian` — any form, layout or responsive change.
-- `senior-frontend-engineering`, `codebase-architecture-guardian` — structure, ownership.
-- `ui-modern-2026` — adopting newer CSS / platform features.
+- `senior-frontend-engineering`, `codebase-architecture-guardian` — structure, ownership;
+  `ui-modern-2026` — newer CSS / platform features.
 - `cachkey-docs` — any user-visible change: update `docs/` and `CHANGELOG.md` with it.

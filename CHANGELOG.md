@@ -27,3 +27,14 @@ Première version en préparation.
 - Auto-hébergement : images Docker (amd64, arm64), Docker Compose, migrations au démarrage.
 - Documentation utilisateur dans `docs/`.
 - Licence AGPL-3.0-only.
+
+### Sécurité
+
+- Limitation des tentatives de connexion : l'adresse du visiteur ne peut plus être falsifiée
+  par l'en-tête `X-Forwarded-For`.
+- En-têtes de sécurité sur toutes les réponses (pas d'affichage dans un cadre, `nosniff`,
+  `Referrer-Policy`, HSTS en HTTPS).
+- Redirections après connexion : les chemins contenant des caractères de contrôle ou `\`
+  sont refusés.
+- Avertissement contre l'hameçonnage sur la page d'autorisation d'un terminal.
+- Dépendances : plus aucune vulnérabilité connue (`bun audit`).

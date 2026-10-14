@@ -1,6 +1,5 @@
 import { type DashboardAlert, type DashboardProject, canManage } from "@cachkey/shared";
 import {
-  Add01Icon,
   Alert02Icon,
   ArrowRight01Icon,
   FolderLockedIcon,
@@ -12,7 +11,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageContainer, PageHeader, SectionCard, StatusPill } from "@/components/app/page";
 import { ActivityChart } from "@/components/dashboard/activity-chart";
 import { ACTIVITY_PANEL_SPACE, RecentActivity } from "@/components/dashboard/recent-activity";
-import { Button } from "@/components/ui/button";
+import { NewProjectDialog } from "@/components/projects/new-project-dialog";
 import { Icon } from "@/components/ui/icon";
 import { textLinkVariants } from "@/components/ui/text-link";
 import { dashboardQueryOptions } from "@/lib/dashboard";
@@ -65,16 +64,7 @@ function DashboardPage() {
               ? `Bienvenue dans ${organization.name}.`
               : `${plural(data.projects.length, "projet", "projets")} et ${plural(variables, "variable", "variables")} dans ${organization.name}.`
           }
-          actions={
-            manager ? (
-              <Button asChild>
-                <Link to="/projects">
-                  <Icon icon={Add01Icon} />
-                  Nouveau projet
-                </Link>
-              </Button>
-            ) : null
-          }
+          actions={manager ? <NewProjectDialog /> : null}
         />
 
         <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-6">

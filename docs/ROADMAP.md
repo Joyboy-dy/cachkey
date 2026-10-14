@@ -110,9 +110,9 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 - Configuration par variables d'environnement, healthchecks.
 - CI GitHub Actions (lint, types, tests, build, publication des images).
 
-## Phase 8 — Version publiable ⏳
+## Phase 8 — Version publiable ✅
 
-- Tests e2e des parcours critiques, revue de sécurité.
+- Tests e2e des parcours critiques ✅ (`e2e/`, Playwright, en CI) ; revue de sécurité ✅.
 - Documentation dans le dépôt, en Markdown (pas de projet séparé) : `docs/` organisé par
   besoin — démarrage, projets et variables, équipe et accès, jetons d'accès, CLI (référence
   complète), API publique, auto-hébergement, sécurité. Lisible par les utilisateurs comme par
@@ -127,6 +127,27 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 
 ## Journal
 
+- **2026-10-14** — Phase 8, revue de sécurité. Corrigé : IP du visiteur lue dans la partie
+  falsifiable de `X-Forwarded-For` (contournement de la limite de tentatives, vérifié : 429
+  malgré une adresse inventée) ; aucun en-tête de sécurité (ajoutés au serveur de production :
+  `frame-ancestors 'none'`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`,
+  `Permissions-Policy`, HSTS en HTTPS) ; redirection ouverte via `/	/…` dans
+  `safeRedirectPath` ; contrôle de chemin des fichiers statiques ; avertissement anti-hameçonnage
+  sur `/device` ; `next`, `mysql2`, `deepmerge-ts` (outils de développement et CLI Prisma) mis à
+  jour par `overrides`. Vérifié sans défaut : cloisonnement organisation / projet /
+  environnement (404 sur ce qui n'est pas visible), recherche des variables et jetons par
+  projet, empreinte SHA-256 des jetons, liaison AAD des valeurs, CSRF (cookies `SameSite=Lax`,
+  origine vérifiée), révocation des sessions au changement de mot de passe, fichiers `.env` de
+  la CLI en 600. Corrigé aussi : « Premiers pas » réserve sa hauteur en bas des pages,
+  « Nouveau projet » de la vue d'ensemble ouvre la création.
+- **2026-10-14** — Phase 8, tests e2e (Playwright 1.61, `e2e/`, `bun run e2e`, job CI) : compte
+  (inscription, email Mailpit, organisation, déconnexion, reconnexion, mauvais mot de passe),
+  variables (création, masquage, affichage, modification, historique, import), accès (invitation,
+  lecture limitée à un environnement, refus d'écriture, `production` invisible, journal et jetons
+  réservés), CLI réelle (connexion par code, `set`/`get`/`run`, `logout`) et jetons (API
+  publique, `pull`, lecture seule, révocation immédiate, valeurs absentes du journal). Constaté :
+  la carte « Premiers pas » dépliée masque les dernières lignes d'une page courte ; « Nouveau
+  projet » de la vue d'ensemble n'ouvre pas la création.
 - **2026-10-14** — Phase 8, documentation : `docs/` organisé par besoin (démarrage, projets
   et variables, équipe et accès, jetons d'accès, CLI, API publique, sécurité, index), chaque
   chiffre et option vérifiés dans le code. Skill `cachkey-docs` (carte page ↔ code,

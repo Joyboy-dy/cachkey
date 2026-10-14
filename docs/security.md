@@ -26,8 +26,20 @@ conservez-la hors du serveur et séparément des sauvegardes de la base.
 
 - Mots de passe hachés (Better Auth) ; adresse email confirmée avant la première connexion.
 - Sessions de 7 jours, renouvelées à l'usage, révocables depuis Appareils connectés.
-- Limitation du nombre de tentatives sur les routes d'authentification.
+- Limitation du nombre de tentatives sur les routes d'authentification, par adresse IP. Derrière
+  un reverse proxy, seule l'adresse ajoutée par celui-ci à `X-Forwarded-For` est retenue :
+  une adresse inventée par le client ne permet pas de contourner la limite.
 - Cookies `HttpOnly`, `SameSite=Lax`, et `Secure` dès que l'instance est servie en HTTPS.
+
+## Navigateur
+
+- Les pages ne peuvent pas être affichées dans le cadre d'un autre site (protection contre
+  le détournement de clic, par exemple sur « Autoriser ce terminal »).
+- En-têtes `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, et
+  `Strict-Transport-Security` dès que l'instance est en HTTPS.
+- Les redirections après connexion ne mènent qu'à des pages de l'instance.
+- La page d'autorisation d'un terminal rappelle de refuser un code qu'on n'a pas demandé
+  soi-même.
 
 ## Contrôle d'accès
 

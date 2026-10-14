@@ -193,6 +193,10 @@ function DevicePage() {
             <li>• Il pourra lire et, selon vos accès, modifier les variables.</li>
             <li>• Ses actions apparaîtront dans le journal d’activité.</li>
           </ul>
+          <p className="mb-5 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm leading-5">
+            Vous n’avez pas lancé « cachkey login » vous-même à l’instant ? Refusez : quelqu’un
+            essaie d’accéder à votre compte.
+          </p>
           <FeedbackAlert feedback={feedback} className="mb-5" />
           <div className="grid gap-3">
             <Button size="lg" onClick={() => void decide(true)} disabled={pending !== null}>

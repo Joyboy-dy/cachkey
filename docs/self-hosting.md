@@ -40,6 +40,10 @@ Au démarrage, l'API applique les migrations de base de données en attente, pui
 web n'écoute que sur `127.0.0.1:3000` (modifiable avec `CACHKEY_PORT`) : faites pointer votre
 reverse proxy dessus. L'API et PostgreSQL ne sont pas exposés.
 
+Le reverse proxy doit transmettre l'adresse du visiteur dans `X-Forwarded-For` (Caddy le fait
+par défaut ; nginx : `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`). Cachkey
+s'en sert pour limiter les tentatives de connexion. N'exposez pas le port web sans proxy.
+
 Exemple avec Caddy :
 
 ```

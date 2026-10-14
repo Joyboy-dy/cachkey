@@ -15,4 +15,7 @@ dist/
 .agents/note_prompts.md
 .DS_Store
 coverage/
+# Playwright output
+e2e/test-results/
+e2e/playwright-report/
 .react-email/

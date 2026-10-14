@@ -39,7 +39,10 @@ bun run dev
    ```bash
    bun run check
    bun run build
+   bun run e2e      # parcours critiques, avec bun run dev lancé
    ```
+
+   La première fois : `cd e2e && bunx playwright install chromium`.
 3. Messages de commit au format [Conventional Commits](https://www.conventionalcommits.org) :
    `feat: …`, `fix: …`, `docs: …`, `chore: …`.
 4. Ouvrez une pull request qui explique le besoin, le changement et la façon dont il a été

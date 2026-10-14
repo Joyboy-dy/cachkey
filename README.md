@@ -127,7 +127,7 @@ Sur un serveur ou en CI : un jeton d'accès avec `CACHKEY_URL` et `CACHKEY_TOKEN
 | `bun run dev`             | Web + API en mode développement                    |
 | `bun run dev:emails`      | Prévisualisation des templates React Email         |
 | `bun run check`           | Format, lint, types, tests et contrats UI          |
-| `bun run test`            | Tests unitaires (`bun test`)                       |
+| `bun run test` / `e2e`    | Tests unitaires / parcours e2e Playwright (pile démarrée) |
 | `bun run build`           | Build de production (web et API)                   |
 | `bun run services:up/down`| Démarre / arrête PostgreSQL et Mailpit             |
 | `bun run db:migrate`      | Crée / applique une migration (développement)      |

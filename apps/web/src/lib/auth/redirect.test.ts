@@ -15,6 +15,11 @@ describe("safeRedirectPath", () => {
       "evil.com",
       "",
       "javascript:alert(1)",
+      // Browsers strip tabs and line breaks: these would become `//evil.com`.
+      "/\t/evil.com",
+      "/\n/evil.com",
+      "/\r/evil.com",
+      "/a\\b",
     ]) {
       expect(safeRedirectPath(value)).toBeUndefined();
     }

@@ -3,7 +3,7 @@ import { Cancel01Icon, MinusSignIcon, Rocket01Icon, Tick02Icon } from "@hugeicon
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
 import { AnimatePresence, MotionConfig, motion, type Transition } from "motion/react";
-import { useEffect, useId, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { textLinkVariants } from "@/components/ui/text-link";
@@ -151,6 +151,7 @@ function GettingStarted({
   className?: string;
 }) {
   const titleId = useId();
+  const dockRef = useRef<HTMLDivElement>(null);
   // Hidden until hydrated: the server cannot know the stored state (no flash, no mismatch).
   const hydrated = useSyncExternalStore(
     noopSubscribe,
@@ -170,6 +171,24 @@ function GettingStarted({
     write(scope, next);
   }
 
+  // Publishes the space the dock takes at the bottom of the viewport (`--dock-space`), so
+  // pages reserve it and their last rows never end up under the card.
+  useEffect(() => {
+    const dock = dockRef.current;
+    if (!dock) return;
+    const root = document.documentElement;
+    const observer = new ResizeObserver(() => {
+      const height = dock.getBoundingClientRect().height;
+      // 16 px offset from the viewport edge, 16 px of air above the dock.
+      root.style.setProperty("--dock-space", height ? `${height + 32}px` : "0px");
+    });
+    observer.observe(dock);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--dock-space");
+    };
+  }, []);
+
   const progress = (
     <span className="font-mono text-xs text-muted-foreground tabular-nums">
       {doneCount}/{steps.length}
@@ -179,6 +198,7 @@ function GettingStarted({
   return (
     <MotionConfig reducedMotion="user">
       <div
+        ref={dockRef}
         className={cn(
           "pointer-events-none fixed inset-x-4 bottom-4 z-40 flex justify-end sm:inset-x-auto sm:right-4",
           className,
