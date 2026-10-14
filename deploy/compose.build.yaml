@@ -1,0 +1,9 @@
+# Builds the Cachkey images from this repository instead of pulling them.
+#   docker compose -f deploy/compose.yaml -f deploy/compose.build.yaml --env-file .env.prod build
+services:
+  api:
+    image: cachkey-api:local
+    build: { context: .., dockerfile: deploy/Dockerfile, target: api }
+  web:
+    image: cachkey-web:local
+    build: { context: .., dockerfile: deploy/Dockerfile, target: web }

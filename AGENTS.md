@@ -105,8 +105,8 @@ Rules:
 
 - Everything container-related lives in `deploy/`: `Dockerfile` (targets `api` / `web`,
   single-file bundles, non-root, healthchecks; the API runs `prisma migrate deploy` first),
-  `compose.yaml` (production), `compose.dev.yaml` (local services). Build context = repo root.
-  CI in `.github/workflows/`; images on GHCR. Guide: `docs/self-hosting.md`.
+  `compose.yaml` (production), `compose.dev.yaml` (local), `templates/` (Dokploy, Coolify).
+  CI in `.github/workflows/`; images on GHCR. Guides: `docs/self-hosting.md`, `docs/one-click-deployment.md`.
 
 ## Environment
 

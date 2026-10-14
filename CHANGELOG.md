@@ -6,6 +6,21 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
 
 ## [Non publié]
 
+### Ajouté
+
+- Templates de déploiement : Dokploy (`deploy/templates/dokploy/cachkey/`, prêt pour leur
+  catalogue) et Coolify (« Docker Compose Empty »), guide `docs/one-click-deployment.md`.
+
+### Modifié
+
+- `deploy/compose.yaml` utilise les images publiées, épinglées par défaut sur `0.1.0`, et
+  fonctionne copié seul ; la construction depuis les sources passe par
+  `deploy/compose.build.yaml`.
+
+### Corrigé
+
+- Le conteneur web reçoit `APP_URL` : l'en-tête HSTS s'active en HTTPS.
+
 ## [0.1.0] — 2026-10-14
 
 Première version publique.

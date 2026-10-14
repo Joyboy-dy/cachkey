@@ -125,10 +125,39 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 - Plus tard (avec un nom de domaine) : page d'accueil et documentation publique générées
   depuis ces mêmes fichiers.
 
+## Phase 9 — Distribution et templates de déploiement 🚧
+
+Objectif : installer Cachkey depuis les plateformes compatibles Docker Compose, sans changer
+son architecture ni son comportement.
+
+- `deploy/compose.yaml` générique ✅ : images GHCR publiques épinglées (`0.1.0` par défaut),
+  seul le web publié (127.0.0.1), PostgreSQL persistant, variables obligatoires avec message,
+  aucun chemin local, utilisable copié seul ; build depuis les sources dans
+  `deploy/compose.build.yaml`. `APP_URL` transmis au web (HSTS).
+- Template Dokploy ✅ préparé (`deploy/templates/dokploy/cachkey/`, copie de travail
+  `../dokploy-templates`, branche `add-cachkey-template`) : validations du dépôt Dokploy
+  passées. ⏳ Test sur une vraie instance Dokploy et PR au catalogue, après accord.
+- Template Coolify « Docker Compose Empty » ✅ (`deploy/templates/coolify/`). Catalogue
+  officiel : non éligible (1 000 étoiles GitHub requises).
+- Documentation `docs/one-click-deployment.md` ✅ : catalogue officiel / template importable /
+  Compose compatible, état réel de chaque plateforme.
+- Plus tard : autres plateformes (CapRover, Easypanel, Portainer…), mise à jour automatique des
+  templates à chaque release.
+
 ---
 
 ## Journal
 
+- **2026-10-14** — Phase 9 (distribution). Compose générique audité : `build:` sorti dans
+  `compose.build.yaml`, version épinglée `0.1.0`, `APP_URL` manquant côté web corrigé (HSTS
+  inactif en production jusque-là). Template Dokploy (`template.toml` : domaine, secrets générés
+  — mot de passe PostgreSQL en hexadécimal car le générateur Dokploy peut produire `@`, `#`,
+  `$`) et template Coolify (`SERVICE_URL_WEB_3000`, `SERVICE_PASSWORD_*`,
+  `SERVICE_REALBASE64_32_*`). Vérifié pour les trois : base vierge (9 migrations), suite e2e
+  complète (5/5) contre le déploiement, arrêt / redémarrage (données conservées, aucune
+  migration rejouée), services sains ; images arm64 lancées par émulation ; validations
+  officielles Dokploy (méta, template, Compose). Non vérifié : vraie instance Dokploy ou Coolify
+  (domaine, Traefik, génération réelle des secrets).
 - **2026-10-14** — Version **0.1.0** publiée. PR unique (phases 1 à 8) fusionnée dans `main`,
   branches de phase supprimées (toutes contenues dans `main`). Historique vérifié avant
   publication : aucun `.env` réel ni secret. Dépôt passé en public, signalement privé des
