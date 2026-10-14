@@ -5,8 +5,8 @@ live in `.agents/` and in the canonical docs listed below. Keep it under 150 lin
 
 ## Project
 
-Cachkey is an open-source, self-hostable manager for technical secrets, API keys and
-environment variables. UI language: **French**. Brand: Cachkey brand kit 1.0.
+Cachkey is an open-source (AGPL-3.0-only), self-hostable manager for technical secrets,
+API keys and environment variables. UI language: **French**. Brand: Cachkey brand kit 1.0.
 
 ## Sources of truth
 
@@ -100,6 +100,13 @@ Rules:
 - shadcn/ui policy (cursors, `customs.css`, `data-slot` contracts): read
   `.agents/rules/shadcn-ui.md` before touching `components/ui/` or global CSS.
 
+## Delivery
+
+- Everything container-related lives in `deploy/`: `Dockerfile` (targets `api` / `web`,
+  single-file bundles, non-root, healthchecks; the API runs `prisma migrate deploy` first),
+  `compose.yaml` (production), `compose.dev.yaml` (local services). Build context = repo root.
+  CI in `.github/workflows/`; images on GHCR. Guide: `docs/self-hosting.md`.
+
 ## Environment
 
 - `.env.example`: every variable, example values only. `.env.local`: real local values.
@@ -128,6 +135,7 @@ flows were exercised in a browser when UI is involved. Report what was not verif
 
 - Never commit or push without explicit approval from the user.
 - The remote is `github.com/Joyboy-dy/cachkey`; credentials are pinned to `Joyboy-dy`.
+- `.agents/note_prompts.md` is a personal scratchpad, git-ignored. Do not rely on it.
 
 ## Skills
 
@@ -135,12 +143,8 @@ Project skills live in `.agents/skills/` (lock file: `skills-lock.json`). Use th
 relevant:
 
 - `ux-ui-audit`, `frontend-aesthetics`, `chromatic-design` — UI audits, polish, colours.
+- `container-compose-ghcr-deployment` — any Docker, Compose or image CI change.
 - `form-ux-validation` — any form change.
 - `responsive-interface-guardian` — layout or responsive changes.
 - `senior-frontend-engineering`, `codebase-architecture-guardian` — structure, ownership.
 - `ui-modern-2026` — adopting newer CSS / platform features.
-- `container-compose-ghcr-deployment` — roadmap phase 7 (Docker, Compose, GHCR).
-
-## Notes
-
-- `.agents/note_prompts.md` is a personal scratchpad, git-ignored. Do not rely on it.

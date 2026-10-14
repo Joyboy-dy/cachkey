@@ -16,7 +16,7 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 - `packages/db` : PostgreSQL + Prisma.
 - `packages/emails` : templates React Email + abstraction d'envoi (Mailpit en dev, Resend en prod).
 - `packages/shared` : schémas Zod partagés (validation formulaires + API).
-- `docker-compose.dev.yml` : PostgreSQL + Mailpit pour le développement local.
+- `deploy/compose.dev.yaml` : PostgreSQL + Mailpit pour le développement local.
 - `.env.example` documentés, aucun secret dans le dépôt.
 - Lint (ESLint + typescript-eslint), formatage (Prettier), `typecheck`, `build`.
 
@@ -103,7 +103,7 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 - API publique documentée (OpenAPI via Elysia).
 - CLI `cachkey` (pull / run avec injection des variables).
 
-## Phase 7 — Self-hosting & distribution ⏳
+## Phase 7 — Self-hosting & distribution ✅
 
 - Dockerfiles de production (web, api) multi-stage, images publiées sur GHCR.
 - `docker-compose.yml` de production, migrations automatiques au démarrage.
@@ -113,13 +113,34 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 ## Phase 8 — Version publiable ⏳
 
 - Tests e2e des parcours critiques, revue de sécurité.
-- Documentation utilisateur et d'auto-hébergement, CONTRIBUTING, SECURITY.md.
-- Page d'accueil publique, versionnement sémantique, notes de version.
+- Documentation dans le dépôt, en Markdown (pas de projet séparé) : `docs/` organisé par
+  besoin — démarrage, projets et variables, équipe et accès, jetons d'accès, CLI (référence
+  complète), API publique, auto-hébergement, sécurité. Lisible par les utilisateurs comme par
+  les agents IA ; un skill de projet encadre sa création, sa mise à jour et sa cohérence
+  avec le code.
+- CONTRIBUTING, SECURITY.md, versionnement sémantique, notes de version (licence : AGPL-3.0-only, adoptée).
+- Plus tard (avec un nom de domaine) : page d'accueil et documentation publique générées
+  depuis ces mêmes fichiers.
 
 ---
 
 ## Journal
 
+- **2026-10-14** — Licence adoptée : GNU AGPL v3.0 (`AGPL-3.0-only`), texte officiel dans
+  `LICENSE`, copyright © 2026 Félicio de SOUZA. Identifiant SPDX dans les `package.json` et
+  les métadonnées OCI des images. Licences tierces (polices Geist, motifs visx) inchangées.
+- **2026-10-14** — Fichiers de déploiement regroupés dans `deploy/` (`Dockerfile`,
+  `Dockerfile.dockerignore`, `api-entrypoint.sh`, `compose.yaml`, `compose.dev.yaml`).
+  Vérifié : build et démarrage via `deploy/compose.yaml`, aucun `.env` dans le contexte de
+  build, services de développement inchangés. Phase 8 : documentation décidée dans le dépôt.
+- **2026-10-14** — Phase 7 terminée : `Dockerfile` multi-étapes (cibles `api` et `web`,
+  bundles autonomes sans node_modules, utilisateur non-root, healthchecks), migrations au
+  démarrage de l'API, `compose.yaml` de production, CI GitHub Actions (vérifications, build,
+  images) et publication GHCR multi-architecture, guide `docs/self-hosting.md`. Vérifié en
+  réel : images construites, pile démarrée (postgres → api → web sains), 9 migrations
+  appliquées puis aucune au redémarrage, inscription + email + vérification + organisation +
+  projet + variable chiffrée + jeton + CLI à travers les conteneurs ; `bun run check` dans
+  un conteneur Linux. Non vérifié : exécution réelle des workflows sur GitHub.
 - **2026-10-14** — « Premiers pas » disponible sur toutes les pages (tant qu'il reste des étapes),
   animation légère à rebond. Activité récente en panneau latéral détaché (xl+) ou en bottom
   sheet (poignée en bas d'écran), état vide illustré.

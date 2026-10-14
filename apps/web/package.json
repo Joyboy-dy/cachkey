@@ -1,12 +1,14 @@
 {
   "name": "@cachkey/web",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "dev": "bun --env-file=../../.env.local --bun vite dev",
-    "build": "bun --bun vite build",
+    "build": "bun --bun vite build && bun build server.ts --target bun --outfile dist/serve.js",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start": "bun dist/serve.js"
   },
   "dependencies": {
     "@cachkey/shared": "workspace:*",

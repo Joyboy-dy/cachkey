@@ -53,6 +53,19 @@ bun run dev                 # web → http://localhost:3000 · api → http://lo
 Les ports Docker peuvent être modifiés avec `CACHKEY_POSTGRES_PORT`, `CACHKEY_SMTP_PORT`
 et `CACHKEY_MAILPIT_UI_PORT` (pensez à adapter `.env.local`).
 
+## Auto-hébergement
+
+Images Docker publiées sur GHCR (`cachkey-api`, `cachkey-web`), déploiement avec
+[deploy/compose.yaml](deploy/compose.yaml) :
+
+```bash
+cp .env.production.example .env.prod   # puis remplir les secrets
+docker compose -f deploy/compose.yaml --env-file .env.prod up -d
+```
+
+Migrations appliquées au démarrage, healthchecks, sauvegarde et mise à jour :
+[docs/self-hosting.md](docs/self-hosting.md).
+
 ## Variables d'environnement
 
 Toutes les variables sont documentées dans [.env.example](.env.example). En local, un seul
@@ -82,22 +95,19 @@ apparaissent alors automatiquement sur les pages de connexion et d'inscription.
 **Google** — [Google Cloud Console › Identifiants](https://console.cloud.google.com/apis/credentials)
 
 1. Créer un « ID client OAuth » de type _Application Web_.
-2. Origine JavaScript autorisée : `http://localhost:3000`
-3. URI de redirection autorisée : `http://localhost:3000/api/auth/callback/google`
+2. Origine autorisée : `http://localhost:3000` ; redirection : `http://localhost:3000/api/auth/callback/google`
 
 **GitHub** — [Settings › Developer settings › OAuth Apps](https://github.com/settings/developers)
 
 1. _New OAuth App_.
-2. Homepage URL : `http://localhost:3000`
-3. Authorization callback URL : `http://localhost:3000/api/auth/callback/github`
+2. Homepage URL : `http://localhost:3000` ; callback : `http://localhost:3000/api/auth/callback/github`
 
 En production, remplacer `http://localhost:3000` par la valeur de `APP_URL`.
 
 ## Ligne de commande
 
-Installation locale : `cd apps/cli && bun link` (puis `cachkey --help`).
-
 ```bash
+cd apps/cli && bun link        # installe la commande cachkey (puis : cachkey --help)
 cachkey login                  # code à valider dans le navigateur (/device)
 cachkey init                   # crée un projet pour ce dossier (ou : cachkey link)
 cachkey pull --all             # .env.<environnement> à la racine, un par environnement
@@ -107,8 +117,8 @@ cachkey run -- npm start       # lance la commande avec les variables
 
 Sur un serveur ou en CI : créez un jeton dans **Projet → Paramètres → Jetons d'accès**
 (lecture seule, un environnement) et définissez `CACHKEY_URL` et `CACHKEY_TOKEN`
-(`$env:CACHKEY_TOKEN="…"` sous PowerShell). API publique : `/api/v1/docs`.
-`bun run --filter @cachkey/cli compile` produit un exécutable autonome.
+(`$env:CACHKEY_TOKEN="…"` sous PowerShell). API publique : `/api/v1/docs`. Exécutable
+autonome : `bun run --filter @cachkey/cli compile`.
 
 ## Scripts
 
@@ -119,9 +129,6 @@ Sur un serveur ou en CI : créez un jeton dans **Projet → Paramètres → Jeto
 | `bun run check`           | Format, lint, types, tests et contrats UI          |
 | `bun run test`            | Tests unitaires (`bun test`)                       |
 | `bun run build`           | Build de production (web et API)                   |
-| `bun run typecheck`       | Vérification TypeScript de tous les packages       |
-| `bun run lint`            | ESLint                                             |
-| `bun run format`          | Prettier                                           |
 | `bun run services:up/down`| Démarre / arrête PostgreSQL et Mailpit             |
 | `bun run db:migrate`      | Crée / applique une migration (développement)      |
 | `bun run db:deploy`       | Applique les migrations (production)               |
@@ -134,3 +141,10 @@ L'interface suit le guide de marque Cachkey 1.0 : Geist / Geist Mono, encre `#1A
 blanc chaud `#FFF5F3`, orange `#F97316` réservé aux actions prioritaires (libellé en encre).
 Les logos sont les fichiers vectoriels officiels du kit (`apps/web/public/brand`), jamais retapés.
 Les polices Geist sont distribuées sous licence SIL OFL 1.1 (`apps/web/public/fonts/LICENSE.txt`).
+
+## Licence
+
+Copyright © 2026 Félicio de SOUZA. Cachkey est un logiciel libre sous licence
+[GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`) : une version modifiée
+proposée à des utilisateurs via un réseau doit leur donner accès à son code source. Les
+dépendances tierces restent sous leurs propres licences.

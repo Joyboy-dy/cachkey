@@ -22,10 +22,10 @@
 
 ## Production rule
 
-- `compose.yaml` (roadmap phase 7) carries most non-sensitive variables and their
+- `deploy/compose.yaml` carries most non-sensitive variables and their
   defaults (ports, internal URLs, SMTP defaults…).
 - Production env files mainly contain: secrets, environment-dependent values, feature flags.
-- A value provided by the environment always overrides the `compose.yaml` default.
+- A value provided by the environment always overrides the `deploy/compose.yaml` default.
 
 ## Never
 

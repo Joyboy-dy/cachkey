@@ -1,6 +1,7 @@
 {
   "name": "@cachkey/api",
   "private": true,
+  "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "dev": "bun --env-file=../../.env.local --watch src/index.ts",
