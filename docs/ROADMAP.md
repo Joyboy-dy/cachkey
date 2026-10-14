@@ -117,8 +117,9 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
   besoin — démarrage, projets et variables, équipe et accès, jetons d'accès, CLI (référence
   complète), API publique, auto-hébergement, sécurité. Lisible par les utilisateurs comme par
   les agents IA ; un skill de projet encadre sa création, sa mise à jour et sa cohérence
-  avec le code.
-- CONTRIBUTING, SECURITY.md, versionnement sémantique, notes de version (licence : AGPL-3.0-only, adoptée).
+  avec le code. ✅ (`docs/README.md`, skill `.agents/skills/cachkey-docs`)
+- CONTRIBUTING, SECURITY.md, versionnement sémantique, notes de version (`CHANGELOG.md`) ✅
+  (licence : AGPL-3.0-only, adoptée).
 - Plus tard (avec un nom de domaine) : page d'accueil et documentation publique générées
   depuis ces mêmes fichiers.
 
@@ -126,6 +127,11 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 
 ## Journal
 
+- **2026-10-14** — Phase 8, documentation : `docs/` organisé par besoin (démarrage, projets
+  et variables, équipe et accès, jetons d'accès, CLI, API publique, sécurité, index), chaque
+  chiffre et option vérifiés dans le code. Skill `cachkey-docs` (carte page ↔ code,
+  vérifications de cohérence). `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`. Restent :
+  tests e2e et revue de sécurité.
 - **2026-10-14** — Licence adoptée : GNU AGPL v3.0 (`AGPL-3.0-only`), texte officiel dans
   `LICENSE`, copyright © 2026 Félicio de SOUZA. Identifiant SPDX dans les `package.json` et
   les métadonnées OCI des images. Licences tierces (polices Geist, motifs visx) inchangées.

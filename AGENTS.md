@@ -13,6 +13,7 @@ API keys and environment variables. UI language: **French**. Brand: Cachkey bran
 | Topic                          | Where                                                    |
 | ------------------------------ | -------------------------------------------------------- |
 | Roadmap, current phase         | `docs/ROADMAP.md` — follow phases in order, update it    |
+| User docs (French) + changelog | `docs/README.md`, `CHANGELOG.md` — `cachkey-docs` skill  |
 | Authentication flows & routes  | `docs/authentication.md`                                 |
 | Human setup & commands         | `README.md` (≤ 150 lines)                                |
 | Environment variables          | `.env.example` (all vars), `.env.production.example`     |
@@ -139,12 +140,11 @@ flows were exercised in a browser when UI is involved. Report what was not verif
 
 ## Skills
 
-Project skills live in `.agents/skills/` (lock file: `skills-lock.json`). Use them when
-relevant:
+Project skills live in `.agents/skills/` (lock file: `skills-lock.json`; `cachkey-docs` is local):
 
 - `ux-ui-audit`, `frontend-aesthetics`, `chromatic-design` — UI audits, polish, colours.
 - `container-compose-ghcr-deployment` — any Docker, Compose or image CI change.
-- `form-ux-validation` — any form change.
-- `responsive-interface-guardian` — layout or responsive changes.
+- `form-ux-validation`, `responsive-interface-guardian` — any form, layout or responsive change.
 - `senior-frontend-engineering`, `codebase-architecture-guardian` — structure, ownership.
 - `ui-modern-2026` — adopting newer CSS / platform features.
+- `cachkey-docs` — any user-visible change: update `docs/` and `CHANGELOG.md` with it.

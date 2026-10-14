@@ -5,7 +5,8 @@
 Cachkey est une application open source et auto-hébergeable de gestion des secrets techniques,
 clés API et variables d'environnement pour les développeurs et les équipes.
 
-> Statut : en développement — phases 1 à 3 terminées (authentification, compte, organisations et projets). Voir [docs/ROADMAP.md](docs/ROADMAP.md).
+> Statut : en développement — phases 1 à 7 terminées. Voir [docs/ROADMAP.md](docs/ROADMAP.md).
+> Documentation utilisateur : [docs/](docs/README.md).
 
 ## Architecture
 
@@ -20,7 +21,7 @@ packages/
   db/         Prisma (PostgreSQL) — schéma et client
   emails/     Templates React Email + transports (SMTP / Resend)
   shared/     Schémas Zod partagés (validation front et API)
-docs/         Plan de développement et documentation technique
+docs/         Documentation utilisateur, feuille de route, notes techniques
 ```
 
 Le navigateur ne parle qu'à l'application web : toutes les requêtes `/api/*` sont relayées
@@ -115,10 +116,9 @@ cachkey secrets                # liste ; get / set / rm / import pour le reste
 cachkey run -- npm start       # lance la commande avec les variables
 ```
 
-Sur un serveur ou en CI : créez un jeton dans **Projet → Paramètres → Jetons d'accès**
-(lecture seule, un environnement) et définissez `CACHKEY_URL` et `CACHKEY_TOKEN`
-(`$env:CACHKEY_TOKEN="…"` sous PowerShell). API publique : `/api/v1/docs`. Exécutable
-autonome : `bun run --filter @cachkey/cli compile`.
+Sur un serveur ou en CI : un jeton d'accès avec `CACHKEY_URL` et `CACHKEY_TOKEN`. Référence :
+[docs/cli.md](docs/cli.md), [docs/access-tokens.md](docs/access-tokens.md),
+[docs/api.md](docs/api.md). Contribuer : [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Scripts
 
