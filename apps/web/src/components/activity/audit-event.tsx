@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { UserAvatar } from "@/components/app/user-avatar";
 import { Icon } from "@/components/ui/icon";
 import { roleLabel } from "@/lib/roles";
+import { cn } from "@/lib/utils";
 
 /*
  * Turns an audit event into a French sentence. Technical values (actions, roles, levels)
@@ -11,11 +12,15 @@ import { roleLabel } from "@/lib/roles";
  */
 
 function Code({ children }: { children: ReactNode }) {
-  return <code className="font-mono text-[13px] break-all text-foreground">{children}</code>;
+  return (
+    <code className="font-mono text-[13px] [overflow-wrap:anywhere] text-foreground">
+      {children}
+    </code>
+  );
 }
 
 function Strong({ children }: { children: ReactNode }) {
-  return <span className="font-medium break-all text-foreground">{children}</span>;
+  return <span className="font-medium [overflow-wrap:anywhere] text-foreground">{children}</span>;
 }
 
 function plural(count: number, one: string, many: string) {
@@ -202,22 +207,47 @@ export function describeEvent(event: AuditEventDto): ReactNode {
   }
 }
 
+/** Read with a service token. Older events lost `via: "token"` when also sent by the CLI. */
+function byToken(event: AuditEventDto): boolean {
+  return (
+    event.details?.via === "token" || (!event.actor.id && event.actor.name.startsWith("Jeton «"))
+  );
+}
+
+/** Done from the command-line tool (`via: "cli"` on events recorded before `client`). */
+export function fromCli(event: AuditEventDto): boolean {
+  return event.details?.client === "cli" || event.details?.via === "cli";
+}
+
+/** The actor's avatar, or a key for a service token (no account behind it). */
+export function ActorAvatar({ event, className }: { event: AuditEventDto; className?: string }) {
+  if (event.actor.id) {
+    return (
+      <UserAvatar
+        user={{ id: event.actor.id, avatarSeed: event.actor.avatarSeed }}
+        className={className}
+      />
+    );
+  }
+  return (
+    <span
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground",
+        className,
+      )}
+    >
+      {byToken(event) ? <Icon icon={Key01Icon} className="size-3.5" /> : null}
+    </span>
+  );
+}
+
 const time = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
 export function AuditEventRow({ event }: { event: AuditEventDto }) {
   const context = [event.projectName, event.environmentName].filter(Boolean);
   return (
     <li className="flex gap-3 px-4 py-3 sm:px-5">
-      {event.actor.id ? (
-        <UserAvatar
-          user={{ id: event.actor.id, avatarSeed: event.actor.avatarSeed }}
-          className="mt-0.5 size-7"
-        />
-      ) : (
-        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
-          {event.details?.via === "token" ? <Icon icon={Key01Icon} className="size-3.5" /> : null}
-        </span>
-      )}
+      <ActorAvatar event={event} className="mt-0.5 size-7" />
       <div className="min-w-0 flex-1 text-sm leading-5">
         <p className="text-muted-foreground">
           <span className="font-medium text-foreground">{event.actor.name}</span>{" "}
@@ -226,12 +256,12 @@ export function AuditEventRow({ event }: { event: AuditEventDto }) {
         <p className="mt-0.5 flex flex-wrap gap-x-1.5 text-xs text-muted-foreground">
           {context.length ? (
             <>
-              <span className="break-all">{context.join(" · ")}</span>
+              <span className="[overflow-wrap:anywhere]">{context.join(" · ")}</span>
               <span aria-hidden>·</span>
             </>
           ) : null}
           <time dateTime={event.createdAt}>{time.format(new Date(event.createdAt))}</time>
-          {event.details?.via === "cli" ? (
+          {fromCli(event) ? (
             <>
               <span aria-hidden>·</span>
               <span>en ligne de commande</span>

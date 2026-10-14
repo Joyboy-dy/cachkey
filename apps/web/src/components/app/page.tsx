@@ -2,9 +2,10 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /** Centred content column shared by every application page. */
+/** Bottom padding leaves room for the floating « Premiers pas » pill. */
 export function PageContainer({ children }: { children: ReactNode }) {
   return (
-    <div className="animate-brand-in mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
+    <div className="animate-brand-in mx-auto w-full max-w-6xl px-4 pt-8 pb-24 sm:px-6 sm:pt-10 lg:px-10">
       {children}
     </div>
   );

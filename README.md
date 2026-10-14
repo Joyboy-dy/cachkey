@@ -99,7 +99,8 @@ Installation locale : `cd apps/cli && bun link` (puis `cachkey --help`).
 
 ```bash
 cachkey login                  # code à valider dans le navigateur (/device)
-cachkey link                   # associe le dossier à un projet et un environnement
+cachkey init                   # crée un projet pour ce dossier (ou : cachkey link)
+cachkey pull --all             # .env.<environnement> à la racine, un par environnement
 cachkey secrets                # liste ; get / set / rm / import pour le reste
 cachkey run -- npm start       # lance la commande avec les variables
 ```

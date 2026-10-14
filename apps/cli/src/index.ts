@@ -9,6 +9,7 @@ import {
   type Workspace,
 } from "@cachkey/shared";
 import { chmod } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import packageJson from "../package.json";
 import { type Command, formatUserCode, HELP, type Options, parseArgs, resolveUrl } from "./args";
 import { Api, ApiError } from "./client";
@@ -111,15 +112,19 @@ async function findSecret(target: Target, key: string): Promise<SecretDto | null
 /** Every variable with its value: through the token API, or the session export. */
 async function loadValues(
   context: Context,
-): Promise<{ values: Record<string, string>; label: string }> {
+): Promise<{ values: Record<string, string>; label: string; environment: string }> {
   const token = serviceToken(context.options);
   if (token) {
     const data = await tokenApi(context, token).request<{
       project: { name: string };
-      environment: { name: string };
+      environment: { name: string; slug: string };
       secrets: Record<string, string>;
     }>("GET", "/api/v1/secrets");
-    return { values: data.secrets, label: `${data.project.name} (${data.environment.name})` };
+    return {
+      values: data.secrets,
+      label: `${data.project.name} (${data.environment.name})`,
+      environment: data.environment.slug,
+    };
   }
   const target = await resolveTarget(context, "environment");
   const { content } = await target.api.request<{ content: string }>(
@@ -131,6 +136,7 @@ async function loadValues(
       parseDotenv(content).entries.map((entry) => [entry.key, entry.value]),
     ),
     label: `${target.project} (${target.environment})`,
+    environment: target.environment,
   };
 }
 
@@ -419,21 +425,151 @@ async function importFile(context: Context, file: string): Promise<number> {
 
 // ── Use ─────────────────────────────────────────────────────────────────────
 
-async function pull(context: Context): Promise<number> {
-  const { values, label } = await loadValues(context);
-  const entries = Object.entries(values).map(([key, value]) => ({ key, value }));
-  const content =
-    context.options.format === "json"
-      ? `${JSON.stringify(values, null, 2)}\n`
-      : serializeDotenv(entries);
-  const output = context.options.output;
-  if (!output) {
-    process.stdout.write(content);
-    return 0;
+/** Folder of `.cachkey.json` (the project root), or the current folder. */
+async function projectRoot(): Promise<string> {
+  const found = await findLink();
+  return found ? dirname(found.path) : process.cwd();
+}
+
+/** Warns when a written file would be committed (inside a Git repository, not ignored). */
+function warnIfTracked(path: string): void {
+  try {
+    const check = Bun.spawnSync(["git", "check-ignore", "-q", path], { cwd: dirname(path) });
+    // 0: ignored · 1: not ignored · 128: not a Git repository.
+    if (check.exitCode === 1) {
+      info(
+        `Attention : ${basename(path)} n'est pas ignoré par Git. Ajoutez « .env.* » à .gitignore.`,
+      );
+    }
+  } catch {
+    // Git is not installed: nothing to check.
   }
-  await Bun.write(output, content);
-  await chmod(output, 0o600).catch(() => undefined);
-  info(`${entries.length} variable(s) de ${label} écrite(s) dans ${output}.`);
+}
+
+/** Environments asked for: --all, --env a,b, or the linked one ("" = linked). */
+async function environmentsToPull(context: Context): Promise<string[]> {
+  const { options } = context;
+  if (options.all) {
+    const target = await resolveTarget(context, "project");
+    const environments = await target.api.request<EnvironmentDto[]>(
+      "GET",
+      `/api/projects/${enc(target.project)}/environments`,
+    );
+    return environments.map((environment) => environment.slug);
+  }
+  if (options.env?.includes(",")) {
+    return options.env
+      .split(",")
+      .map((slug) => slug.trim())
+      .filter(Boolean);
+  }
+  return [options.env ?? ""];
+}
+
+async function pull(context: Context): Promise<number> {
+  const { options } = context;
+  const token = serviceToken(options);
+  if (token && (options.all || options.env)) {
+    throw new CliError(
+      "Un jeton d'accès ne donne accès qu'à un environnement : retirez --all et --env.",
+    );
+  }
+  const slugs = token ? [""] : await environmentsToPull(context);
+  if (slugs.length > 1 && options.output) {
+    throw new CliError("--output ne s'utilise qu'avec un seul environnement.");
+  }
+  const root = await projectRoot();
+  for (const slug of slugs) {
+    const scoped: Context = slug ? { ...context, options: { ...options, env: slug } } : context;
+    const { values, label, environment } = await loadValues(scoped);
+    const entries = Object.entries(values).map(([key, value]) => ({ key, value }));
+    const json = options.format === "json";
+    const content = json ? `${JSON.stringify(values, null, 2)}\n` : serializeDotenv(entries);
+    if (options.output === "-") {
+      process.stdout.write(content);
+      continue;
+    }
+    // Default: `.env.<environment>` (`.env.<environment>.json`) at the project root.
+    const path = options.output ?? join(root, `.env.${environment}${json ? ".json" : ""}`);
+    await Bun.write(path, content);
+    await chmod(path, 0o600).catch(() => undefined);
+    info(`${entries.length} variable(s) de ${label} → ${path}`);
+    warnIfTracked(path);
+  }
+  return 0;
+}
+
+// ── Create ──────────────────────────────────────────────────────────────────
+
+async function createProject(scope: Scope, name: string): Promise<ProjectDto> {
+  const project = await scope.api.request<ProjectDto>("POST", "/api/projects", {
+    name,
+    description: "",
+  });
+  info(`Projet ${project.name} créé dans ${scope.organization.name}.`);
+  return project;
+}
+
+async function projectCreate(context: Context, name: string): Promise<number> {
+  const project = await createProject(await resolveScope(context), name);
+  console.log(project.slug);
+  return 0;
+}
+
+async function envCreate(context: Context, name: string): Promise<number> {
+  const target = await resolveTarget(context, "project");
+  const environment = await target.api.request<EnvironmentDto>(
+    "POST",
+    `/api/projects/${enc(target.project)}/environments`,
+    { name },
+  );
+  info(`Environnement ${environment.name} créé dans ${target.project}.`);
+  console.log(environment.slug);
+  return 0;
+}
+
+/** Like `git init`: creates a project for this folder and links the folder to it. */
+async function init(context: Context, given: string | null): Promise<number> {
+  const existing = await findLink();
+  if (existing && dirname(existing.path) === process.cwd()) {
+    throw new CliError(
+      `Ce dossier est déjà lié au projet ${existing.link.project}. Lancez « cachkey unlink » d'abord.`,
+    );
+  }
+  const api = sessionApi(context);
+  const workspace = await workspaceOf(api);
+  if (workspace.organizations.length === 0) {
+    throw new CliError("Aucune organisation pour ce compte.");
+  }
+  const { org } = context.options;
+  const organization = org
+    ? workspace.organizations.find((item) => item.slug === org || item.id === org)
+    : await choose("Organisation", workspace.organizations, (item) => item.name);
+  if (!organization) throw new CliError(`Organisation introuvable : ${org}.`);
+  const scope: Scope = {
+    api: api.withOrganization(organization.id),
+    organization: { id: organization.id, name: organization.name },
+  };
+  const project = await createProject(scope, given ?? basename(process.cwd()));
+  const environments = await scope.api.request<EnvironmentDto[]>(
+    "GET",
+    `/api/projects/${enc(project.slug)}/environments`,
+  );
+  // New projects come with development, staging and production: start on development.
+  const environment =
+    environments.find((item) => item.slug === (context.options.env ?? "development")) ??
+    environments[0];
+  if (!environment) throw new CliError("Le projet n'a aucun environnement.");
+  const path = await saveLink({
+    organization: scope.organization,
+    project: project.slug,
+    environment: environment.slug,
+  });
+  info(`Dossier lié à ${project.name} (${environment.name}) : ${path}`);
+  info(
+    `Environnements : ${environments.map((item) => item.slug).join(", ")}. Changez avec « cachkey link » ou --env.`,
+  );
+  info("Ajoutez des variables avec « cachkey set NOM » ou « cachkey import .env ».");
   return 0;
 }
 
@@ -473,6 +609,8 @@ function dispatch(command: Command, context: Context): Promise<number> | number 
       return logout(context);
     case "whoami":
       return whoami(context);
+    case "init":
+      return init(context, command.projectName);
     case "link":
       return link(context);
     case "unlink":
@@ -483,6 +621,10 @@ function dispatch(command: Command, context: Context): Promise<number> | number 
       return listProjects(context);
     case "envs":
       return listEnvs(context);
+    case "project-create":
+      return projectCreate(context, command.projectName);
+    case "env-create":
+      return envCreate(context, command.envName);
     case "secrets":
       return listSecrets(context);
     case "get":

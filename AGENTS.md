@@ -86,6 +86,8 @@ Rules:
 - UI icons: **Hugeicons only**, through `<Icon icon={…} />` (`components/ui/icon.tsx`,
   icons from `@hugeicons/core-free-icons`). No lucide-react; after `shadcn add`, replace
   the generated lucide imports.
+- Charts: **Bklit** only (`bunx shadcn add @bklit/<chart>` → `components/charts`, vendored,
+  not linted). Colours come from the `--chart-*` tokens mapped to the brand in `styles.css`.
 - Avatars: **DiceBear only**, generated locally (`lib/avatar.ts`): users = style **Clay**,
   organisations = style **Shape Grid**. Never other styles, provider images or the HTTP API.
 - Brand marks (Google, GitHub…): drop SVGs in `apps/web/public/icons`, run `bun run icons:generate`; import from

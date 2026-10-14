@@ -14,6 +14,8 @@ export default tseslint.config(
       "**/src/generated/**",
       "**/routeTree.gen.ts",
       ".agents/**",
+      // Bklit charts, vendored from its shadcn registry (`shadcn add @bklit/…`): kept as published.
+      "apps/web/src/components/charts/**",
     ],
   },
   js.configs.recommended,

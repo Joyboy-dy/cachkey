@@ -17,26 +17,32 @@ export type NavItem = {
 
 export type NavSection = { label: string; items: NavItem[] };
 
-/** Application navigation, in display order. Labels are user-facing (French). */
+/**
+ * Sidebar navigation, in display order. Labels are user-facing (French). The account pages
+ * are reached from the avatar menu only (see `ACCOUNT_NAV_ITEM`).
+ */
 export const NAV_SECTIONS: NavSection[] = [
   {
     label: "Espace de travail",
     items: [
       { label: "Vue d’ensemble", to: "/dashboard", icon: DashboardSquare01Icon },
       { label: "Projets", to: "/projects", icon: FolderLockedIcon },
-      { label: "Organisation", to: "/organization", icon: Building03Icon },
       { label: "Activité", to: "/activity", icon: Activity01Icon, managersOnly: true },
+      { label: "Organisation", to: "/organization", icon: Building03Icon },
     ],
-  },
-  {
-    label: "Compte",
-    items: [{ label: "Mon compte", to: "/account", icon: UserCircleIcon }],
   },
 ];
 
+/** Not in the sidebar, but still the owner of /account/* (breadcrumb). */
+export const ACCOUNT_NAV_ITEM: NavItem = {
+  label: "Mon compte",
+  to: "/account",
+  icon: UserCircleIcon,
+};
+
 /** Navigation entry owning `pathname`, used for the active state and the breadcrumb. */
 export function findNavItem(pathname: string): NavItem | undefined {
-  return NAV_SECTIONS.flatMap((section) => section.items).find(
+  return [...NAV_SECTIONS.flatMap((section) => section.items), ACCOUNT_NAV_ITEM].find(
     (item) => pathname === item.to || pathname.startsWith(`${item.to}/`),
   );
 }

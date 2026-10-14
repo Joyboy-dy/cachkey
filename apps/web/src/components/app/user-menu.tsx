@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import {
+  ComputerIcon,
   Loading03Icon,
+  SquareLockPasswordIcon,
   Logout03Icon,
   UnfoldMoreIcon,
   UserCircleIcon,
@@ -24,7 +26,13 @@ import type { AuthSession } from "@/lib/auth/session";
 import { useSignOut } from "@/lib/auth/use-sign-out";
 import { UserAvatar } from "./user-avatar";
 
-/** Account entry at the bottom of the sidebar: identity, account page, sign-out. */
+const ACCOUNT_LINKS = [
+  { label: "Mon profil", to: "/account", icon: UserCircleIcon },
+  { label: "Sécurité", to: "/account/security", icon: SquareLockPasswordIcon },
+  { label: "Appareils connectés", to: "/account/sessions", icon: ComputerIcon },
+] as const;
+
+/** Account entry at the bottom of the sidebar: identity, account settings, sign-out. */
 export function UserMenu({ user }: { user: AuthSession["user"] }) {
   const { isMobile, setOpenMobile } = useSidebar();
   const { signOut, isPending } = useSignOut();
@@ -61,12 +69,15 @@ export function UserMenu({ user }: { user: AuthSession["user"] }) {
               </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/account" onClick={() => setOpenMobile(false)}>
-                <Icon icon={UserCircleIcon} aria-hidden />
-                Mon compte
-              </Link>
-            </DropdownMenuItem>
+            {/* The account pages live here only: the sidebar is for the workspace. */}
+            {ACCOUNT_LINKS.map((item) => (
+              <DropdownMenuItem key={item.to} asChild>
+                <Link to={item.to} onClick={() => setOpenMobile(false)}>
+                  <Icon icon={item.icon} aria-hidden />
+                  {item.label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               disabled={isPending}

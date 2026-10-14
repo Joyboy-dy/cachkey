@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/app/app-sidebar";
 import { AppTopbar } from "@/components/app/app-topbar";
+import { GettingStartedDock } from "@/components/app/getting-started";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { sessionQueryOptions } from "@/lib/auth/session";
 import { getSidebarOpen } from "@/lib/sidebar-state";
@@ -35,11 +36,13 @@ function AppShell() {
   return (
     <SidebarProvider defaultOpen={sidebarOpen}>
       <AppSidebar user={session.user} workspace={workspace} organization={organization} />
-      <SidebarInset className="min-w-0">
+      {/* clip (not hidden): no horizontal page scroll, sticky top bar keeps working. */}
+      <SidebarInset className="min-w-0 overflow-x-clip">
         <AppTopbar />
         <main className="flex-1">
           <Outlet />
         </main>
+        <GettingStartedDock user={session.user} organization={organization} />
       </SidebarInset>
     </SidebarProvider>
   );

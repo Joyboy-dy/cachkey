@@ -70,3 +70,17 @@ describe("resolveUrl", () => {
 test("formatUserCode", () => {
   expect(formatUserCode("WDJBMJHT")).toBe("WDJB-MJHT");
 });
+
+test("project commands", () => {
+  expect(command(["init"]).command).toEqual({ name: "init", projectName: null });
+  expect(command(["init", "Mon app"]).command).toEqual({ name: "init", projectName: "Mon app" });
+  expect(command(["projects", "create", "Api"]).command).toEqual({
+    name: "project-create",
+    projectName: "Api",
+  });
+  expect(command(["envs", "create", "qa"]).command).toEqual({ name: "env-create", envName: "qa" });
+  expect(command(["pull", "--all"]).options.all).toBe(true);
+  expect(command(["pull", "-o", "-"]).options.output).toBe("-");
+  expect(parseArgs(["projects", "delete", "x"])).toHaveProperty("error");
+  expect(parseArgs(["envs", "create"])).toHaveProperty("error");
+});

@@ -5,6 +5,7 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { AuditEventRow } from "@/components/activity/audit-event";
 import { PageContainer, PageHeader } from "@/components/app/page";
+import { ScrollRow } from "@/components/app/scroll-row";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import {
@@ -102,7 +103,11 @@ function ActivityPage() {
       />
 
       <div className="mt-8 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div role="group" aria-label="Type d’activité" className="flex flex-wrap gap-1.5">
+        {/* One line at every size: scrolls sideways when it does not fit. */}
+        <ScrollRow
+          label="Type d’activité"
+          className="-mx-4 px-4 sm:mx-0 sm:px-0 xl:min-w-0 xl:flex-1"
+        >
           {CATEGORIES.map((category) => {
             const active = search.category === category.value;
             return (
@@ -126,7 +131,7 @@ function ActivityPage() {
               </button>
             );
           })}
-        </div>
+        </ScrollRow>
         <div className="flex items-center gap-2 text-sm">
           <span id="activity-project" className="shrink-0 text-muted-foreground">
             Projet
@@ -186,7 +191,7 @@ function ActivityPage() {
             ) : null}
           </div>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
             {groupByDay(events).map((group) => (
               <section key={group.key} aria-label={group.label}>
                 <h2 className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">

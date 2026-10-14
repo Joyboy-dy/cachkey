@@ -6,3 +6,4 @@ export * from "./dotenv";
 export * from "./collaboration-schemas";
 export * from "./text";
 export * from "./token-schemas";
+export * from "./dashboard-schemas";

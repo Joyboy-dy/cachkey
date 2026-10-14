@@ -1,6 +1,4 @@
 import {
-  type AuditAction,
-  auditActions,
   auditCategories,
   type AuditPage,
   auditQuerySchema,
@@ -18,7 +16,7 @@ import {
   type Workspace,
 } from "@cachkey/shared";
 import { Elysia } from "elysia";
-import { audit, type AuditActor } from "./audit";
+import { audit, type AuditActor, auditEventSelect, toAuditEventDtos } from "./audit";
 import { prisma } from "./db";
 import {
   HttpError,
@@ -91,7 +89,6 @@ function parseProject(body: unknown) {
 }
 
 const AUDIT_PAGE_SIZE = 50;
-const auditActionSet = new Set<string>(auditActions);
 
 export const workspaceRoutes = new Elysia({ prefix: "/api" })
   .use(httpErrors)
@@ -136,17 +133,6 @@ export const workspaceRoutes = new Elysia({ prefix: "/api" })
           ]
         : [],
     );
-  })
-
-  /** Counts for the dashboard's first steps (owners and admins). */
-  .get("/organization/overview", async ({ request }) => {
-    const { organizationId } = await requireManager(request.headers);
-    const [secrets, members, pendingInvitations] = await Promise.all([
-      prisma.secret.count({ where: { environment: { project: { organizationId } } } }),
-      prisma.member.count({ where: { organizationId } }),
-      prisma.invitation.count({ where: { organizationId, status: "pending" } }),
-    ]);
-    return { secrets, members, pendingInvitations };
   })
 
   /**
@@ -497,56 +483,13 @@ export const workspaceRoutes = new Elysia({ prefix: "/api" })
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: AUDIT_PAGE_SIZE + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      select: {
-        id: true,
-        action: true,
-        actorId: true,
-        actorName: true,
-        actor: { select: { name: true, avatarSeed: true } },
-        projectName: true,
-        environmentName: true,
-        target: true,
-        metadata: true,
-        ip: true,
-        createdAt: true,
-      },
+      select: auditEventSelect,
     });
     set.headers["cache-control"] = "no-store";
     const page = rows.slice(0, AUDIT_PAGE_SIZE);
     return {
       nextCursor: rows.length > AUDIT_PAGE_SIZE ? (page.at(-1)?.id ?? null) : null,
-      events: page.flatMap((row) =>
-        auditActionSet.has(row.action)
-          ? [
-              {
-                id: row.id,
-                action: row.action as AuditAction,
-                actor: {
-                  id: row.actorId,
-                  // Current name when the account still exists, the recorded one otherwise.
-                  name: row.actor?.name ?? row.actorName,
-                  avatarSeed: row.actor?.avatarSeed ?? null,
-                },
-                projectName: row.projectName,
-                environmentName: row.environmentName,
-                target: row.target,
-                details:
-                  row.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
-                    ? (Object.fromEntries(
-                        Object.entries(row.metadata).filter(
-                          ([, value]) =>
-                            typeof value === "string" ||
-                            typeof value === "number" ||
-                            typeof value === "boolean",
-                        ),
-                      ) as Record<string, string | number | boolean>)
-                    : null,
-                ip: row.ip,
-                createdAt: row.createdAt.toISOString(),
-              },
-            ]
-          : [],
-      ),
+      events: page.flatMap(toAuditEventDtos),
     };
   })
 

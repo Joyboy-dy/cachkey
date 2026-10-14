@@ -183,28 +183,3 @@ export const auditProjectsQueryOptions = (organizationId: string) =>
     queryFn: () => getAuditProjects(),
     staleTime: 60_000,
   });
-
-// ── Overview ─────────────────────────────────────────────────────────────────
-
-const overviewSchema = z.object({
-  secrets: z.number(),
-  members: z.number(),
-  pendingInvitations: z.number(),
-});
-export type OrganizationOverview = z.infer<typeof overviewSchema>;
-
-export const getOrganizationOverview = createServerFn({ method: "GET" }).handler(
-  async (): Promise<OrganizationOverview | null> => {
-    const response = await fetchApiAsVisitor("/api/organization/overview");
-    if (!response?.ok) return null;
-    const parsed = overviewSchema.safeParse(await response.json());
-    return parsed.success ? parsed.data : null;
-  },
-);
-
-export const organizationOverviewQueryOptions = (organizationId: string) =>
-  queryOptions({
-    queryKey: ["overview", organizationId],
-    queryFn: () => getOrganizationOverview(),
-    staleTime: 30_000,
-  });

@@ -1,259 +1,253 @@
+import { type DashboardAlert, type DashboardProject, canManage } from "@cachkey/shared";
 import {
-  ArrowRight02Icon,
+  Add01Icon,
+  Alert02Icon,
+  ArrowRight01Icon,
   FolderLockedIcon,
-  MailValidation01Icon,
-  Tick02Icon,
+  Key01Icon,
+  MailSend01Icon,
 } from "@hugeicons/core-free-icons";
-import { canManage } from "@cachkey/shared";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PageContainer, PageHeader, SectionCard, StatusPill } from "@/components/app/page";
+import { ActivityChart } from "@/components/dashboard/activity-chart";
+import { ACTIVITY_PANEL_SPACE, RecentActivity } from "@/components/dashboard/recent-activity";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { PageContainer, PageHeader, SectionCard } from "@/components/app/page";
-import { UserAvatar } from "@/components/app/user-avatar";
 import { textLinkVariants } from "@/components/ui/text-link";
-import { organizationOverviewQueryOptions } from "@/lib/collaboration";
+import { dashboardQueryOptions } from "@/lib/dashboard";
 import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { projectsQueryOptions } from "@/lib/workspace";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  loader: async ({ context }) => {
-    const { queryClient, organization } = context;
-    await Promise.all([
-      queryClient.ensureQueryData(projectsQueryOptions(organization.id)),
-      canManage(organization.role)
-        ? queryClient.ensureQueryData(organizationOverviewQueryOptions(organization.id))
-        : null,
-    ]);
-  },
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(dashboardQueryOptions(context.organization.id)),
   head: () => ({ meta: [{ title: "Vue d’ensemble · Cachkey" }] }),
   component: DashboardPage,
 });
 
-type Step = {
-  title: string;
-  description: string;
-  done: boolean;
-  action?: { label: string; to: "/projects" | "/organization" };
+const PERMISSION_LABELS: Record<DashboardProject["permission"], string> = {
+  manage: "Accès complet",
+  write: "Lecture et écriture",
+  read: "Lecture",
 };
+
+const relative = new Intl.RelativeTimeFormat("fr-FR", { numeric: "auto" });
+
+/** « aujourd’hui », « hier », « il y a 5 jours », then the date. */
+function since(value: string): string {
+  const days = Math.round((Date.now() - new Date(value).getTime()) / 86_400_000);
+  if (days < 7) return relative.format(-days, "day");
+  return `le ${formatDate(value)}`;
+}
+
+function plural(count: number, one: string, many: string) {
+  return `${count} ${count > 1 ? many : one}`;
+}
 
 function DashboardPage() {
   const { session, organization } = Route.useRouteContext();
   const { user } = session;
-  const { data: projects } = useSuspenseQuery(projectsQueryOptions(organization.id));
-  const firstName = user.name.split(" ")[0] || user.name;
-
+  const { data } = useSuspenseQuery(dashboardQueryOptions(organization.id));
   const manager = canManage(organization.role);
-  const { data: overview } = useQuery({
-    ...organizationOverviewQueryOptions(organization.id),
-    enabled: manager,
-  });
-
-  const accountSteps: Step[] = [
-    {
-      title: "Créer votre compte",
-      description: "Votre espace Cachkey est prêt.",
-      done: true,
-    },
-    {
-      title: "Confirmer votre adresse email",
-      description: "Elle sert à sécuriser votre compte et à le récupérer.",
-      done: user.emailVerified,
-    },
-  ];
-  const steps: Step[] = manager
-    ? [
-        ...accountSteps,
-        {
-          title: "Créer votre organisation",
-          description: `${organization.name} regroupe vos projets.`,
-          done: true,
-        },
-        {
-          title: "Créer votre premier projet",
-          description: "Un projet regroupe les variables d’une application.",
-          done: projects.length > 0,
-          action: { label: "Créer un projet", to: "/projects" },
-        },
-        {
-          title: "Ajouter vos variables",
-          description: "Importez votre fichier .env : chaque valeur est chiffrée.",
-          done: (overview?.secrets ?? 0) > 0,
-          action: { label: "Ouvrir un projet", to: "/projects" },
-        },
-        {
-          title: "Inviter votre équipe",
-          description: "Partagez l’accès sans jamais envoyer un secret par message.",
-          done: (overview?.members ?? 1) > 1 || (overview?.pendingInvitations ?? 0) > 0,
-          action: { label: "Inviter", to: "/organization" },
-        },
-      ]
-    : [
-        ...accountSteps,
-        {
-          title: `Rejoindre ${organization.name}`,
-          description: "Vous faites partie de l’organisation.",
-          done: true,
-        },
-        {
-          title: "Accéder à un projet",
-          description: "Un administrateur vous partage les projets dont vous avez besoin.",
-          done: projects.length > 0,
-          action: { label: "Voir mes projets", to: "/projects" },
-        },
-      ];
-  const doneCount = steps.filter((step) => step.done).length;
-  const nextIndex = steps.findIndex((step) => !step.done);
+  const firstName = user.name.split(" ")[0] || user.name;
+  // Owners and admins only (null for members): the panel shows even when still empty.
+  const activity = data.activity;
+  const variables = data.projects.reduce((sum, project) => sum + project.variables, 0);
 
   return (
-    <PageContainer>
-      <PageHeader
-        title={`Bonjour, ${firstName}`}
-        description={`Retrouvez ici l’essentiel de ${organization.name}.`}
-      />
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        <SectionCard
-          className="lg:col-span-2"
-          title="Premiers pas"
+    <div className={cn(activity && ACTIVITY_PANEL_SPACE)}>
+      <PageContainer>
+        <PageHeader
+          title={`Bonjour, ${firstName}`}
           description={
-            manager
-              ? "Quelques étapes pour mettre vos secrets à l’abri."
-              : "Pour bien démarrer dans l’organisation."
+            data.projects.length === 0
+              ? `Bienvenue dans ${organization.name}.`
+              : `${plural(data.projects.length, "projet", "projets")} et ${plural(variables, "variable", "variables")} dans ${organization.name}.`
           }
-          aside={
-            <span className="font-mono text-sm whitespace-nowrap text-muted-foreground">
-              {doneCount}/{steps.length}
-            </span>
+          actions={
+            manager ? (
+              <Button asChild>
+                <Link to="/projects">
+                  <Icon icon={Add01Icon} />
+                  Nouveau projet
+                </Link>
+              </Button>
+            ) : null
           }
-        >
-          <div
-            className="h-1 bg-secondary"
-            role="progressbar"
-            aria-label="Progression des premiers pas"
-            aria-valuemin={0}
-            aria-valuemax={steps.length}
-            aria-valuenow={doneCount}
-          >
-            <div
-              className="h-full bg-primary transition-[width] duration-500"
-              style={{ width: `${(doneCount / steps.length) * 100}%` }}
-            />
-          </div>
-          <ol className="divide-y">
-            {steps.map((step, index) => (
-              <li key={step.title} className="flex items-start gap-4 px-5 py-4 sm:px-6">
-                <span
-                  className={cn(
-                    "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border font-mono text-xs",
-                    step.done && "border-foreground bg-foreground text-background",
-                    !step.done && index === nextIndex && "border-primary text-foreground",
-                    !step.done && index !== nextIndex && "border-border text-muted-foreground",
-                  )}
-                  aria-hidden
-                >
-                  {step.done ? (
-                    <Icon icon={Tick02Icon} className="size-3.5" strokeWidth={3} />
-                  ) : (
-                    index + 1
-                  )}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p
-                    className={cn(
-                      "text-sm leading-6 font-medium",
-                      // Done: still readable in both themes, the strike-through carries the state.
-                      step.done &&
-                        "text-foreground/75 line-through decoration-foreground/50 decoration-1",
-                    )}
-                  >
-                    {step.title}
-                    <span className="sr-only">{step.done ? " (terminé)" : " (à faire)"}</span>
-                  </p>
-                  <p className="text-sm leading-5 text-muted-foreground">{step.description}</p>
-                </div>
-                {!step.done && step.action && index === nextIndex ? (
+        />
+
+        <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-6">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-6">
+            {data.alerts && data.alerts.length > 0 ? <Alerts alerts={data.alerts} /> : null}
+            <Projects projects={data.projects} manager={manager} />
+            {data.activity ? (
+              <SectionCard
+                title="Activité des 14 derniers jours"
+                description="Consultations et modifications des variables, tous projets confondus."
+                aside={
                   <Link
-                    to={step.action.to}
-                    className={cn(textLinkVariants(), "shrink-0 text-sm whitespace-nowrap")}
+                    to="/activity"
+                    className={cn(textLinkVariants(), "text-sm whitespace-nowrap")}
                   >
-                    {step.action.label}
+                    Journal complet
                   </Link>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        </SectionCard>
-
-        <div className="grid content-start gap-6">
-          <SectionCard
-            title="Projets récents"
-            aside={
-              <Link to="/projects" className={cn(textLinkVariants(), "text-sm whitespace-nowrap")}>
-                Tout voir
-              </Link>
-            }
-          >
-            {projects.length === 0 ? (
-              <p className="px-5 py-5 text-sm leading-6 text-muted-foreground sm:px-6">
-                Aucun projet pour l’instant.
-              </p>
-            ) : (
-              <ul className="divide-y">
-                {projects.slice(0, 4).map((project) => (
-                  <li key={project.id}>
-                    <Link
-                      to="/projects/$slug"
-                      params={{ slug: project.slug }}
-                      className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-accent sm:px-6"
-                    >
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                        <Icon icon={FolderLockedIcon} className="size-4" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">{project.name}</span>
-                        <span className="block text-xs text-muted-foreground">
-                          Modifié le {formatDate(project.updatedAt)}
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </SectionCard>
-
-          <SectionCard title="Votre compte">
-            <div className="flex items-center gap-3 px-5 py-5 sm:px-6">
-              <UserAvatar user={user} className="size-11 text-sm" />
-              <div className="min-w-0">
-                <p className="truncate text-sm leading-6 font-medium">{user.name}</p>
-                <p className="truncate text-sm leading-5 text-muted-foreground">{user.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 border-t px-5 py-3.5 text-sm sm:px-6">
-              <Icon
-                icon={MailValidation01Icon}
-                className={cn(
-                  "size-4",
-                  user.emailVerified ? "text-success" : "text-muted-foreground",
-                )}
-                aria-hidden
-              />
-              {user.emailVerified ? "Adresse email confirmée" : "Adresse email à confirmer"}
-            </div>
-            <div className="border-t px-5 py-3.5 sm:px-6">
-              <Link
-                to="/account"
-                className={cn(textLinkVariants(), "inline-flex items-center gap-1.5 text-sm")}
+                }
               >
-                Gérer mon compte
-                <Icon icon={ArrowRight02Icon} className="size-4" aria-hidden />
-              </Link>
-            </div>
-          </SectionCard>
+                <div className="px-3 pt-2 sm:px-4">
+                  <ActivityChart days={data.activity.days} />
+                </div>
+                <Legend />
+              </SectionCard>
+            ) : null}
+          </div>
         </div>
-      </div>
-    </PageContainer>
+
+        {activity ? <RecentActivity events={activity.recent} /> : null}
+      </PageContainer>
+    </div>
+  );
+}
+
+function Legend() {
+  return (
+    <p className="flex flex-wrap gap-x-4 gap-y-1 px-5 pb-4 text-xs text-muted-foreground sm:px-6">
+      <span className="inline-flex items-center gap-1.5">
+        <span className="size-2.5 rounded-sm bg-foreground" aria-hidden />
+        Consultations
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="size-2.5 rounded-sm bg-primary" aria-hidden />
+        Modifications
+      </span>
+    </p>
+  );
+}
+
+/** What deserves action now: expiring access tokens, invitations waiting for an answer. */
+function Alerts({ alerts }: { alerts: DashboardAlert[] }) {
+  return (
+    <SectionCard title="À surveiller" className="border-primary/40">
+      <ul className="divide-y">
+        {alerts.map((alert) => {
+          if (alert.type === "pending_invitations") {
+            return (
+              <li key="invitations" className="flex items-center gap-3 px-5 py-3 sm:px-6">
+                <Icon icon={MailSend01Icon} className="size-4 shrink-0 text-muted-foreground" />
+                <p className="min-w-0 flex-1 text-sm">
+                  {plural(alert.count, "invitation attend", "invitations attendent")} une réponse.
+                </p>
+                <Link
+                  to="/organization"
+                  className={cn(textLinkVariants(), "text-sm whitespace-nowrap")}
+                >
+                  Voir
+                </Link>
+              </li>
+            );
+          }
+          const expired = alert.type === "token_expired";
+          return (
+            <li
+              key={`${alert.projectSlug}:${alert.tokenName}`}
+              className="flex items-center gap-3 px-5 py-3 sm:px-6"
+            >
+              <Icon
+                icon={expired ? Alert02Icon : Key01Icon}
+                className={cn(
+                  "size-4 shrink-0",
+                  expired ? "text-destructive" : "text-muted-foreground",
+                )}
+              />
+              <p className="min-w-0 flex-1 text-sm">
+                Le jeton <span className="font-medium">{alert.tokenName}</span> de{" "}
+                {alert.projectName}{" "}
+                {expired
+                  ? `a expiré le ${formatDate(alert.expiresAt)}`
+                  : `expire ${expiresIn(alert.expiresAt)}`}
+                .
+              </p>
+              <Link
+                to="/projects/$slug/settings"
+                params={{ slug: alert.projectSlug }}
+                hash="jetons"
+                className={cn(textLinkVariants(), "text-sm whitespace-nowrap")}
+              >
+                Gérer
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </SectionCard>
+  );
+}
+
+function expiresIn(value: string): string {
+  const days = Math.round((new Date(value).getTime() - Date.now()) / 86_400_000);
+  return relative.format(days, "day");
+}
+
+function Projects({ projects, manager }: { projects: DashboardProject[]; manager: boolean }) {
+  return (
+    <SectionCard
+      title="Vos projets"
+      aside={
+        projects.length > 0 ? (
+          <Link to="/projects" className={cn(textLinkVariants(), "text-sm whitespace-nowrap")}>
+            Tout voir
+          </Link>
+        ) : null
+      }
+    >
+      {projects.length === 0 ? (
+        <div className="px-5 py-8 text-center sm:px-6">
+          <p className="text-sm font-medium">Aucun projet pour l’instant</p>
+          <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-balance text-muted-foreground">
+            {manager
+              ? "Créez un projet par application, puis importez son fichier .env."
+              : "Un administrateur vous partagera les projets dont vous avez besoin."}
+          </p>
+        </div>
+      ) : (
+        <ul className="divide-y">
+          {projects.slice(0, 6).map((project) => (
+            <li key={project.id}>
+              <Link
+                to="/projects/$slug"
+                params={{ slug: project.slug }}
+                className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-accent/60 sm:px-6"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                  <Icon icon={FolderLockedIcon} className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="truncate text-sm font-medium">{project.name}</span>
+                    {project.permission !== "manage" ? (
+                      <StatusPill>{PERMISSION_LABELS[project.permission]}</StatusPill>
+                    ) : null}
+                  </span>
+                  <span className="block truncate text-xs leading-5 text-muted-foreground">
+                    {plural(project.environments, "environnement", "environnements")} ·{" "}
+                    {plural(project.variables, "variable", "variables")}
+                    {project.emptyVariables > 0 ? (
+                      <span className="text-foreground">
+                        {" "}
+                        · {project.emptyVariables} sans valeur
+                      </span>
+                    ) : null}
+                  </span>
+                </span>
+                <span className="hidden shrink-0 text-xs text-muted-foreground sm:block">
+                  Modifié {since(project.lastChangeAt)}
+                </span>
+                <Icon icon={ArrowRight01Icon} className="size-4 shrink-0 text-muted-foreground" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SectionCard>
   );
 }

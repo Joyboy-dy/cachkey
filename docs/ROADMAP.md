@@ -120,6 +120,18 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 
 ## Journal
 
+- **2026-10-14** — « Premiers pas » disponible sur toutes les pages (tant qu'il reste des étapes),
+  animation légère à rebond. Activité récente en panneau latéral détaché (xl+) ou en bottom
+  sheet (poignée en bas d'écran), état vide illustré.
+- **2026-10-14** — Vue d'ensemble repensée : projets avec leurs compteurs (environnements,
+  variables, variables sans valeur, dernière modification), « À surveiller » (jetons qui
+  expirent, invitations en attente), activité des 14 derniers jours (graphique Bklit),
+  dernières actions, démarrage depuis le terminal. « Premiers pas » devient une carte
+  flottante (repliable, masquable 3 jours). « Mon compte » quitte la barre latérale pour le
+  menu de l'avatar (profil, sécurité, appareils). Manifeste web ajouté.
+- **2026-10-14** — CLI : `init` (crée le projet du dossier et s'y lie), `projects create`,
+  `envs create` ; `pull` écrit `.env.<environnement>` à la racine du projet, plusieurs
+  environnements avec `--env a,b` ou `--all`, avertit si le fichier n'est pas ignoré par Git.
 - **2026-10-14** — CLI façon `gh` : `cachkey login` (code validé dans le navigateur sur
   `/device`, session propre au terminal, visible et révocable dans Appareils), `link`
   (`.cachkey.json` sans secret), `orgs`, `projects`, `envs`, `secrets`, `get`, `set` (saisie

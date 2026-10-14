@@ -15,6 +15,7 @@ export type Options = {
   yes: boolean;
   overwrite: boolean;
   noBrowser: boolean;
+  all: boolean;
 };
 
 export type Command =
@@ -23,11 +24,14 @@ export type Command =
   | { name: "login" }
   | { name: "logout" }
   | { name: "whoami" }
+  | { name: "init"; projectName: string | null }
   | { name: "link" }
   | { name: "unlink" }
   | { name: "orgs" }
   | { name: "projects" }
+  | { name: "project-create"; projectName: string }
   | { name: "envs" }
+  | { name: "env-create"; envName: string }
   | { name: "secrets" }
   | { name: "get"; key: string }
   | { name: "set"; key: string; value: string | null }
@@ -47,12 +51,15 @@ Connexion
   cachkey logout                Déconnecte ce terminal.
   cachkey whoami                Compte, organisation, projet et environnement utilisés.
 
-Dossier de travail
-  cachkey link                  Associe ce dossier à un projet et un environnement.
-  cachkey unlink                Retire cette association.
+Projets
+  cachkey init [nom]            Crée un projet (nom du dossier par défaut) et y lie ce dossier.
+  cachkey link                  Lie ce dossier à un projet existant et un environnement.
+  cachkey unlink                Retire ce lien.
+  cachkey projects [create <nom>]       Liste ou crée des projets.
+  cachkey envs [create <nom>]           Liste ou crée des environnements.
+  cachkey orgs                  Liste vos organisations.
 
-Consulter et modifier
-  cachkey orgs | projects | envs
+Variables
   cachkey secrets               Liste les variables (sans leurs valeurs).
   cachkey get <NOM>             Affiche une valeur.
   cachkey set <NOM> [valeur]    Ajoute ou modifie (sans valeur : lue au clavier, masquée).
@@ -60,11 +67,15 @@ Consulter et modifier
   cachkey import <fichier>      Importe un fichier .env (--overwrite pour remplacer).
 
 Utiliser
-  cachkey pull [--format dotenv|json] [--output fichier]
-  cachkey run -- <commande> [arguments]
+  cachkey pull                  Écrit .env.<environnement> à la racine du projet.
+      --env a,b | --all         Plusieurs environnements : un fichier chacun.
+      --output <fichier>        Autre fichier (« - » : affiche dans le terminal).
+      --format json             JSON au lieu du format .env.
+  cachkey run -- <commande> [arguments]   Lance la commande avec les variables.
 
 Options
   --org, --project, --env <identifiant>   Remplacent ceux du dossier lié.
+  --all               Tous les environnements (pull).
   --url <adresse>     Instance Cachkey (sinon CACHKEY_URL, puis celle de la connexion).
   --token <jeton>     Jeton d'accès d'un serveur ou d'une CI (sinon CACHKEY_TOKEN).
   --yes, -y           Ne demande pas de confirmation.
@@ -85,18 +96,7 @@ const VALUE_FLAGS = {
   "--format": "format",
 } as const;
 
-const SIMPLE = [
-  "login",
-  "logout",
-  "whoami",
-  "link",
-  "unlink",
-  "orgs",
-  "projects",
-  "envs",
-  "secrets",
-  "pull",
-] as const;
+const SIMPLE = ["login", "logout", "whoami", "link", "unlink", "orgs", "secrets", "pull"] as const;
 
 export function parseArgs(argv: readonly string[]): Parsed {
   const options: Options = {
@@ -110,6 +110,7 @@ export function parseArgs(argv: readonly string[]): Parsed {
     yes: false,
     overwrite: false,
     noBrowser: false,
+    all: false,
   };
   const positional: string[] = [];
   let rest: string[] | null = null;
@@ -132,6 +133,10 @@ export function parseArgs(argv: readonly string[]): Parsed {
     }
     if (arg === "--no-browser") {
       options.noBrowser = true;
+      continue;
+    }
+    if (arg === "--all") {
+      options.all = true;
       continue;
     }
     if (arg.startsWith("-") && arg !== "-") {
@@ -184,6 +189,19 @@ function toCommand(
     case "set":
       if (!args[0]) return missing("NOM");
       return extra(2) ?? { name: "set", key: args[0], value: args[1] ?? null };
+    case "init":
+      return extra(1) ?? { name: "init", projectName: args[0] ?? null };
+    case "projects":
+    case "envs":
+      if (args[0] === undefined) return { name };
+      if (args[0] !== "create")
+        return { error: `Sous-commande inconnue : ${args[0]}. Essayez « ${name} create <nom> ».` };
+      if (!args[1]) return { error: `Indiquez le nom : cachkey ${name} create <nom>.` };
+      if (args.length > 2)
+        return { error: `Mettez le nom entre guillemets s'il contient des espaces.` };
+      return name === "projects"
+        ? { name: "project-create", projectName: args[1] }
+        : { name: "env-create", envName: args[1] };
     case "import":
       if (!args[0]) return missing("fichier");
       return extra(1) ?? { name: "import", file: args[0] };
