@@ -37,7 +37,7 @@ function ProjectsPage() {
           <p className="mt-1.5 max-w-md text-sm leading-6 text-balance text-muted-foreground">
             {manager
               ? "Créez un premier projet pour une application, un site ou un service."
-              : "Les projets créés par les administrateurs de l’organisation apparaîtront ici."}
+              : "Les projets qu’un administrateur partagera avec vous apparaîtront ici."}
           </p>
           {manager ? (
             <div className="mt-6">

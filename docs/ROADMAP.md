@@ -82,11 +82,20 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 - Historique : chaque changement de valeur crée une version, consultable, révélable et
   restaurable (la restauration crée une nouvelle version).
 
-## Phase 5 — Collaboration & permissions ⏳
+## Phase 5 — Collaboration & permissions ✅
 
-- Invitations par email.
-- Permissions granulaires par projet / environnement.
-- Journal d'audit (qui a lu / modifié quoi, quand).
+- Invitations par email (plugin organization de Better Auth) : rôle administrateur ou membre,
+  validité 7 jours, renvoi et annulation, page `/invitation/:id` (accepter / refuser, adresse
+  vérifiée), invitations reçues affichées à l'onboarding.
+- Permissions par projet et par environnement (`ProjectAccess`) : propriétaires et
+  administrateurs gèrent tout ; un membre ne voit que les projets partagés avec lui, en lecture
+  (afficher, copier, exporter) ou en lecture et écriture, sur tous les environnements ou une
+  sélection. Un projet ou environnement non partagé répond 404. Accès retirés quand la
+  personne quitte l'organisation ou devient administrateur.
+- Journal d'audit (`AuditEvent`, `apps/api/src/audit.ts`) : chaque affichage ou export de
+  valeur, chaque modification de variable, d'environnement, de projet, d'accès et de membre,
+  avec auteur, projet, environnement, adresse IP et date. Page « Activité » filtrable par type
+  et par projet, pagination par curseur. Aucune valeur secrète n'y est jamais écrite.
 
 ## Phase 6 — Accès programmatique ⏳
 
@@ -111,6 +120,11 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 
 ## Journal
 
+- **2026-10-14** — Phase 5 terminée. Vérifié : format, lint, types, tests, build ; en réel
+  (API + Mailpit + navigateur) : invitation (email reçu, détails refusés à une autre adresse,
+  acceptation), membre sans accès (liste vide, 404), accès en lecture limité à un
+  environnement (autres environnements 404, écriture 403, journal 403), journal des
+  consultations et des changements de rôle, interface en lecture seule.
 - **2026-10-14** — Refonte UX projets / environnements / variables : onglets Variables et
   Paramètres, sélecteur d'environnement, liste pensée pour des centaines de variables (barre
   d'outils collante, recherche « / », tri, affichage progressif, valeurs longues repliées),

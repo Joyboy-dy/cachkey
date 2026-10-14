@@ -1,5 +1,5 @@
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AuthHeader, AuthShell } from "@/components/auth/auth-shell";
 import { CreateOrganizationForm } from "@/components/organization/create-organization-form";
@@ -8,6 +8,7 @@ import { Icon } from "@/components/ui/icon";
 import { authClient } from "@/lib/auth/auth-client";
 import { sessionQueryOptions } from "@/lib/auth/session";
 import { useSignOut } from "@/lib/auth/use-sign-out";
+import { myInvitationsQueryOptions } from "@/lib/collaboration";
 import { useRefreshWorkspace, workspaceQueryOptions } from "@/lib/workspace";
 
 /**
@@ -20,14 +21,15 @@ export const Route = createFileRoute("/onboarding")({
     if (!session) throw redirect({ to: "/sign-in", search: { redirect: "/onboarding" } });
     const workspace = await context.queryClient.fetchQuery(workspaceQueryOptions());
     if (workspace.active) throw redirect({ to: "/dashboard" });
-    return { session, workspace };
+    const invitations = await context.queryClient.fetchQuery(myInvitationsQueryOptions());
+    return { session, workspace, invitations };
   },
   head: () => ({ meta: [{ title: "Votre organisation · Cachkey" }] }),
   component: OnboardingPage,
 });
 
 function OnboardingPage() {
-  const { session, workspace } = Route.useRouteContext();
+  const { session, workspace, invitations } = Route.useRouteContext();
   const navigate = useNavigate();
   const refreshWorkspace = useRefreshWorkspace();
   const { signOut, isPending: signingOut } = useSignOut();
@@ -61,6 +63,35 @@ function OnboardingPage() {
             : "Créez votre organisation : elle regroupera vos projets et, plus tard, votre équipe."
         }
       />
+
+      {invitations.length > 0 ? (
+        <section aria-labelledby="invitations-title" className="mb-7">
+          <h2 id="invitations-title" className="mb-3 text-sm font-medium">
+            Invitations reçues
+          </h2>
+          <ul className="grid gap-2">
+            {invitations.map((invitation) => (
+              <li key={invitation.id}>
+                <Link
+                  to="/invitation/$id"
+                  params={{ id: invitation.id }}
+                  className="flex w-full items-center gap-3 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2.5 text-left text-sm transition-colors hover:border-primary"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">
+                      {invitation.organizationName}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      Invitation de {invitation.inviterName}
+                    </span>
+                  </span>
+                  <Icon icon={ArrowRight01Icon} className="size-4 text-muted-foreground" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {hasOrganizations ? (
         <>

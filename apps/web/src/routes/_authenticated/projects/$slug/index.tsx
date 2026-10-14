@@ -1,4 +1,4 @@
-import { canManage, type EnvironmentDto } from "@cachkey/shared";
+import { canManage, canWrite, type EnvironmentDto } from "@cachkey/shared";
 import { Layers01Icon } from "@hugeicons/core-free-icons";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -8,6 +8,7 @@ import { SecretsPanel } from "@/components/secrets/secrets-panel";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { environmentsQueryOptions, secretsQueryOptions } from "@/lib/secrets";
+import { projectQueryOptions } from "@/lib/workspace";
 
 const searchSchema = z.object({ env: z.string().min(1).max(64).optional().catch(undefined) });
 
@@ -40,6 +41,7 @@ function VariablesTab() {
   const { slug } = Route.useParams();
   const { env } = Route.useSearch();
   const { data: environments } = useSuspenseQuery(environmentsQueryOptions(organization.id, slug));
+  const { data: project } = useSuspenseQuery(projectQueryOptions(organization.id, slug));
   const manager = canManage(organization.role);
   const environment = pickEnvironment(environments, env);
 
@@ -53,7 +55,7 @@ function VariablesTab() {
         <p className="mt-1 max-w-sm text-sm leading-6 text-balance text-muted-foreground">
           {manager
             ? "Créez un environnement (development, production…) pour y ranger vos variables."
-            : "Un administrateur doit d’abord créer un environnement pour ce projet."}
+            : "Aucun environnement de ce projet ne vous est partagé pour l’instant."}
         </p>
         {manager ? (
           <Button asChild className="mt-5">
@@ -72,6 +74,7 @@ function VariablesTab() {
       organizationId={organization.id}
       projectSlug={slug}
       environment={environment}
+      canWrite={canWrite(project?.permission)}
       switcher={
         <EnvironmentSwitcher
           organizationId={organization.id}

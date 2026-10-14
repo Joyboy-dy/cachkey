@@ -25,14 +25,22 @@ import {
 } from "./crypto";
 import { prisma } from "./db";
 import { env } from "./env";
-import { findProject, HttpError, httpErrors, requireManager, requireMembership } from "./guards";
+import { type AuditActor, audit } from "./audit";
+import {
+  coversEnvironment,
+  HttpError,
+  httpErrors,
+  type Membership,
+  requireProject,
+} from "./guards";
 
 /*
  * Environments and their encrypted variables, under /api/projects/:slug.
  *
- * Every member of the organisation reads and edits variables; owners and admins also
- * create, rename and delete environments. Values never leave the API unless explicitly
- * requested (reveal, export) and those responses are never cached.
+ * Owners and admins manage everything; members only see the projects and environments
+ * shared with them, read-only or with write access (see guards.ts). Values never leave the
+ * API unless explicitly requested (reveal, export): those responses are never cached and
+ * always written to the audit log.
  */
 
 const masterKey = Buffer.from(env.ENCRYPTION_KEY, "base64");
@@ -70,12 +78,29 @@ async function findEnvironment(projectId: string, slug: string) {
   return environment;
 }
 
-/** Project + environment of the URL, for any member of the active organisation. */
-async function scope(headers: Headers, params: { slug: string; env: string }) {
-  const { organizationId, userId } = await requireMembership(headers);
-  const project = await findProject(organizationId, params.slug);
+/**
+ * Project + environment of the URL, checked against the caller's access. An environment
+ * outside the access answers 404, like a missing one.
+ */
+async function scope(
+  headers: Headers,
+  params: { slug: string; env: string },
+  needed: "read" | "write" = "read",
+) {
+  const { membership, project, grant } = await requireProject(headers, params.slug, needed);
   const environment = await findEnvironment(project.id, params.env);
-  return { userId, project, environment };
+  if (!coversEnvironment(grant, environment.id)) {
+    throw new HttpError(404, "ENVIRONMENT_NOT_FOUND");
+  }
+  return { membership, project, environment };
+}
+
+function actorOf(membership: Membership): AuditActor {
+  return {
+    organizationId: membership.organizationId,
+    userId: membership.userId,
+    userName: membership.userName,
+  };
 }
 
 async function findSecret(environmentId: string, id: string) {
@@ -143,11 +168,14 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
 
   // ── Environments ──────────────────────────────────────────────────────────
 
+  /** Only the environments the caller's access covers. */
   .get("/environments", async ({ request, params }): Promise<EnvironmentDto[]> => {
-    const { organizationId } = await requireMembership(request.headers);
-    const project = await findProject(organizationId, params.slug);
+    const { project, grant } = await requireProject(request.headers, params.slug);
     const environments = await prisma.environment.findMany({
-      where: { projectId: project.id },
+      where: {
+        projectId: project.id,
+        ...(grant.environmentIds ? { id: { in: grant.environmentIds } } : {}),
+      },
       orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       select: { id: true, name: true, slug: true, _count: { select: { secrets: true } } },
     });
@@ -158,8 +186,7 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
   })
 
   .post("/environments", async ({ request, params, body, set }): Promise<EnvironmentDto> => {
-    const { organizationId } = await requireManager(request.headers);
-    const project = await findProject(organizationId, params.slug);
+    const { membership, project } = await requireProject(request.headers, params.slug, "manage");
     const { name } = parse(environmentSchema, body);
     const existing = await prisma.environment.aggregate({
       where: { projectId: project.id },
@@ -175,25 +202,53 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
         position: (existing._max.position ?? -1) + 1,
       },
     });
+    await audit(
+      actorOf(membership),
+      { action: "environment.created", project, environmentName: name },
+      request,
+    );
     set.status = 201;
     return { id: environment.id, name, slug: environment.slug, secretCount: 0 };
   })
 
   // The slug stays stable on rename so existing links keep working.
   .patch("/environments/:env", async ({ request, params, body }) => {
-    const { organizationId } = await requireManager(request.headers);
-    const project = await findProject(organizationId, params.slug);
+    const { membership, project } = await requireProject(request.headers, params.slug, "manage");
     const environment = await findEnvironment(project.id, params.env);
     const { name } = parse(environmentSchema, body);
     await prisma.environment.update({ where: { id: environment.id }, data: { name } });
+    if (name !== environment.name) {
+      await audit(
+        actorOf(membership),
+        {
+          action: "environment.renamed",
+          project,
+          environmentName: name,
+          details: { from: environment.name },
+        },
+        request,
+      );
+    }
     return { status: true };
   })
 
   .delete("/environments/:env", async ({ request, params }) => {
-    const { organizationId } = await requireManager(request.headers);
-    const project = await findProject(organizationId, params.slug);
+    const { membership, project } = await requireProject(request.headers, params.slug, "manage");
     const environment = await findEnvironment(project.id, params.env);
+    const secretCount = await prisma.secret.count({ where: { environmentId: environment.id } });
     await prisma.environment.delete({ where: { id: environment.id } });
+    // Accesses limited to this environment no longer cover it.
+    await prisma.$executeRaw`UPDATE project_access SET environment_ids = array_remove(environment_ids, ${environment.id}) WHERE project_id = ${project.id}`;
+    await audit(
+      actorOf(membership),
+      {
+        action: "environment.deleted",
+        project,
+        environmentName: environment.name,
+        details: { variables: secretCount },
+      },
+      request,
+    );
     return { status: true };
   })
 
@@ -210,7 +265,7 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
   })
 
   .post("/environments/:env/secrets", async ({ request, params, body, set }) => {
-    const { userId, project, environment } = await scope(request.headers, params);
+    const { membership, project, environment } = await scope(request.headers, params, "write");
     const { key, value } = parse(secretSchema, body);
     const count = await prisma.secret.count({ where: { environmentId: environment.id } });
     if (count >= MAX_SECRETS_PER_ENVIRONMENT) throw new HttpError(409, "TOO_MANY_SECRETS");
@@ -221,11 +276,16 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
           environmentId: environment.id,
           key,
           value: encrypted,
-          updatedById: userId,
-          versions: { create: { version: 1, value: encrypted, createdById: userId } },
+          updatedById: membership.userId,
+          versions: { create: { version: 1, value: encrypted, createdById: membership.userId } },
         },
         select: { id: true, key: true, version: true, updatedAt: true, updatedBy: author },
       });
+      await audit(
+        actorOf(membership),
+        { action: "secret.created", project, environmentName: environment.name, target: key },
+        request,
+      );
       set.status = 201;
       return secretDto(secret);
     } catch (error) {
@@ -235,43 +295,83 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
   })
 
   .patch("/environments/:env/secrets/:id", async ({ request, params, body }) => {
-    const { userId, project, environment } = await scope(request.headers, params);
+    const { membership, project, environment } = await scope(request.headers, params, "write");
     const secret = await findSecret(environment.id, params.id);
     const input = parse(secretUpdateSchema, body);
+    const actor = actorOf(membership);
+    const base = { project, environmentName: environment.name };
 
+    let key = secret.key;
     if (input.key !== undefined && input.key !== secret.key) {
       try {
         await prisma.secret.update({
           where: { id: secret.id },
-          data: { key: input.key, updatedById: userId },
+          data: { key: input.key, updatedById: membership.userId },
         });
       } catch (error) {
         if (isUniqueViolation(error)) throw new HttpError(409, "SECRET_ALREADY_EXISTS");
         throw error;
       }
+      key = input.key;
+      await audit(
+        actor,
+        { ...base, action: "secret.renamed", target: key, details: { from: secret.key } },
+        request,
+      );
     }
     if (input.value !== undefined) {
       const dataKey = await dataKeyOf(project);
       if (decryptSecret(dataKey, environment.id, secret.value) !== input.value) {
-        await writeValue(secret, encryptSecret(dataKey, environment.id, input.value), userId);
+        await writeValue(
+          secret,
+          encryptSecret(dataKey, environment.id, input.value),
+          membership.userId,
+        );
+        await audit(
+          actor,
+          {
+            ...base,
+            action: "secret.updated",
+            target: key,
+            details: { version: secret.version + 1 },
+          },
+          request,
+        );
       }
     }
     return { status: true };
   })
 
   .delete("/environments/:env/secrets/:id", async ({ request, params }) => {
-    const { environment } = await scope(request.headers, params);
+    const { membership, project, environment } = await scope(request.headers, params, "write");
     const secret = await findSecret(environment.id, params.id);
     await prisma.secret.delete({ where: { id: secret.id } });
+    await audit(
+      actorOf(membership),
+      { action: "secret.deleted", project, environmentName: environment.name, target: secret.key },
+      request,
+    );
     return { status: true };
   })
 
-  // ── Values: explicit reveal only ─────────────────────────────────────────
+  // ── Values: explicit reveal only, always logged ──────────────────────────
 
   .post("/environments/:env/secrets/:id/reveal", async ({ request, params }) => {
-    const { project, environment } = await scope(request.headers, params);
+    const { membership, project, environment } = await scope(request.headers, params);
     const secret = await findSecret(environment.id, params.id);
-    return { value: decryptSecret(await dataKeyOf(project), environment.id, secret.value) };
+    const value = decryptSecret(await dataKeyOf(project), environment.id, secret.value);
+    await audit(
+      actorOf(membership),
+      {
+        action: "secret.revealed",
+        project,
+        environmentName: environment.name,
+        target: secret.key,
+        details: { version: secret.version },
+      },
+      request,
+    );
+    return { value };
   })
 
   // ── History ──────────────────────────────────────────────────────────────
@@ -295,25 +395,51 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
   )
 
   .post("/environments/:env/secrets/:id/versions/:version/reveal", async ({ request, params }) => {
-    const { project, environment } = await scope(request.headers, params);
+    const { membership, project, environment } = await scope(request.headers, params);
     const secret = await findSecret(environment.id, params.id);
     const version = await findVersion(secret.id, params.version);
-    return { value: decryptSecret(await dataKeyOf(project), environment.id, version.value) };
+    const value = decryptSecret(await dataKeyOf(project), environment.id, version.value);
+    await audit(
+      actorOf(membership),
+      {
+        action: "secret.version_revealed",
+        project,
+        environmentName: environment.name,
+        target: secret.key,
+        details: { version: version.version },
+      },
+      request,
+    );
+    return { value };
   })
 
   /** Makes an old value current again, as a new version (history is never rewritten). */
   .post("/environments/:env/secrets/:id/versions/:version/restore", async ({ request, params }) => {
-    const { userId, environment } = await scope(request.headers, params);
+    const { membership, project, environment } = await scope(request.headers, params, "write");
     const secret = await findSecret(environment.id, params.id);
     const version = await findVersion(secret.id, params.version);
-    if (version.version !== secret.version) await writeValue(secret, version.value, userId);
+    if (version.version !== secret.version) {
+      await writeValue(secret, version.value, membership.userId);
+      await audit(
+        actorOf(membership),
+        {
+          action: "secret.restored",
+          project,
+          environmentName: environment.name,
+          target: secret.key,
+          details: { restored: version.version, version: secret.version + 1 },
+        },
+        request,
+      );
+    }
     return { status: true };
   })
 
   // ── .env import / export ─────────────────────────────────────────────────
 
   .post("/environments/:env/import", async ({ request, params, body }): Promise<ImportResult> => {
-    const { userId, project, environment } = await scope(request.headers, params);
+    const { membership, project, environment } = await scope(request.headers, params, "write");
+    const userId = membership.userId;
     const { content, overwrite } = parse(importSchema, body);
     const { entries, invalidLines } = parseDotenv(content);
     const dataKey = await dataKeyOf(project);
@@ -357,11 +483,23 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
         result.skipped++;
       }
     }
+    if (result.created || result.updated) {
+      await audit(
+        actorOf(membership),
+        {
+          action: "environment.imported",
+          project,
+          environmentName: environment.name,
+          details: { created: result.created, updated: result.updated },
+        },
+        request,
+      );
+    }
     return result;
   })
 
   .post("/environments/:env/export", async ({ request, params }) => {
-    const { project, environment } = await scope(request.headers, params);
+    const { membership, project, environment } = await scope(request.headers, params);
     const dataKey = await dataKeyOf(project);
     const secrets = await prisma.secret.findMany({
       where: { environmentId: environment.id },
@@ -374,6 +512,16 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
         value: decryptSecret(dataKey, environment.id, secret.value),
       })),
       `${project.name} — ${environment.name}\nExporté depuis Cachkey le ${new Date().toISOString()}`,
+    );
+    await audit(
+      actorOf(membership),
+      {
+        action: "environment.exported",
+        project,
+        environmentName: environment.name,
+        details: { variables: secrets.length },
+      },
+      request,
     );
     return { filename: `.env.${environment.slug}`, content };
   });

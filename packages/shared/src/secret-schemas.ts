@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isReadableText, UNREADABLE_TEXT_MESSAGE } from "./text";
 
 /** Environments created with every new project. */
 export const defaultEnvironments = [
@@ -17,7 +18,8 @@ const environmentName = z
   .trim()
   .min(1, "Indiquez un nom.")
   .max(40, "Au plus 40 caractères.")
-  .refine((value) => /[\p{L}\p{N}]/u.test(value), "Utilisez au moins une lettre ou un chiffre.");
+  .refine((value) => /[\p{L}\p{N}]/u.test(value), "Utilisez au moins une lettre ou un chiffre.")
+  .refine(isReadableText, UNREADABLE_TEXT_MESSAGE);
 
 export const environmentSchema = z.object({ name: environmentName });
 export type EnvironmentInput = z.infer<typeof environmentSchema>;

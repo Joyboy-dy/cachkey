@@ -9,8 +9,8 @@ export const ROLE_LABELS: Record<MemberRole, string> = {
 
 export const ROLE_DESCRIPTIONS: Record<MemberRole, string> = {
   owner: "Gère l’organisation, ses membres et ses projets, et peut la supprimer.",
-  admin: "Gère les membres et les projets.",
-  member: "Consulte les projets.",
+  admin: "Gère les membres, les projets et les accès.",
+  member: "Accède aux projets qui lui sont partagés, en lecture ou en écriture.",
 };
 
 export function roleLabel(role: string): string {

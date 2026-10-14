@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isReadableText, UNREADABLE_TEXT_MESSAGE } from "./text";
 
 /** Must stay aligned with the Better Auth `emailAndPassword` options in apps/api. */
 export const PASSWORD_MIN_LENGTH = 10;
@@ -19,7 +20,8 @@ export const nameField = z
   .string()
   .trim()
   .min(1, "Saisissez votre nom.")
-  .max(80, "Au plus 80 caractères.");
+  .max(80, "Au plus 80 caractères.")
+  .refine(isReadableText, UNREADABLE_TEXT_MESSAGE);
 
 export const signInSchema = z.object({
   email: emailField,

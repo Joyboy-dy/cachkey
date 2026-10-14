@@ -1,6 +1,7 @@
 export {
   renderConfirmEmailChange,
   renderDeleteAccount,
+  renderInvitation,
   renderPasswordChanged,
   renderResetPassword,
   renderVerifyEmail,

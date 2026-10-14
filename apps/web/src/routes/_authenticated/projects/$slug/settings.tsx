@@ -10,11 +10,13 @@ import {
   dangerTriggerClass,
 } from "@/components/app/confirm";
 import { SectionCard } from "@/components/app/page";
+import { AccessCard } from "@/components/projects/access-card";
 import { ProjectForm } from "@/components/projects/project-form";
 import { EnvironmentNameDialog } from "@/components/secrets/environment-dialogs";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
+import { projectAccessQueryOptions } from "@/lib/collaboration";
 import { environmentsApi, environmentsQueryOptions } from "@/lib/secrets";
 import { projectQueryOptions, projectsApi } from "@/lib/workspace";
 
@@ -25,10 +27,13 @@ export const Route = createFileRoute("/_authenticated/projects/$slug/settings")(
       throw redirect({ to: "/projects/$slug", params: { slug: params.slug } });
     }
   },
-  loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(
-      environmentsQueryOptions(context.organization.id, params.slug),
-    ),
+  loader: async ({ context, params }) => {
+    const { queryClient, organization } = context;
+    await Promise.all([
+      queryClient.ensureQueryData(environmentsQueryOptions(organization.id, params.slug)),
+      queryClient.ensureQueryData(projectAccessQueryOptions(organization.id, params.slug)),
+    ]);
+  },
   component: SettingsTab,
 });
 
@@ -36,12 +41,25 @@ function SettingsTab() {
   const { organization } = Route.useRouteContext();
   const { slug } = Route.useParams();
   const { data: project } = useSuspenseQuery(projectQueryOptions(organization.id, slug));
+  const { data: environments } = useSuspenseQuery(environmentsQueryOptions(organization.id, slug));
   if (!project) return null;
 
   return (
     <div className="grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6">
       <GeneralCard project={project} />
       <EnvironmentsCard organizationId={organization.id} projectSlug={project.slug} />
+      <AccessCard
+        organizationId={organization.id}
+        projectSlug={project.slug}
+        environments={environments}
+      />
+      <Link
+        to="/activity"
+        search={{ project: project.id }}
+        className="-mt-2 inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground underline decoration-primary decoration-2 underline-offset-4 hover:text-foreground"
+      >
+        Voir l’activité de ce projet
+      </Link>
       <DangerCard project={project} />
     </div>
   );
@@ -92,6 +110,8 @@ function EnvironmentsCard({
 
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: environmentsKey });
+    // Accesses limited to a deleted environment change too.
+    await queryClient.invalidateQueries({ queryKey: ["access", organizationId, projectSlug] });
     setDialog(null);
   }
 

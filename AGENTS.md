@@ -29,8 +29,10 @@ environment variables. UI language: **French**. Brand: Cachkey brand kit 1.0.
   The web server proxies every `/api/*` request to the API (`src/server/api.ts`):
   one public origin, first-party cookies, no CORS.
 - `apps/api` — Elysia + Better Auth (`src/auth.ts`, organization plugin), env validated by
-  Zod (`src/env.ts`). Business routes are scoped to the session's active organisation and
-  check the caller's role (`src/workspace.ts`); owner/admin write, member reads.
+  Zod (`src/env.ts`). Business routes are scoped to the session's active organisation;
+  access checks live in `src/guards.ts` (`requireProject`): owner/admin manage everything,
+  members only reach projects/environments granted to them (`ProjectAccess`). Every read or
+  change of a secret is written with `audit()` (`src/audit.ts`), never with its value.
 - `packages/db` — Prisma 7 (PostgreSQL). Only models actually needed by the current phase.
 - `packages/emails` — React Email templates + `EmailTransport` (SMTP/Mailpit, Resend).
 - `packages/shared` — Zod schemas shared by web and API.

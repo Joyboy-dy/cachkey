@@ -1,4 +1,10 @@
-import { canManage, type MemberRole, memberRoles } from "@cachkey/shared";
+import {
+  canManage,
+  canWrite,
+  type MemberRole,
+  memberRoles,
+  type ProjectPermission,
+} from "@cachkey/shared";
 import { Elysia } from "elysia";
 import { auth } from "./auth";
 import { prisma } from "./db";
@@ -38,8 +44,15 @@ export async function requireMembership(headers: Headers) {
     select: { role: true },
   });
   if (!member || !isMemberRole(member.role)) throw new HttpError(403, "FORBIDDEN");
-  return { userId: session.user.id, organizationId, role: member.role };
+  return {
+    userId: session.user.id,
+    userName: session.user.name,
+    organizationId,
+    role: member.role,
+  };
 }
+
+export type Membership = Awaited<ReturnType<typeof requireMembership>>;
 
 export async function requireManager(headers: Headers) {
   const membership = await requireMembership(headers);
@@ -65,4 +78,46 @@ export async function findProject(organizationId: string, slug: string) {
   });
   if (!project) throw new HttpError(404, "PROJECT_NOT_FOUND");
   return project;
+}
+
+/** What `membership` may do in a project, and on which environments (null: all). */
+export type ProjectGrant = { permission: ProjectPermission; environmentIds: string[] | null };
+
+export async function grantFor(
+  membership: Membership,
+  projectId: string,
+): Promise<ProjectGrant | null> {
+  if (canManage(membership.role)) return { permission: "manage", environmentIds: null };
+  const access = await prisma.projectAccess.findUnique({
+    where: { projectId_userId: { projectId, userId: membership.userId } },
+    select: { level: true, environmentIds: true },
+  });
+  if (!access) return null;
+  return {
+    permission: access.level === "write" ? "write" : "read",
+    environmentIds: access.environmentIds.length ? access.environmentIds : null,
+  };
+}
+
+export function coversEnvironment(grant: ProjectGrant, environmentId: string): boolean {
+  return grant.environmentIds === null || grant.environmentIds.includes(environmentId);
+}
+
+const ranks: Record<ProjectPermission, number> = { read: 0, write: 1, manage: 2 };
+
+/**
+ * Project of the URL with the caller's grant. A project the caller cannot see answers 404,
+ * like a missing one: its existence is not disclosed. Seen but not allowed: 403.
+ */
+export async function requireProject(
+  headers: Headers,
+  slug: string,
+  needed: ProjectPermission = "read",
+) {
+  const membership = await requireMembership(headers);
+  const project = await findProject(membership.organizationId, slug);
+  const grant = await grantFor(membership, project.id);
+  if (!grant) throw new HttpError(404, "PROJECT_NOT_FOUND");
+  if (ranks[grant.permission] < ranks[needed]) throw new HttpError(403, "FORBIDDEN");
+  return { membership, project, grant, canWrite: canWrite(grant.permission) };
 }

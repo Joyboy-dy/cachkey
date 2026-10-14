@@ -1,0 +1,226 @@
+import type { AuditEventDto } from "@cachkey/shared";
+import type { ReactNode } from "react";
+import { UserAvatar } from "@/components/app/user-avatar";
+import { roleLabel } from "@/lib/roles";
+
+/*
+ * Turns an audit event into a French sentence. Technical values (actions, roles, levels)
+ * are never shown as such: each one is mapped to words.
+ */
+
+function Code({ children }: { children: ReactNode }) {
+  return <code className="font-mono text-[13px] break-all text-foreground">{children}</code>;
+}
+
+function Strong({ children }: { children: ReactNode }) {
+  return <span className="font-medium break-all text-foreground">{children}</span>;
+}
+
+function plural(count: number, one: string, many: string) {
+  return `${count} ${count > 1 ? many : one}`;
+}
+
+function detail(event: AuditEventDto, key: string): string | number | undefined {
+  const value = event.details?.[key];
+  return typeof value === "boolean" ? undefined : value;
+}
+
+function numberDetail(event: AuditEventDto, key: string): number {
+  const value = detail(event, key);
+  return typeof value === "number" ? value : 0;
+}
+
+/** What happened, after the actor's name. */
+export function describeEvent(event: AuditEventDto): ReactNode {
+  const target = event.target ?? "";
+  const env = event.environmentName ?? "";
+  const from = String(detail(event, "from") ?? "");
+
+  switch (event.action) {
+    case "secret.revealed":
+      return (
+        <>
+          a affiché la valeur de <Code>{target}</Code>
+        </>
+      );
+    case "secret.version_revealed":
+      return (
+        <>
+          a affiché la version {detail(event, "version")} de <Code>{target}</Code>
+        </>
+      );
+    case "secret.created":
+      return (
+        <>
+          a ajouté la variable <Code>{target}</Code>
+        </>
+      );
+    case "secret.updated":
+      return (
+        <>
+          a modifié la valeur de <Code>{target}</Code>
+        </>
+      );
+    case "secret.renamed":
+      return (
+        <>
+          a renommé <Code>{from}</Code> en <Code>{target}</Code>
+        </>
+      );
+    case "secret.deleted":
+      return (
+        <>
+          a supprimé la variable <Code>{target}</Code>
+        </>
+      );
+    case "secret.restored":
+      return (
+        <>
+          a restauré la version {detail(event, "restored")} de <Code>{target}</Code>
+        </>
+      );
+    case "environment.imported": {
+      const parts = [
+        numberDetail(event, "created")
+          ? plural(numberDetail(event, "created"), "ajoutée", "ajoutées")
+          : null,
+        numberDetail(event, "updated")
+          ? plural(numberDetail(event, "updated"), "remplacée", "remplacées")
+          : null,
+      ].filter(Boolean);
+      return <>a importé un fichier .env ({parts.join(", ")})</>;
+    }
+    case "environment.exported":
+      return (
+        <>
+          a exporté {plural(numberDetail(event, "variables"), "variable", "variables")} au format
+          .env
+        </>
+      );
+    case "environment.created":
+      return (
+        <>
+          a créé l’environnement <Code>{env}</Code>
+        </>
+      );
+    case "environment.renamed":
+      return (
+        <>
+          a renommé l’environnement <Code>{from}</Code> en <Code>{env}</Code>
+        </>
+      );
+    case "environment.deleted":
+      return (
+        <>
+          a supprimé l’environnement <Code>{env}</Code> (
+          {plural(numberDetail(event, "variables"), "variable", "variables")})
+        </>
+      );
+    case "project.created":
+      return <>a créé le projet</>;
+    case "project.updated":
+      return from ? (
+        <>
+          a renommé le projet <Strong>{from}</Strong>
+        </>
+      ) : (
+        <>a modifié la description du projet</>
+      );
+    case "project.deleted":
+      return <>a supprimé le projet</>;
+    case "access.granted": {
+      const level = detail(event, "level") === "write" ? "en lecture et écriture" : "en lecture";
+      const environments = detail(event, "environments");
+      const scope =
+        typeof environments === "number"
+          ? plural(environments, "environnement", "environnements")
+          : "tous les environnements";
+      return (
+        <>
+          a donné à <Strong>{target}</Strong> un accès {level} ({scope})
+        </>
+      );
+    }
+    case "access.revoked":
+      return (
+        <>
+          a retiré l’accès de <Strong>{target}</Strong>
+        </>
+      );
+    case "member.invited":
+      return (
+        <>
+          a invité <Strong>{target}</Strong> en tant que{" "}
+          {roleLabel(String(detail(event, "role") ?? "member")).toLowerCase()}
+        </>
+      );
+    case "member.invitation_canceled":
+      return (
+        <>
+          a annulé l’invitation de <Strong>{target}</Strong>
+        </>
+      );
+    case "member.joined":
+      return <>a rejoint l’organisation</>;
+    case "member.role_changed":
+      return (
+        <>
+          a nommé <Strong>{target}</Strong>{" "}
+          {roleLabel(String(detail(event, "role") ?? "member")).toLowerCase()}
+        </>
+      );
+    case "member.removed":
+      return (
+        <>
+          a retiré <Strong>{target}</Strong> de l’organisation
+        </>
+      );
+    case "member.left":
+      return <>a quitté l’organisation</>;
+    case "member.ownership_transferred":
+      return (
+        <>
+          a transféré la propriété de l’organisation à <Strong>{target}</Strong>
+        </>
+      );
+  }
+}
+
+const time = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+export function AuditEventRow({ event }: { event: AuditEventDto }) {
+  const context = [event.projectName, event.environmentName].filter(Boolean);
+  return (
+    <li className="flex gap-3 px-4 py-3 sm:px-5">
+      {event.actor.id ? (
+        <UserAvatar
+          user={{ id: event.actor.id, avatarSeed: event.actor.avatarSeed }}
+          className="mt-0.5 size-7"
+        />
+      ) : (
+        <span className="mt-0.5 size-7 shrink-0 rounded-lg bg-secondary" />
+      )}
+      <div className="min-w-0 flex-1 text-sm leading-5">
+        <p className="text-muted-foreground">
+          <span className="font-medium text-foreground">{event.actor.name}</span>{" "}
+          {describeEvent(event)}
+        </p>
+        <p className="mt-0.5 flex flex-wrap gap-x-1.5 text-xs text-muted-foreground">
+          {context.length ? (
+            <>
+              <span className="break-all">{context.join(" · ")}</span>
+              <span aria-hidden>·</span>
+            </>
+          ) : null}
+          <time dateTime={event.createdAt}>{time.format(new Date(event.createdAt))}</time>
+          {event.ip ? (
+            <>
+              <span aria-hidden>·</span>
+              <span>depuis {event.ip}</span>
+            </>
+          ) : null}
+        </p>
+      </div>
+    </li>
+  );
+}

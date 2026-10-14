@@ -1,5 +1,7 @@
 import {
   canManage,
+  type InvitableRole,
+  invitableRoles,
   type MemberDto,
   type MemberRole,
   memberRoles,
@@ -8,22 +10,43 @@ import {
 } from "@cachkey/shared";
 import { Loading03Icon, UserRemove01Icon } from "@hugeicons/core-free-icons";
 import { revalidateLogic } from "@tanstack/react-form";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ConfirmByTypingDialog, DangerAction, dangerTriggerClass } from "@/components/app/confirm";
+import {
+  ConfirmByTypingDialog,
+  ConfirmDialog,
+  DangerAction,
+  dangerTriggerClass,
+} from "@/components/app/confirm";
 import { type Feedback, FeedbackAlert } from "@/components/app/feedback";
 import { SectionCard, StatusPill } from "@/components/app/page";
 import { UserAvatar } from "@/components/app/user-avatar";
 import { useAppForm } from "@/components/form/form";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { authClient } from "@/lib/auth/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { formatDate } from "@/lib/date";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/roles";
-import { cn } from "@/lib/utils";
-import { membersQueryOptions, useRefreshWorkspace } from "@/lib/workspace";
+import { membersQueryOptions, request, useRefreshWorkspace } from "@/lib/workspace";
 import { OrgAvatar } from "./org-avatar";
 
 type Organization = NonNullable<Workspace["active"]>;
@@ -95,11 +118,15 @@ export function OrganizationGeneralCard({ organization }: { organization: Organi
   );
 }
 
-/** Who may change `target`: managers act on others; only owners act on owners. */
+/** Who may change `target`: managers act on other non-owner members (ownership is transferred). */
 function canActOn(viewer: MemberRole, target: MemberDto, viewerId: string): boolean {
-  if (target.user.id === viewerId || !canManage(viewer)) return false;
-  return target.role !== "owner" || viewer === "owner";
+  return target.user.id !== viewerId && canManage(viewer) && target.role !== "owner";
 }
+
+type PendingChange =
+  | { type: "role"; member: MemberDto; role: InvitableRole }
+  | { type: "remove"; member: MemberDto }
+  | null;
 
 export function MembersCard({
   organization,
@@ -110,29 +137,30 @@ export function MembersCard({
 }) {
   const queryClient = useQueryClient();
   const { data: members } = useSuspenseQuery(membersQueryOptions(organization.id));
-  const [pending, setPending] = useState<string | null>(null);
+  const [change, setChange] = useState<PendingChange>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
 
-  async function run(memberId: string, action: () => Promise<{ error: unknown }>, done: string) {
-    setPending(memberId);
-    setFeedback(null);
-    const { error } = await action();
-    if (error) {
-      setFeedback({
-        tone: "error",
-        message: getAuthErrorMessage(error as { code?: string; status?: number }),
-      });
-    } else {
-      await queryClient.invalidateQueries({ queryKey: ["members"] });
-      setFeedback({ tone: "success", message: done });
-    }
-    setPending(null);
+  /** Applies the confirmed change; returns an error message for the dialog, if any. */
+  async function apply(): Promise<string | null> {
+    if (!change) return null;
+    const { member } = change;
+    const { error } =
+      change.type === "role"
+        ? await authClient.organization.updateMemberRole({ memberId: member.id, role: change.role })
+        : await authClient.organization.removeMember({ memberIdOrEmail: member.id });
+    if (error) return getAuthErrorMessage(error);
+    await queryClient.invalidateQueries({ queryKey: ["members"] });
+    await queryClient.invalidateQueries({ queryKey: ["access"] });
+    setFeedback({
+      tone: "success",
+      message:
+        change.type === "role"
+          ? `${member.user.name} est maintenant ${ROLE_LABELS[change.role].toLowerCase()}.`
+          : `${member.user.name} a été retiré de l’organisation.`,
+    });
+    setChange(null);
+    return null;
   }
-
-  // Owners may appoint other owners; admins assign admin or member.
-  const assignable = memberRoles.filter(
-    (role) => role !== "owner" || organization.role === "owner",
-  );
 
   return (
     <SectionCard
@@ -144,7 +172,6 @@ export function MembersCard({
       <ul className="divide-y">
         {members.map((member) => {
           const editable = canActOn(organization.role, member, viewerId);
-          const busy = pending === member.id;
           return (
             <li
               key={member.id}
@@ -160,57 +187,43 @@ export function MembersCard({
                   {member.user.email} · depuis le {formatDate(member.joinedAt)}
                 </p>
               </div>
-              {editable ? (
+              {editable && member.role !== "owner" ? (
                 <div className="flex items-center gap-2">
-                  <label className="sr-only" htmlFor={`role-${member.id}`}>
-                    Rôle de {member.user.name}
-                  </label>
-                  <select
-                    id={`role-${member.id}`}
+                  {/* The value only changes once the dialog is confirmed. */}
+                  <Select
                     value={member.role}
-                    disabled={pending !== null}
-                    onChange={(event) => {
-                      const role = event.target.value as MemberRole;
-                      void run(
-                        member.id,
-                        () =>
-                          authClient.organization.updateMemberRole({
-                            memberId: member.id,
-                            role,
-                          }),
-                        `${member.user.name} est maintenant ${ROLE_LABELS[role].toLowerCase()}.`,
-                      );
+                    onValueChange={(value) => {
+                      setFeedback(null);
+                      setChange({ type: "role", member, role: value as InvitableRole });
                     }}
-                    className="h-8 rounded-md border border-input bg-card px-2 text-sm hover:border-foreground/55 disabled:opacity-60"
                   >
-                    {assignable.map((role) => (
-                      <option key={role} value={role}>
-                        {ROLE_LABELS[role]}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger
+                      size="sm"
+                      className="w-40"
+                      aria-label={`Rôle de ${member.user.name}`}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent align="end">
+                      {invitableRoles.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {ROLE_LABELS[role]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="size-8 text-muted-foreground hover:text-destructive"
                     aria-label={`Retirer ${member.user.name} de l’organisation`}
                     title="Retirer de l’organisation"
-                    disabled={pending !== null}
-                    onClick={() =>
-                      void run(
-                        member.id,
-                        () =>
-                          authClient.organization.removeMember({
-                            memberIdOrEmail: member.id,
-                          }),
-                        `${member.user.name} a été retiré de l’organisation.`,
-                      )
-                    }
+                    onClick={() => {
+                      setFeedback(null);
+                      setChange({ type: "remove", member });
+                    }}
                   >
-                    <Icon
-                      icon={busy ? Loading03Icon : UserRemove01Icon}
-                      className={cn(busy && "animate-spin")}
-                    />
+                    <Icon icon={UserRemove01Icon} />
                   </Button>
                 </div>
               ) : (
@@ -229,11 +242,55 @@ export function MembersCard({
             <dd className="text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</dd>
           </div>
         ))}
-        <p className="mt-1 text-muted-foreground">
-          L’invitation de nouveaux membres arrive dans une prochaine version.
-        </p>
       </dl>
+
+      <RoleChangeDialog change={change} onCancel={() => setChange(null)} onConfirm={apply} />
     </SectionCard>
+  );
+}
+
+function RoleChangeDialog({
+  change,
+  onCancel,
+  onConfirm,
+}: {
+  change: PendingChange;
+  onCancel: () => void;
+  onConfirm: () => Promise<string | null>;
+}) {
+  const name = change?.member.user.name ?? "";
+  if (change?.type === "remove") {
+    return (
+      <ConfirmDialog
+        open
+        onOpenChange={(open) => {
+          if (!open) onCancel();
+        }}
+        title={`Retirer ${name} ?`}
+        description={`${name} perdra immédiatement l’accès à l’organisation et à tous ses projets. Vous pourrez l’inviter à nouveau.`}
+        confirmLabel="Retirer de l’organisation"
+        onConfirm={onConfirm}
+      />
+    );
+  }
+  const role = change?.type === "role" ? change.role : "member";
+  const promote = role === "admin";
+  return (
+    <ConfirmDialog
+      open={change?.type === "role"}
+      onOpenChange={(open) => {
+        if (!open) onCancel();
+      }}
+      title={promote ? `Nommer ${name} administrateur ?` : `Repasser ${name} en membre ?`}
+      description={
+        promote
+          ? `${name} pourra gérer les membres, les invitations, tous les projets et leurs accès, et consulter le journal d’activité.`
+          : `${name} ne verra plus que les projets qui lui seront partagés. Ses accès actuels devront être redonnés projet par projet.`
+      }
+      confirmLabel={promote ? "Nommer administrateur" : "Repasser en membre"}
+      tone={promote ? "default" : "destructive"}
+      onConfirm={onConfirm}
+    />
   );
 }
 
@@ -291,6 +348,7 @@ export function OrganizationDangerCard({ organization }: { organization: Organiz
 
   return (
     <SectionCard title="Zone sensible" className="border-destructive/30">
+      <TransferOwnership organization={organization} />
       <DangerAction
         title="Supprimer l’organisation"
         description="Tous ses projets, leurs variables et l’accès de ses membres seront définitivement supprimés."
@@ -327,5 +385,108 @@ export function OrganizationDangerCard({ organization }: { organization: Organiz
         }}
       />
     </SectionCard>
+  );
+}
+
+/**
+ * Hands the organisation over to another member, in three steps: choose the member, type the
+ * organisation's name, then hold the button. The current owner becomes administrator.
+ */
+function TransferOwnership({ organization }: { organization: Organization }) {
+  const queryClient = useQueryClient();
+  const refreshWorkspace = useRefreshWorkspace();
+  const { data: members } = useQuery(membersQueryOptions(organization.id));
+  const [step, setStep] = useState<"choose" | "confirm" | null>(null);
+  const [userId, setUserId] = useState("");
+  const candidates = (members ?? []).filter((member) => member.role !== "owner");
+  const target = candidates.find((member) => member.user.id === userId);
+
+  return (
+    <div className="border-b">
+      <DangerAction
+        title="Transférer la propriété"
+        description="Un autre membre devient propriétaire ; vous restez dans l’organisation en tant qu’administrateur."
+        action={
+          <Button
+            variant="outline"
+            className={dangerTriggerClass}
+            disabled={candidates.length === 0}
+            title={candidates.length === 0 ? "Invitez d’abord un autre membre." : undefined}
+            onClick={() => {
+              setUserId("");
+              setStep("choose");
+            }}
+          >
+            Transférer la propriété
+          </Button>
+        }
+      />
+
+      <Dialog open={step === "choose"} onOpenChange={(open) => !open && setStep(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transférer la propriété</DialogTitle>
+            <DialogDescription>
+              Étape 1 sur 2 : choisissez le futur propriétaire de {organization.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="transfer-target">Nouveau propriétaire</Label>
+              <Select value={userId} onValueChange={setUserId}>
+                <SelectTrigger id="transfer-target" className="w-full">
+                  <SelectValue placeholder="Choisir un membre" />
+                </SelectTrigger>
+                <SelectContent>
+                  {candidates.map((member) => (
+                    <SelectItem key={member.user.id} value={member.user.id}>
+                      {member.user.name} · {member.user.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <ul className="grid gap-1.5 rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm leading-5">
+              <li>Le nouveau propriétaire pourra supprimer l’organisation ou vous en retirer.</li>
+              <li>Vous deviendrez administrateur et ne pourrez plus revenir en arrière seul.</li>
+            </ul>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStep(null)}>
+              Annuler
+            </Button>
+            <Button variant="destructive" disabled={!target} onClick={() => setStep("confirm")}>
+              Continuer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmByTypingDialog
+        open={step === "confirm"}
+        onOpenChange={(open) => !open && setStep(null)}
+        title={`Transférer ${organization.name} à ${target?.user.name ?? ""} ?`}
+        description="Étape 2 sur 2. Cette action prend effet immédiatement."
+        consequences={[
+          `${target?.user.name ?? ""} devient propriétaire de l’organisation.`,
+          "Vous devenez administrateur.",
+        ]}
+        expected={organization.name}
+        confirmLabel="Transférer la propriété"
+        hold
+        onConfirm={async () => {
+          const { error } = await request<{ status: true }>(
+            "POST",
+            "/api/organization/transfer-ownership",
+            { userId, confirmation: organization.name },
+          );
+          if (error) return getAuthErrorMessage(error);
+          setStep(null);
+          await queryClient.invalidateQueries({ queryKey: ["members"] });
+          await refreshWorkspace();
+          return null;
+        }}
+      />
+    </div>
   );
 }

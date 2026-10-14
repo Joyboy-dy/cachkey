@@ -49,11 +49,14 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  tone = "destructive",
   onConfirm,
 }: DialogState & {
   title: string;
   description: ReactNode;
   confirmLabel: string;
+  /** `default` for a non-destructive change that still deserves a confirmation. */
+  tone?: "default" | "destructive";
   onConfirm: ConfirmAction;
 }) {
   const { pending, feedback, run, reset } = useConfirmAction(onConfirm);
@@ -77,7 +80,7 @@ export function ConfirmDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
             Annuler
           </Button>
-          <Button variant="destructive" onClick={() => void run()} disabled={pending}>
+          <Button variant={tone} onClick={() => void run()} disabled={pending}>
             {pending ? <Icon icon={Loading03Icon} className="animate-spin" aria-hidden /> : null}
             {confirmLabel}
           </Button>

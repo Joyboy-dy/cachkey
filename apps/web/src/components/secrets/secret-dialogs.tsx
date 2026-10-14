@@ -227,10 +227,12 @@ export function HistoryDialog({
   onOpenChange,
   scope,
   secret,
+  canRestore,
   onRestored,
 }: DialogState & {
   scope: Scope;
   secret: SecretDto | null;
+  canRestore: boolean;
   onRestored: () => Promise<void>;
 }) {
   return (
@@ -247,6 +249,7 @@ export function HistoryDialog({
           <HistoryList
             scope={scope}
             secret={secret}
+            canRestore={canRestore}
             onRestored={async () => {
               await onRestored();
               onOpenChange(false);
@@ -261,10 +264,12 @@ export function HistoryDialog({
 function HistoryList({
   scope,
   secret,
+  canRestore,
   onRestored,
 }: {
   scope: Scope;
   secret: SecretDto;
+  canRestore: boolean;
   onRestored: () => Promise<void>;
 }) {
   const [versions, setVersions] = useState<SecretVersionDto[] | null>(null);
@@ -294,6 +299,7 @@ function HistoryList({
               secretId={secret.id}
               version={version}
               current={version.version === secret.version}
+              canRestore={canRestore}
               onRestored={onRestored}
               onError={(error) =>
                 setFeedback({ tone: "error", message: getAuthErrorMessage(error) })
@@ -316,6 +322,7 @@ function VersionRow({
   secretId,
   version,
   current,
+  canRestore,
   onRestored,
   onError,
 }: {
@@ -323,6 +330,7 @@ function VersionRow({
   secretId: string;
   version: SecretVersionDto;
   current: boolean;
+  canRestore: boolean;
   onRestored: () => Promise<void>;
   onError: (error: ApiError) => void;
 }) {
@@ -389,7 +397,7 @@ function VersionRow({
         >
           <Icon icon={value === null ? ViewIcon : ViewOffSlashIcon} />
         </Button>
-        {current ? null : (
+        {current || !canRestore ? null : (
           <Button variant="outline" size="sm" onClick={() => void restore()} disabled={restoring}>
             <Icon
               icon={restoring ? Loading03Icon : ArrowTurnBackwardIcon}

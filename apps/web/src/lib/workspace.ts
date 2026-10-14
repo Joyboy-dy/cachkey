@@ -90,7 +90,7 @@ type ApiResult<T> = { data: T; error: null } | { data: null; error: ApiError };
 
 /** Same-origin JSON call from the browser; errors come back as `{ code, status }`. */
 export async function request<T>(
-  method: "GET" | "POST" | "PATCH" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   path: string,
   body?: unknown,
 ): Promise<ApiResult<T>> {
@@ -134,6 +134,9 @@ export function useRefreshWorkspace() {
     queryClient.removeQueries({ queryKey: ["members"] });
     queryClient.removeQueries({ queryKey: ["environments"] });
     queryClient.removeQueries({ queryKey: ["secrets"] });
+    queryClient.removeQueries({ queryKey: ["access"] });
+    queryClient.removeQueries({ queryKey: ["invitations"] });
+    queryClient.removeQueries({ queryKey: ["audit"] });
     await queryClient.invalidateQueries({ queryKey: ["workspace"] });
     await queryClient.invalidateQueries({ queryKey: ["auth"] });
     await router.invalidate();

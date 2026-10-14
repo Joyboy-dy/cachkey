@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isReadableText, UNREADABLE_TEXT_MESSAGE } from "./text";
 
 /** Roles of a member inside an organisation (Better Auth organization plugin). */
 export const memberRoles = ["owner", "admin", "member"] as const;
@@ -25,7 +26,8 @@ const organizationName = z
   .string()
   .trim()
   .min(2, "Au moins 2 caractères.")
-  .max(60, "Au plus 60 caractères.");
+  .max(60, "Au plus 60 caractères.")
+  .refine(isReadableText, UNREADABLE_TEXT_MESSAGE);
 
 export const organizationSchema = z.object({ name: organizationName });
 export type OrganizationInput = z.infer<typeof organizationSchema>;
@@ -35,9 +37,14 @@ const projectName = z
   .trim()
   .min(2, "Au moins 2 caractères.")
   .max(60, "Au plus 60 caractères.")
-  .refine((value) => slugify(value).length > 0, "Utilisez au moins une lettre ou un chiffre.");
+  .refine((value) => slugify(value).length > 0, "Utilisez au moins une lettre ou un chiffre.")
+  .refine(isReadableText, UNREADABLE_TEXT_MESSAGE);
 
-const projectDescription = z.string().trim().max(280, "Au plus 280 caractères.");
+const projectDescription = z
+  .string()
+  .trim()
+  .max(280, "Au plus 280 caractères.")
+  .refine(isReadableText, UNREADABLE_TEXT_MESSAGE);
 
 export const projectSchema = z.object({
   name: projectName,
@@ -48,6 +55,8 @@ export type ProjectInput = z.infer<typeof projectSchema>;
 /** Project as returned by the API. */
 export const projectDtoSchema = z.object({
   id: z.string(),
+  /** What the viewer can do: manage (owner/admin), write or read (shared with a member). */
+  permission: z.enum(["manage", "write", "read"]),
   name: z.string(),
   slug: z.string(),
   description: z.string().nullable(),

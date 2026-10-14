@@ -59,11 +59,14 @@ export function SecretsPanel({
   organizationId,
   projectSlug,
   environment,
+  canWrite,
   switcher,
 }: {
   organizationId: string;
   projectSlug: string;
   environment: EnvironmentDto;
+  /** False for read-only access: values can be shown, copied and exported, not changed. */
+  canWrite: boolean;
   /** Environment selector, shown first in the toolbar. */
   switcher: ReactNode;
 }) {
@@ -211,15 +214,17 @@ export function SecretsPanel({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9"
-              onClick={() => setDialog({ type: "import" })}
-            >
-              <Icon icon={Upload01Icon} />
-              <span className="sr-only lg:not-sr-only">Importer</span>
-            </Button>
+            {canWrite ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9"
+                onClick={() => setDialog({ type: "import" })}
+              >
+                <Icon icon={Upload01Icon} />
+                <span className="sr-only lg:not-sr-only">Importer</span>
+              </Button>
+            ) : null}
             <Button
               variant="outline"
               size="sm"
@@ -233,10 +238,16 @@ export function SecretsPanel({
               />
               <span className="sr-only lg:not-sr-only">Exporter</span>
             </Button>
-            <Button size="sm" className="h-9" onClick={() => setDialog({ type: "create" })}>
-              <Icon icon={Add01Icon} />
-              <span className="sr-only sm:not-sr-only">Ajouter</span>
-            </Button>
+            {canWrite ? (
+              <Button size="sm" className="h-9" onClick={() => setDialog({ type: "create" })}>
+                <Icon icon={Add01Icon} />
+                <span className="sr-only sm:not-sr-only">Ajouter</span>
+              </Button>
+            ) : (
+              <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-medium whitespace-nowrap text-muted-foreground">
+                Lecture seule
+              </span>
+            )}
           </div>
         </div>
 
@@ -297,9 +308,11 @@ export function SecretsPanel({
             Aucune variable dans <span className="font-mono">{environment.name}</span>
           </h3>
           <p className="mt-1 max-w-sm text-sm leading-6 text-balance text-muted-foreground">
-            Importez votre fichier .env en une fois, ou ajoutez les variables une par une.
+            {canWrite
+              ? "Importez votre fichier .env en une fois, ou ajoutez les variables une par une."
+              : "Les variables ajoutées à cet environnement apparaîtront ici."}
           </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <div className={cn("mt-5 flex flex-wrap justify-center gap-2", !canWrite && "hidden")}>
             <Button variant="outline" onClick={() => setDialog({ type: "create" })}>
               <Icon icon={Add01Icon} />
               Ajouter une variable
@@ -328,9 +341,9 @@ export function SecretsPanel({
                 value={revealed[`${secret.id}:${secret.version}`]}
                 onReveal={() => reveal(secret)}
                 onHide={() => hide(secret)}
-                onEdit={() => setDialog({ type: "edit", secret })}
+                onEdit={canWrite ? () => setDialog({ type: "edit", secret }) : undefined}
                 onHistory={() => setDialog({ type: "history", secret })}
-                onDelete={() => setDialog({ type: "delete", secret })}
+                onDelete={canWrite ? () => setDialog({ type: "delete", secret }) : undefined}
               />
             ))}
           </ul>
@@ -364,6 +377,7 @@ export function SecretsPanel({
         onOpenChange={onDialogChange}
         scope={scope}
         secret={dialog?.type === "history" ? dialog.secret : null}
+        canRestore={canWrite}
         onRestored={refresh}
       />
       <ImportDialog
@@ -430,9 +444,9 @@ function SecretRow({
   value: string | undefined;
   onReveal: () => Promise<string | null>;
   onHide: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   onHistory: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
 }) {
   const { copied, copy } = useCopy();
   const [loading, setLoading] = useState(false);
@@ -514,19 +528,25 @@ function SecretRow({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={onEdit}>
-                <Icon icon={PencilEdit02Icon} />
-                Modifier
-              </DropdownMenuItem>
+              {onEdit ? (
+                <DropdownMenuItem onSelect={onEdit}>
+                  <Icon icon={PencilEdit02Icon} />
+                  Modifier
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem onSelect={onHistory}>
                 <Icon icon={Clock01Icon} />
                 Historique
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onSelect={onDelete}>
-                <Icon icon={Delete02Icon} />
-                Supprimer
-              </DropdownMenuItem>
+              {onDelete ? (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+                    <Icon icon={Delete02Icon} />
+                    Supprimer
+                  </DropdownMenuItem>
+                </>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

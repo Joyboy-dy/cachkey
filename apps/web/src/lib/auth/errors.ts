@@ -28,6 +28,7 @@ const messages: Record<string, string> = {
   SESSION_NOT_FRESH: "Pour des raisons de sécurité, reconnectez-vous avant cette action.",
   UNAUTHORIZED: "Votre session a expiré. Reconnectez-vous pour continuer.",
   CHANGE_EMAIL_DISABLED: "Le changement d’adresse email n’est pas disponible.",
+  UNREADABLE_TEXT: "Ce texte contient des caractères illisibles. Saisissez-le à nouveau.",
   VALIDATION_ERROR: "Certaines informations sont invalides.",
   FORBIDDEN: "Vous n’avez pas les droits nécessaires pour cette action.",
   NO_ACTIVE_ORGANIZATION: "Sélectionnez d’abord une organisation.",
@@ -59,6 +60,28 @@ const messages: Record<string, string> = {
   YOU_ARE_NOT_ALLOWED_TO_CREATE_A_NEW_ORGANIZATION:
     "Vous ne pouvez pas créer de nouvelle organisation.",
   MEMBER_NOT_FOUND: "Ce membre ne fait plus partie de l’organisation.",
+  OWNERSHIP_TRANSFER_REQUIRED:
+    "Le rôle de propriétaire ne change que par un transfert de propriété.",
+  OWNER_ROLE_NOT_INVITABLE: "On ne peut pas inviter quelqu’un comme propriétaire.",
+  CONFIRMATION_MISMATCH: "La confirmation ne correspond pas au nom de l’organisation.",
+  ACCESS_NOT_NEEDED: "Les propriétaires et administrateurs ont déjà accès à tous les projets.",
+  INVITATION_NOT_FOUND: "Cette invitation n’existe plus.",
+  INVITATION_FOR_ANOTHER_EMAIL: "Cette invitation a été envoyée à une autre adresse email.",
+  USER_IS_ALREADY_A_MEMBER_OF_THIS_ORGANIZATION:
+    "Cette personne fait déjà partie de l’organisation.",
+  USER_IS_ALREADY_INVITED_TO_THIS_ORGANIZATION: "Cette personne a déjà été invitée.",
+  YOU_ARE_NOT_ALLOWED_TO_INVITE_USERS_TO_THIS_ORGANIZATION:
+    "Vous n’avez pas les droits nécessaires pour inviter des personnes.",
+  YOU_ARE_NOT_ALLOWED_TO_INVITE_USER_WITH_THIS_ROLE: "Vous ne pouvez pas inviter avec ce rôle.",
+  INVITATION_LIMIT_REACHED:
+    "Trop d’invitations en attente. Annulez-en avant d’en envoyer d’autres.",
+  ORGANIZATION_MEMBERSHIP_LIMIT_REACHED: "L’organisation a atteint son nombre maximal de membres.",
+  YOU_ARE_NOT_THE_RECIPIENT_OF_THE_INVITATION:
+    "Cette invitation a été envoyée à une autre adresse email.",
+  INVITATION_EXPIRED: "Cette invitation a expiré. Demandez-en une nouvelle.",
+  YOU_ARE_NOT_ALLOWED_TO_CANCEL_THIS_INVITATION: "Vous ne pouvez pas annuler cette invitation.",
+  EMAIL_VERIFICATION_REQUIRED_BEFORE_ACCEPTING_OR_REJECTING_INVITATION:
+    "Confirmez d’abord votre adresse email pour répondre à l’invitation.",
 };
 
 const oauthMessages: Record<string, string> = {

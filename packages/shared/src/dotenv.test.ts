@@ -76,3 +76,13 @@ describe("secretKeySchema", () => {
     expect(secretKeySchema.safeParse("").success).toBe(false);
   });
 });
+
+describe("isReadableText", () => {
+  test("accepts accents and refuses text corrupted by a wrong encoding", async () => {
+    const { isReadableText } = await import("./text");
+    const { nameField } = await import("./auth-schemas");
+    expect(isReadableText("Invitée Éléonore çà")).toBe(true);
+    expect(isReadableText("Invit\uFFFDe")).toBe(false);
+    expect(nameField.safeParse("Invit\uFFFDe").success).toBe(false);
+  });
+});

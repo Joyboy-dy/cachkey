@@ -7,17 +7,19 @@ import {
 } from "@cachkey/emails";
 import {
   avatarSchema,
+  isReadableText,
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   type SocialProviderId,
 } from "@cachkey/shared";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
-import { createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 import { organization } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./db";
 import { sendEmail } from "./email";
 import { env } from "./env";
+import { afterMembershipChange, organizationHooks, sendInvitation } from "./organization-events";
 
 const ONE_HOUR = 60 * 60;
 
@@ -163,9 +165,13 @@ export const auth = betterAuth({
   plugins: [
     organization({
       creatorRole: "owner",
-      // Invitations arrive with phase 5; until then members are managed by owners/admins.
       organizationLimit: 20,
       membershipLimit: 100,
+      invitationExpiresIn: 7 * 24 * ONE_HOUR,
+      // Inviting the same address again replaces the previous invitation.
+      cancelPendingInvitationsOnReInvite: true,
+      sendInvitationEmail: sendInvitation,
+      organizationHooks,
     }),
   ],
 
@@ -186,8 +192,34 @@ export const auth = betterAuth({
   },
 
   hooks: {
-    // Notify the owner whenever their password changes from the account settings.
+    // Names sent in another encoding than UTF-8 arrive with U+FFFD: refuse them rather than
+    // storing « Invit�e » (sign-up, profile, organisation create/update).
+    before: createAuthMiddleware(async (ctx) => {
+      const body: unknown = ctx.body;
+      if (!body || typeof body !== "object") return;
+      const data = "data" in body && body.data && typeof body.data === "object" ? body.data : {};
+      const names = [
+        "name" in body ? body.name : undefined,
+        "name" in data ? data.name : undefined,
+      ];
+      if (names.some((name) => typeof name === "string" && !isReadableText(name))) {
+        throw new APIError("BAD_REQUEST", { code: "UNREADABLE_TEXT", message: "UNREADABLE_TEXT" });
+      }
+    }),
+    // Notify the owner whenever their password changes from the account settings, and
+    // follow membership changes (see organization-events.ts).
     after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path.startsWith("/organization/")) {
+        // Audit and access clean-up for role changes, removals and departures.
+        await afterMembershipChange(
+          ctx.path,
+          ctx.context.returned,
+          // The session is not attached to the context for these endpoints: read it.
+          (await getSessionFromCtx(ctx))?.user,
+          ctx.request,
+        );
+        return;
+      }
       if (ctx.path !== "/change-password") return;
       const user = (ctx.context.newSession ?? ctx.context.session)?.user;
       if (!user || ctx.context.returned instanceof Error) return;

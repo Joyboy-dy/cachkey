@@ -16,7 +16,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { AuthSession } from "@/lib/auth/session";
-import type { Workspace } from "@cachkey/shared";
+import { canManage, type Workspace } from "@cachkey/shared";
 import { findNavItem, NAV_SECTIONS } from "./navigation";
 import { OrgSwitcher } from "./org-switcher";
 import { UserMenu } from "./user-menu";
@@ -58,28 +58,30 @@ export function AppSidebar({ user, workspace, organization }: AppSidebarProps) {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
-                {section.items.map((item) => {
-                  const isActive = item === activeItem;
-                  return (
-                    <SidebarMenuItem key={item.to}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={item.label}
-                        className="relative h-9 text-sidebar-foreground before:absolute before:inset-y-2 before:-left-2 before:w-[3px] before:rounded-r-full before:bg-primary before:opacity-0 before:transition-opacity group-data-[collapsible=icon]:before:hidden data-[active=true]:before:opacity-100 data-[active=true]:[&>svg]:text-primary"
-                      >
-                        <Link
-                          to={item.to}
-                          aria-current={isActive ? "page" : undefined}
-                          onClick={() => setOpenMobile(false)}
+                {section.items
+                  .filter((item) => !item.managersOnly || canManage(organization.role))
+                  .map((item) => {
+                    const isActive = item === activeItem;
+                    return (
+                      <SidebarMenuItem key={item.to}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={item.label}
+                          className="relative h-9 text-sidebar-foreground before:absolute before:inset-y-2 before:-left-2 before:w-[3px] before:rounded-r-full before:bg-primary before:opacity-0 before:transition-opacity group-data-[collapsible=icon]:before:hidden data-[active=true]:before:opacity-100 data-[active=true]:[&>svg]:text-primary"
                         >
-                          <Icon icon={item.icon} />
-                          <span>{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                          <Link
+                            to={item.to}
+                            aria-current={isActive ? "page" : undefined}
+                            onClick={() => setOpenMobile(false)}
+                          >
+                            <Icon icon={item.icon} />
+                            <span>{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

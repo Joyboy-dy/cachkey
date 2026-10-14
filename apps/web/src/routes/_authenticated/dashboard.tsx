@@ -4,19 +4,28 @@ import {
   MailValidation01Icon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { canManage } from "@cachkey/shared";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Icon } from "@/components/ui/icon";
-import { PageContainer, PageHeader, SectionCard, StatusPill } from "@/components/app/page";
+import { PageContainer, PageHeader, SectionCard } from "@/components/app/page";
 import { UserAvatar } from "@/components/app/user-avatar";
 import { textLinkVariants } from "@/components/ui/text-link";
+import { organizationOverviewQueryOptions } from "@/lib/collaboration";
 import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { projectsQueryOptions } from "@/lib/workspace";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(projectsQueryOptions(context.organization.id)),
+  loader: async ({ context }) => {
+    const { queryClient, organization } = context;
+    await Promise.all([
+      queryClient.ensureQueryData(projectsQueryOptions(organization.id)),
+      canManage(organization.role)
+        ? queryClient.ensureQueryData(organizationOverviewQueryOptions(organization.id))
+        : null,
+    ]);
+  },
   head: () => ({ meta: [{ title: "Vue d’ensemble · Cachkey" }] }),
   component: DashboardPage,
 });
@@ -25,9 +34,7 @@ type Step = {
   title: string;
   description: string;
   done: boolean;
-  /** Not available yet (later Cachkey version). */
-  soon?: boolean;
-  action?: { label: string; to: "/projects" };
+  action?: { label: string; to: "/projects" | "/organization" };
 };
 
 function DashboardPage() {
@@ -36,7 +43,13 @@ function DashboardPage() {
   const { data: projects } = useSuspenseQuery(projectsQueryOptions(organization.id));
   const firstName = user.name.split(" ")[0] || user.name;
 
-  const steps: Step[] = [
+  const manager = canManage(organization.role);
+  const { data: overview } = useQuery({
+    ...organizationOverviewQueryOptions(organization.id),
+    enabled: manager,
+  });
+
+  const accountSteps: Step[] = [
     {
       title: "Créer votre compte",
       description: "Votre espace Cachkey est prêt.",
@@ -47,30 +60,48 @@ function DashboardPage() {
       description: "Elle sert à sécuriser votre compte et à le récupérer.",
       done: user.emailVerified,
     },
-    {
-      title: "Créer votre organisation",
-      description: `${organization.name} regroupe vos projets.`,
-      done: true,
-    },
-    {
-      title: "Créer votre premier projet",
-      description: "Un projet regroupe les secrets d’une application.",
-      done: projects.length > 0,
-      action: { label: "Créer un projet", to: "/projects" },
-    },
-    {
-      title: "Ajouter vos environnements et vos secrets",
-      description: "Développement, production… chacun avec ses propres valeurs.",
-      done: false,
-      soon: true,
-    },
-    {
-      title: "Inviter votre équipe",
-      description: "Partagez l’accès sans jamais envoyer un secret par message.",
-      done: false,
-      soon: true,
-    },
   ];
+  const steps: Step[] = manager
+    ? [
+        ...accountSteps,
+        {
+          title: "Créer votre organisation",
+          description: `${organization.name} regroupe vos projets.`,
+          done: true,
+        },
+        {
+          title: "Créer votre premier projet",
+          description: "Un projet regroupe les variables d’une application.",
+          done: projects.length > 0,
+          action: { label: "Créer un projet", to: "/projects" },
+        },
+        {
+          title: "Ajouter vos variables",
+          description: "Importez votre fichier .env : chaque valeur est chiffrée.",
+          done: (overview?.secrets ?? 0) > 0,
+          action: { label: "Ouvrir un projet", to: "/projects" },
+        },
+        {
+          title: "Inviter votre équipe",
+          description: "Partagez l’accès sans jamais envoyer un secret par message.",
+          done: (overview?.members ?? 1) > 1 || (overview?.pendingInvitations ?? 0) > 0,
+          action: { label: "Inviter", to: "/organization" },
+        },
+      ]
+    : [
+        ...accountSteps,
+        {
+          title: `Rejoindre ${organization.name}`,
+          description: "Vous faites partie de l’organisation.",
+          done: true,
+        },
+        {
+          title: "Accéder à un projet",
+          description: "Un administrateur vous partage les projets dont vous avez besoin.",
+          done: projects.length > 0,
+          action: { label: "Voir mes projets", to: "/projects" },
+        },
+      ];
   const doneCount = steps.filter((step) => step.done).length;
   const nextIndex = steps.findIndex((step) => !step.done);
 
@@ -85,7 +116,11 @@ function DashboardPage() {
         <SectionCard
           className="lg:col-span-2"
           title="Premiers pas"
-          description="Quelques étapes pour mettre vos secrets à l’abri."
+          description={
+            manager
+              ? "Quelques étapes pour mettre vos secrets à l’abri."
+              : "Pour bien démarrer dans l’organisation."
+          }
           aside={
             <span className="font-mono text-sm whitespace-nowrap text-muted-foreground">
               {doneCount}/{steps.length}
@@ -127,7 +162,9 @@ function DashboardPage() {
                   <p
                     className={cn(
                       "text-sm leading-6 font-medium",
-                      step.done && "text-muted-foreground line-through decoration-border",
+                      // Done: still readable in both themes, the strike-through carries the state.
+                      step.done &&
+                        "text-foreground/75 line-through decoration-foreground/50 decoration-1",
                     )}
                   >
                     {step.title}
@@ -135,8 +172,7 @@ function DashboardPage() {
                   </p>
                   <p className="text-sm leading-5 text-muted-foreground">{step.description}</p>
                 </div>
-                {step.soon ? <StatusPill>Bientôt</StatusPill> : null}
-                {!step.done && !step.soon && step.action && index === nextIndex ? (
+                {!step.done && step.action && index === nextIndex ? (
                   <Link
                     to={step.action.to}
                     className={cn(textLinkVariants(), "shrink-0 text-sm whitespace-nowrap")}

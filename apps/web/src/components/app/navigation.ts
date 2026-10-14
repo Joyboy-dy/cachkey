@@ -1,4 +1,5 @@
 import {
+  Activity01Icon,
   Building03Icon,
   DashboardSquare01Icon,
   FolderLockedIcon,
@@ -8,8 +9,10 @@ import type { IconSvgElement } from "@/components/ui/icon";
 
 export type NavItem = {
   label: string;
-  to: "/dashboard" | "/projects" | "/organization" | "/account";
+  to: "/dashboard" | "/projects" | "/organization" | "/activity" | "/account";
   icon: IconSvgElement;
+  /** Shown to owners and admins only. */
+  managersOnly?: boolean;
 };
 
 export type NavSection = { label: string; items: NavItem[] };
@@ -22,6 +25,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: "Vue d’ensemble", to: "/dashboard", icon: DashboardSquare01Icon },
       { label: "Projets", to: "/projects", icon: FolderLockedIcon },
       { label: "Organisation", to: "/organization", icon: Building03Icon },
+      { label: "Activité", to: "/activity", icon: Activity01Icon, managersOnly: true },
     ],
   },
   {
