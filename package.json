@@ -1,0 +1,38 @@
+{
+  "name": "cachkey",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "bun run --filter './apps/*' dev",
+    "dev:web": "bun run --filter @cachkey/web dev",
+    "dev:api": "bun run --filter @cachkey/api dev",
+    "dev:emails": "bun run --filter @cachkey/emails dev",
+    "build": "bun run --filter './apps/*' build",
+    "typecheck": "bun run --filter '*' typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "services:up": "docker compose -f docker-compose.dev.yml up -d",
+    "services:down": "docker compose -f docker-compose.dev.yml down",
+    "db:generate": "bun run --filter @cachkey/db generate",
+    "db:migrate": "bun run --filter @cachkey/db migrate",
+    "db:deploy": "bun run --filter @cachkey/db deploy",
+    "db:studio": "bun run --filter @cachkey/db studio"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "^1.4.3",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "typescript": "~6.0",
+    "typescript-eslint": "^8.71.2"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@cachkey/db",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "postinstall": "prisma generate",
+    "migrate": "bun --env-file=../../.env prisma migrate dev",
+    "deploy": "bun --env-file=../../.env prisma migrate deploy",
+    "studio": "bun --env-file=../../.env prisma studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0"
+  },
+  "devDependencies": {
+    "prisma": "^7.10.0"
+  }
+}

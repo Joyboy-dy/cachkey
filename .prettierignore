@@ -1,0 +1,8 @@
+node_modules
+dist
+.output
+bun.lock
+**/src/generated
+**/routeTree.gen.ts
+**/migrations
+*.md
