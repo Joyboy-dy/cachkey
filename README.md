@@ -36,7 +36,7 @@ donc cookies first-party et aucune configuration CORS. Détails :
 
 ```bash
 bun install                 # installe les dépendances et génère le client Prisma
-cp .env.example .env.local  # puis renseigner BETTER_AUTH_SECRET (openssl rand -base64 32)
+cp .env.example .env.local  # puis renseigner BETTER_AUTH_SECRET et ENCRYPTION_KEY (openssl rand -base64 32)
 bun run services:up         # PostgreSQL (port 5433) + Mailpit (SMTP 1026, UI 8026)
 bun run db:migrate          # applique les migrations
 bun run dev                 # web → http://localhost:3000 · api → http://localhost:3001
@@ -65,6 +65,7 @@ jamais commités.
 | `API_PORT` / `API_INTERNAL_URL`             | oui    | Port de l'API / URL utilisée par le web pour l'atteindre  |
 | `DATABASE_URL`                              | oui    | Connexion PostgreSQL                                      |
 | `BETTER_AUTH_SECRET`                        | oui    | Secret de signature (≥ 32 caractères)                     |
+| `ENCRYPTION_KEY`                            | oui    | Clé maître des secrets (32 octets en base64). À sauvegarder : sans elle, les secrets sont illisibles |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | non    | Active la connexion Google                                |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | non    | Active la connexion GitHub                                |
 | `EMAIL_PROVIDER`                            | non    | `smtp` (défaut) ou `resend`                               |

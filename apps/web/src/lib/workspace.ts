@@ -85,11 +85,12 @@ export const projectQueryOptions = (organizationId: string, slug: string) =>
     staleTime: 30_000,
   });
 
-type ApiError = { code?: string; status?: number };
+export type ApiError = { code?: string; status?: number };
 type ApiResult<T> = { data: T; error: null } | { data: null; error: ApiError };
 
-async function send<T>(
-  method: "POST" | "PATCH" | "DELETE",
+/** Same-origin JSON call from the browser; errors come back as `{ code, status }`. */
+export async function request<T>(
+  method: "GET" | "POST" | "PATCH" | "DELETE",
   path: string,
   body?: unknown,
 ): Promise<ApiResult<T>> {
@@ -114,11 +115,11 @@ async function send<T>(
 }
 
 export const projectsApi = {
-  create: (input: ProjectInput) => send<ProjectDto>("POST", "/api/projects", input),
+  create: (input: ProjectInput) => request<ProjectDto>("POST", "/api/projects", input),
   update: (slug: string, input: ProjectInput) =>
-    send<ProjectDto>("PATCH", `/api/projects/${encodeURIComponent(slug)}`, input),
+    request<ProjectDto>("PATCH", `/api/projects/${encodeURIComponent(slug)}`, input),
   remove: (slug: string) =>
-    send<{ status: true }>("DELETE", `/api/projects/${encodeURIComponent(slug)}`),
+    request<{ status: true }>("DELETE", `/api/projects/${encodeURIComponent(slug)}`),
 };
 
 /**
@@ -131,6 +132,8 @@ export function useRefreshWorkspace() {
   return async () => {
     queryClient.removeQueries({ queryKey: ["projects"] });
     queryClient.removeQueries({ queryKey: ["members"] });
+    queryClient.removeQueries({ queryKey: ["environments"] });
+    queryClient.removeQueries({ queryKey: ["secrets"] });
     await queryClient.invalidateQueries({ queryKey: ["workspace"] });
     await queryClient.invalidateQueries({ queryKey: ["auth"] });
     await router.invalidate();

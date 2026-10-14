@@ -3,6 +3,7 @@ import { Elysia } from "elysia";
 import { accountRoutes } from "./account";
 import { auth, enabledSocialProviders } from "./auth";
 import { env } from "./env";
+import { secretRoutes } from "./secrets";
 import { workspaceRoutes } from "./workspace";
 
 export const app = new Elysia()
@@ -10,6 +11,7 @@ export const app = new Elysia()
   .mount(auth.handler)
   .use(accountRoutes)
   .use(workspaceRoutes)
+  .use(secretRoutes)
   .get("/api/health", () => ({ status: "ok" }))
   .get("/api/config", (): PublicConfig => ({ socialProviders: enabledSocialProviders }))
   .listen(env.API_PORT);

@@ -11,7 +11,7 @@ import { revalidateLogic } from "@tanstack/react-form";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { z } from "zod";
+import { ConfirmByTypingDialog, DangerAction, dangerTriggerClass } from "@/components/app/confirm";
 import { type Feedback, FeedbackAlert } from "@/components/app/feedback";
 import { SectionCard, StatusPill } from "@/components/app/page";
 import { UserAvatar } from "@/components/app/user-avatar";
@@ -40,16 +40,18 @@ export function OrganizationGeneralCard({ organization }: { organization: Organi
     defaultValues: { name: organization.name },
     validationLogic: revalidateLogic(),
     validators: { onDynamic: organizationSchema },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       setFeedback(null);
+      const name = value.name.trim();
       const { error } = await authClient.organization.update({
         organizationId: organization.id,
-        data: { name: value.name.trim() },
+        data: { name },
       });
       if (error) {
         setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
         return;
       }
+      formApi.reset({ name });
       await refreshWorkspace();
       setFeedback({ tone: "success", message: "Le nom de l’organisation a été mis à jour." });
     },
@@ -78,7 +80,7 @@ export function OrganizationGeneralCard({ organization }: { organization: Organi
               </form.AppField>
             </div>
             <div className={actions}>
-              <form.SubmitButton size="default" className="w-full sm:w-auto">
+              <form.SubmitButton size="default" className="w-full sm:w-auto" requireChanges>
                 Enregistrer
               </form.SubmitButton>
             </div>
@@ -235,7 +237,7 @@ export function MembersCard({
   );
 }
 
-/** Leave (non-owners) or delete (owner, after typing the name) the organisation. */
+/** Leave (non-owners) or delete (owner: type the name, then hold) the organisation. */
 export function OrganizationDangerCard({ organization }: { organization: Organization }) {
   const navigate = useNavigate();
   const refreshWorkspace = useRefreshWorkspace();
@@ -248,29 +250,7 @@ export function OrganizationDangerCard({ organization }: { organization: Organiz
     await navigate({ to: "/onboarding", replace: true });
   }
 
-  const schema = z.object({
-    confirmation: z
-      .string()
-      .trim()
-      .refine((value) => value === organization.name, {
-        message: "Saisissez le nom exact de l’organisation pour confirmer.",
-      }),
-  });
-
-  const form = useAppForm({
-    defaultValues: { confirmation: "" },
-    validationLogic: revalidateLogic(),
-    validators: { onDynamic: schema },
-    onSubmit: async () => {
-      setFeedback(null);
-      const { error } = await authClient.organization.delete({ organizationId: organization.id });
-      if (error) {
-        setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
-        return;
-      }
-      await afterExit();
-    },
-  });
+  const [deleting, setDeleting] = useState(false);
 
   if (!owner) {
     return (
@@ -310,31 +290,42 @@ export function OrganizationDangerCard({ organization }: { organization: Organiz
   }
 
   return (
-    <SectionCard
-      title="Supprimer l’organisation"
-      description="Tous ses projets et l’accès de ses membres seront définitivement supprimés."
-      className="border-destructive/30"
-    >
-      <form.AppForm>
-        <form.Form>
-          <div className={cardBody}>
-            <FeedbackAlert feedback={feedback} />
-            <form.AppField name="confirmation">
-              {(field) => (
-                <field.TextField
-                  label={`Saisissez « ${organization.name} » pour confirmer`}
-                  autoComplete="off"
-                />
-              )}
-            </form.AppField>
-          </div>
-          <div className={actions}>
-            <form.SubmitButton size="default" variant="destructive" className="w-full sm:w-auto">
-              Supprimer l’organisation
-            </form.SubmitButton>
-          </div>
-        </form.Form>
-      </form.AppForm>
+    <SectionCard title="Zone sensible" className="border-destructive/30">
+      <DangerAction
+        title="Supprimer l’organisation"
+        description="Tous ses projets, leurs variables et l’accès de ses membres seront définitivement supprimés."
+        action={
+          <Button
+            variant="outline"
+            className={dangerTriggerClass}
+            onClick={() => setDeleting(true)}
+          >
+            Supprimer l’organisation
+          </Button>
+        }
+      />
+      <ConfirmByTypingDialog
+        open={deleting}
+        onOpenChange={setDeleting}
+        title={`Supprimer ${organization.name} ?`}
+        description="Cette action est définitive et ne peut pas être annulée."
+        consequences={[
+          "Tous les projets, environnements et variables seront supprimés.",
+          "Tous les membres perdront leur accès.",
+          "Les applications qui utilisent ces variables ne pourront plus les récupérer.",
+        ]}
+        expected={organization.name}
+        confirmLabel="Supprimer l’organisation"
+        hold
+        onConfirm={async () => {
+          const { error } = await authClient.organization.delete({
+            organizationId: organization.id,
+          });
+          if (error) return getAuthErrorMessage(error);
+          await afterExit();
+          return null;
+        }}
+      />
     </SectionCard>
   );
 }

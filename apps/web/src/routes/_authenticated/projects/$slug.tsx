@@ -1,21 +1,15 @@
-import { canManage, type ProjectDto } from "@cachkey/shared";
-import { ArrowLeft01Icon, Layers01Icon } from "@hugeicons/core-free-icons";
-import { revalidateLogic } from "@tanstack/react-form";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, notFound, useNavigate, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
-import { z } from "zod";
-import { type Feedback, FeedbackAlert } from "@/components/app/feedback";
-import { PageContainer, PageHeader, SectionCard, StatusPill } from "@/components/app/page";
-import { useAppForm } from "@/components/form/form";
-import { ProjectForm } from "@/components/projects/project-form";
+import { canManage } from "@cachkey/shared";
+import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, notFound, Outlet } from "@tanstack/react-router";
+import { PageContainer, PageHeader } from "@/components/app/page";
 import { Icon } from "@/components/ui/icon";
 import { textLinkVariants } from "@/components/ui/text-link";
-import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import { projectQueryOptions, projectsApi } from "@/lib/workspace";
+import { projectQueryOptions } from "@/lib/workspace";
 
+/** Project layout: header and the « Variables / Paramètres » tabs. */
 export const Route = createFileRoute("/_authenticated/projects/$slug")({
   loader: async ({ context, params }) => {
     const project = await context.queryClient.ensureQueryData(
@@ -29,14 +23,16 @@ export const Route = createFileRoute("/_authenticated/projects/$slug")({
     meta: [{ title: `${loaderData?.crumb ?? "Projet"} · Cachkey` }],
   }),
   notFoundComponent: ProjectNotFound,
-  component: ProjectPage,
+  component: ProjectLayout,
 });
 
-function ProjectPage() {
+const tabClass =
+  "inline-flex h-10 items-center border-b-2 border-transparent text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground data-[status=active]:border-primary data-[status=active]:text-foreground";
+
+function ProjectLayout() {
   const { organization } = Route.useRouteContext();
   const { slug } = Route.useParams();
   const { data: project } = useSuspenseQuery(projectQueryOptions(organization.id, slug));
-  const manager = canManage(organization.role);
 
   if (!project) return <ProjectNotFound />;
 
@@ -57,114 +53,30 @@ function ProjectPage() {
         description={project.description || `Créé le ${formatDate(project.createdAt)}.`}
       />
 
-      <div className="mt-8 grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6">
-        <SectionCard
-          title="Environnements et secrets"
-          description="Développement, préproduction, production… chacun avec ses propres valeurs."
-          aside={<StatusPill>Bientôt</StatusPill>}
-        >
-          <div className="flex items-center gap-4 px-5 py-6 sm:px-6">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground">
-              <Icon icon={Layers01Icon} className="size-5" />
-            </span>
-            <p className="text-sm leading-6 text-muted-foreground">
-              La gestion chiffrée des variables d’environnement de ce projet arrive dans la
-              prochaine version de Cachkey.
-            </p>
-          </div>
-        </SectionCard>
+      <nav aria-label="Sections du projet" className="mt-6 mb-6 border-b">
+        <ul className="-mb-px flex gap-6">
+          <li>
+            <Link
+              to="/projects/$slug"
+              params={{ slug }}
+              activeOptions={{ exact: true, includeSearch: false }}
+              className={tabClass}
+            >
+              Variables
+            </Link>
+          </li>
+          {canManage(organization.role) ? (
+            <li>
+              <Link to="/projects/$slug/settings" params={{ slug }} className={tabClass}>
+                Paramètres
+              </Link>
+            </li>
+          ) : null}
+        </ul>
+      </nav>
 
-        {manager ? (
-          <>
-            <ProjectSettingsCard project={project} />
-            <DeleteProjectCard project={project} />
-          </>
-        ) : null}
-      </div>
+      <Outlet />
     </PageContainer>
-  );
-}
-
-function ProjectSettingsCard({ project }: { project: ProjectDto }) {
-  const queryClient = useQueryClient();
-  const router = useRouter();
-
-  return (
-    <SectionCard title="Paramètres" description="Le nom et la description du projet.">
-      <ProjectForm
-        layout="card"
-        initial={project}
-        submitLabel="Enregistrer"
-        successMessage="Le projet a été mis à jour."
-        onSubmit={async (input) => {
-          const { error } = await projectsApi.update(project.slug, input);
-          if (error) return error;
-          await queryClient.invalidateQueries({ queryKey: ["projects"] });
-          await router.invalidate();
-          return null;
-        }}
-      />
-    </SectionCard>
-  );
-}
-
-function DeleteProjectCard({ project }: { project: ProjectDto }) {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const [feedback, setFeedback] = useState<Feedback>(null);
-
-  const schema = z.object({
-    confirmation: z
-      .string()
-      .trim()
-      .refine((value) => value === project.name, {
-        message: "Saisissez le nom exact du projet pour confirmer.",
-      }),
-  });
-
-  const form = useAppForm({
-    defaultValues: { confirmation: "" },
-    validationLogic: revalidateLogic(),
-    validators: { onDynamic: schema },
-    onSubmit: async () => {
-      setFeedback(null);
-      const { error } = await projectsApi.remove(project.slug);
-      if (error) {
-        setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
-        return;
-      }
-      queryClient.removeQueries({ queryKey: ["projects"] });
-      await navigate({ to: "/projects", replace: true });
-    },
-  });
-
-  return (
-    <SectionCard
-      title="Supprimer le projet"
-      description="Le projet et tout ce qu’il contient seront définitivement supprimés."
-      className="border-destructive/30"
-    >
-      <form.AppForm>
-        <form.Form>
-          <div className="grid gap-5 px-5 py-5 sm:px-6">
-            <FeedbackAlert feedback={feedback} />
-            <form.AppField name="confirmation">
-              {(field) => (
-                <field.TextField
-                  label={`Saisissez « ${project.name} » pour confirmer`}
-                  autoComplete="off"
-                />
-              )}
-            </form.AppField>
-          </div>
-          <div className="flex justify-end border-t px-5 py-3.5 sm:px-6">
-            <form.SubmitButton size="default" variant="destructive" className="w-full sm:w-auto">
-              Supprimer le projet
-            </form.SubmitButton>
-          </div>
-        </form.Form>
-      </form.AppForm>
-    </SectionCard>
   );
 }
 

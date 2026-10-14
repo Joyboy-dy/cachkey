@@ -31,15 +31,15 @@ export function ProjectForm({
     defaultValues: { name: initial?.name ?? "", description: initial?.description ?? "" },
     validationLogic: revalidateLogic(),
     validators: { onDynamic: projectSchema },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value, formApi }) => {
       setFeedback(null);
-      const error = await onSubmit({
-        name: value.name.trim(),
-        description: value.description.trim(),
-      });
+      const input = { name: value.name.trim(), description: value.description.trim() };
+      const error = await onSubmit(input);
       if (error) {
         setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
       } else if (successMessage) {
+        // The saved values become the new reference: « Enregistrer » turns off again.
+        formApi.reset(input);
         setFeedback({ tone: "success", message: successMessage });
       }
     },
@@ -77,7 +77,7 @@ export function ProjectForm({
         <form.Form>
           <div className="grid gap-5 px-5 py-5 sm:px-6">{fields}</div>
           <div className="flex justify-end border-t px-5 py-3.5 sm:px-6">
-            <form.SubmitButton size="default" className="w-full sm:w-auto">
+            <form.SubmitButton size="default" className="w-full sm:w-auto" requireChanges>
               {submitLabel}
             </form.SubmitButton>
           </div>

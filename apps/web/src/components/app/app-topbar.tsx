@@ -12,14 +12,20 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { findAccountSection, findNavItem } from "./navigation";
 import { ThemeToggle } from "./theme-toggle";
 
-/** Second breadcrumb level: account section, or a `crumb` returned by the route's loader. */
+/**
+ * Second breadcrumb level: account section, or the deepest `crumb` returned by a loader
+ * (a layout such as a project page provides it for all its tabs).
+ */
 function useSubCrumb(pathname: string, parent: string | undefined): string | undefined {
   const crumb = useMatches({
     select: (matches) => {
-      const data: unknown = matches.at(-1)?.loaderData;
-      return data && typeof data === "object" && "crumb" in data && typeof data.crumb === "string"
-        ? data.crumb
-        : undefined;
+      for (const match of [...matches].reverse()) {
+        const data: unknown = match.loaderData;
+        if (data && typeof data === "object" && "crumb" in data && typeof data.crumb === "string") {
+          return data.crumb;
+        }
+      }
+      return undefined;
     },
   });
   if (parent === "/account") return findAccountSection(pathname)?.label;

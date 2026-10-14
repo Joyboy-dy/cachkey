@@ -29,6 +29,8 @@ import { Route as AuthenticatedAccountSecurityRouteImport } from './routes/_auth
 import { Route as AuthenticatedAccountSessionsRouteImport } from './routes/_authenticated/account/sessions'
 import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects/index'
 import { Route as AuthenticatedProjectsSlugRouteImport } from './routes/_authenticated/projects/$slug'
+import { Route as AuthenticatedProjectsSlugIndexRouteImport } from './routes/_authenticated/projects/$slug/index'
+import { Route as AuthenticatedProjectsSlugSettingsRouteImport } from './routes/_authenticated/projects/$slug/settings'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -134,6 +136,18 @@ const AuthenticatedProjectsSlugRoute =
     path: '/projects/$slug',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedProjectsSlugIndexRoute =
+  AuthenticatedProjectsSlugIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedProjectsSlugRoute,
+  } as any)
+const AuthenticatedProjectsSlugSettingsRoute =
+  AuthenticatedProjectsSlugSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedProjectsSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -151,9 +165,11 @@ export interface FileRoutesByFullPath {
   '/api/$': typeof ApiSplatRoute
   '/account/security': typeof AuthenticatedAccountSecurityRoute
   '/account/sessions': typeof AuthenticatedAccountSessionsRoute
-  '/projects/$slug': typeof AuthenticatedProjectsSlugRoute
+  '/projects/$slug': typeof AuthenticatedProjectsSlugRouteWithChildren
   '/account/': typeof AuthenticatedAccountIndexRoute
   '/projects/': typeof AuthenticatedProjectsIndexRoute
+  '/projects/$slug/settings': typeof AuthenticatedProjectsSlugSettingsRoute
+  '/projects/$slug/': typeof AuthenticatedProjectsSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -170,9 +186,10 @@ export interface FileRoutesByTo {
   '/api/$': typeof ApiSplatRoute
   '/account/security': typeof AuthenticatedAccountSecurityRoute
   '/account/sessions': typeof AuthenticatedAccountSessionsRoute
-  '/projects/$slug': typeof AuthenticatedProjectsSlugRoute
   '/account': typeof AuthenticatedAccountIndexRoute
   '/projects': typeof AuthenticatedProjectsIndexRoute
+  '/projects/$slug/settings': typeof AuthenticatedProjectsSlugSettingsRoute
+  '/projects/$slug': typeof AuthenticatedProjectsSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -193,9 +210,11 @@ export interface FileRoutesById {
   '/api/$': typeof ApiSplatRoute
   '/_authenticated/account/security': typeof AuthenticatedAccountSecurityRoute
   '/_authenticated/account/sessions': typeof AuthenticatedAccountSessionsRoute
-  '/_authenticated/projects/$slug': typeof AuthenticatedProjectsSlugRoute
+  '/_authenticated/projects/$slug': typeof AuthenticatedProjectsSlugRouteWithChildren
   '/_authenticated/account/': typeof AuthenticatedAccountIndexRoute
   '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
+  '/_authenticated/projects/$slug/settings': typeof AuthenticatedProjectsSlugSettingsRoute
+  '/_authenticated/projects/$slug/': typeof AuthenticatedProjectsSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -218,6 +237,8 @@ export interface FileRouteTypes {
     | '/projects/$slug'
     | '/account/'
     | '/projects/'
+    | '/projects/$slug/settings'
+    | '/projects/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -234,9 +255,10 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/account/security'
     | '/account/sessions'
-    | '/projects/$slug'
     | '/account'
     | '/projects'
+    | '/projects/$slug/settings'
+    | '/projects/$slug'
   id:
     | '__root__'
     | '/'
@@ -259,6 +281,8 @@ export interface FileRouteTypes {
     | '/_authenticated/projects/$slug'
     | '/_authenticated/account/'
     | '/_authenticated/projects/'
+    | '/_authenticated/projects/$slug/settings'
+    | '/_authenticated/projects/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -413,6 +437,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectsSlugRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/projects/$slug/': {
+      id: '/_authenticated/projects/$slug/'
+      path: '/'
+      fullPath: '/projects/$slug/'
+      preLoaderRoute: typeof AuthenticatedProjectsSlugIndexRouteImport
+      parentRoute: typeof AuthenticatedProjectsSlugRoute
+    }
+    '/_authenticated/projects/$slug/settings': {
+      id: '/_authenticated/projects/$slug/settings'
+      path: '/settings'
+      fullPath: '/projects/$slug/settings'
+      preLoaderRoute: typeof AuthenticatedProjectsSlugSettingsRouteImport
+      parentRoute: typeof AuthenticatedProjectsSlugRoute
+    }
   }
 }
 
@@ -431,12 +469,29 @@ const AuthenticatedAccountRouteChildren: AuthenticatedAccountRouteChildren = {
 const AuthenticatedAccountRouteWithChildren =
   AuthenticatedAccountRoute._addFileChildren(AuthenticatedAccountRouteChildren)
 
+interface AuthenticatedProjectsSlugRouteChildren {
+  AuthenticatedProjectsSlugSettingsRoute: typeof AuthenticatedProjectsSlugSettingsRoute
+  AuthenticatedProjectsSlugIndexRoute: typeof AuthenticatedProjectsSlugIndexRoute
+}
+
+const AuthenticatedProjectsSlugRouteChildren: AuthenticatedProjectsSlugRouteChildren =
+  {
+    AuthenticatedProjectsSlugSettingsRoute:
+      AuthenticatedProjectsSlugSettingsRoute,
+    AuthenticatedProjectsSlugIndexRoute: AuthenticatedProjectsSlugIndexRoute,
+  }
+
+const AuthenticatedProjectsSlugRouteWithChildren =
+  AuthenticatedProjectsSlugRoute._addFileChildren(
+    AuthenticatedProjectsSlugRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOrganizationRoute: typeof AuthenticatedOrganizationRoute
   AuthenticatedWelcomeRoute: typeof AuthenticatedWelcomeRoute
-  AuthenticatedProjectsSlugRoute: typeof AuthenticatedProjectsSlugRoute
+  AuthenticatedProjectsSlugRoute: typeof AuthenticatedProjectsSlugRouteWithChildren
   AuthenticatedProjectsIndexRoute: typeof AuthenticatedProjectsIndexRoute
 }
 
@@ -445,7 +500,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOrganizationRoute: AuthenticatedOrganizationRoute,
   AuthenticatedWelcomeRoute: AuthenticatedWelcomeRoute,
-  AuthenticatedProjectsSlugRoute: AuthenticatedProjectsSlugRoute,
+  AuthenticatedProjectsSlugRoute: AuthenticatedProjectsSlugRouteWithChildren,
   AuthenticatedProjectsIndexRoute: AuthenticatedProjectsIndexRoute,
 }
 

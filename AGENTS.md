@@ -93,6 +93,10 @@ Rules:
 - `.env.example`: every variable, example values only. `.env.local`: real local values.
   `.env.prod`: real production values. Both real files are git-ignored.
 - Details and production rules: `.agents/rules/environment.md`.
+- `ENCRYPTION_KEY` (32 bytes, base64) wraps every project's data key: never rotate or lose it
+  without a re-encryption plan.
+- Secret values: only through `apps/api/src/crypto.ts`; never logged, never in list responses,
+  never in the TanStack Query cache (revealed on demand from the browser, `no-store`).
 - Local services: `bun run services:up` (PostgreSQL on 5433, Mailpit SMTP 1026 / UI 8026).
 
 ## Commands

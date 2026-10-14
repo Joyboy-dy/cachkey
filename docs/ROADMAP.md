@@ -65,13 +65,22 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 - Projets : CRUD (`/api/projects`), identifiant d'URL unique par organisation et stable au
   renommage, liste, détail, paramètres, suppression confirmée par le nom.
 
-## Phase 4 — Environnements & secrets ⏳
+## Phase 4 — Environnements & secrets ✅
 
-- Environnements configurables par projet (local, développement, staging, production…).
-- Chiffrement des secrets au repos (enveloppe : clé maître de l'instance + clés de données).
-- CRUD variables, masquage par défaut, révélation explicite, copie.
-- Import / export `.env`.
-- Historique des versions d'une variable.
+- Environnements par projet : `development`, `staging` et `production` créés avec chaque
+  projet (et ajoutés aux projets existants par migration), puis création, renommage et
+  suppression par les propriétaires et administrateurs (20 au plus par projet).
+- Chiffrement au repos par enveloppe (`apps/api/src/crypto.ts`) : la clé maître de l'instance
+  (`ENCRYPTION_KEY`) ne chiffre que la clé de données de chaque projet ; chaque valeur est
+  chiffrée en AES-256-GCM avec cette clé, un IV aléatoire et des données associées qui la lient
+  à son environnement.
+- Variables (`/api/projects/:slug/environments/:env/secrets`) : liste sans valeurs, création,
+  modification, suppression, révélation explicite, copie. Les réponses portent
+  `Cache-Control: no-store`. Tous les membres lisent et modifient les variables.
+- Import `.env` (fichier ou collage, remplacement optionnel, lignes illisibles signalées) et
+  export `.env` ; lecteur compatible dotenv dans `packages/shared/src/dotenv.ts`.
+- Historique : chaque changement de valeur crée une version, consultable, révélable et
+  restaurable (la restauration crée une nouvelle version).
 
 ## Phase 5 — Collaboration & permissions ⏳
 
@@ -102,6 +111,17 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 
 ## Journal
 
+- **2026-10-14** — Refonte UX projets / environnements / variables : onglets Variables et
+  Paramètres, sélecteur d'environnement, liste pensée pour des centaines de variables (barre
+  d'outils collante, recherche « / », tri, affichage progressif, valeurs longues repliées),
+  import avec aperçu et défilement maîtrisé (fichiers `.env.example` acceptés), boutons
+  d'enregistrement actifs seulement sur un changement valide, suppressions par dialogue
+  (saisie de confirmation, maintien du bouton pour l'organisation et le compte).
+- **2026-10-14** — Phase 4 terminée. Vérifié : format, lint, types, tests (chiffrement,
+  lecteur `.env`), build ; en réel (API + navigateur) : environnements par défaut et migration
+  des projets existants, ajout / doublon refusé / nom invalide refusé, import avec ligne
+  illisible, versions et restauration, export, révélation, valeurs chiffrées en base,
+  `no-store`, accès refusé sans session, 320 px et thèmes clair et sombre.
 - **2026-10-14** — Phase 3 terminée. Vérifié : format, lint, types, tests, build ; en réel
   (API + navigateur) : onboarding, création / changement / suppression d'organisation, CRUD
   projets (identifiants uniques, validation, 404), rôles (membre refusé en écriture : 403,

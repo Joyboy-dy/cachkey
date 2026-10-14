@@ -32,6 +32,12 @@ const messages: Record<string, string> = {
   FORBIDDEN: "Vous n’avez pas les droits nécessaires pour cette action.",
   NO_ACTIVE_ORGANIZATION: "Sélectionnez d’abord une organisation.",
   PROJECT_NOT_FOUND: "Ce projet n’existe pas ou a été supprimé.",
+  ENVIRONMENT_NOT_FOUND: "Cet environnement n’existe pas ou a été supprimé.",
+  TOO_MANY_ENVIRONMENTS: "Ce projet a atteint le nombre maximal d’environnements (20).",
+  SECRET_NOT_FOUND: "Cette variable n’existe plus. Actualisez la page.",
+  SECRET_ALREADY_EXISTS: "Une variable porte déjà ce nom dans cet environnement.",
+  TOO_MANY_SECRETS: "Cet environnement a atteint le nombre maximal de variables (500).",
+  VERSION_NOT_FOUND: "Cette version n’existe plus.",
   ORGANIZATION_ALREADY_EXISTS: "Cet identifiant d’organisation est déjà utilisé.",
   ORGANIZATION_SLUG_ALREADY_TAKEN: "Cet identifiant d’organisation est déjà utilisé.",
   YOU_HAVE_REACHED_THE_MAXIMUM_NUMBER_OF_ORGANIZATIONS:

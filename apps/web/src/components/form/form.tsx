@@ -246,25 +246,48 @@ type SubmitButtonProps = {
   /** Auth pages use the default full-width `lg` button; settings use compact ones. */
   size?: "default" | "lg";
   variant?: "default" | "ink" | "destructive";
+  /**
+   * Edit forms: stay disabled until a value differs from the saved one.
+   * After a successful save, call `form.reset(savedValues)` to make them the new reference.
+   */
+  requireChanges?: boolean;
 };
 
+/**
+ * Enabled only once the form can actually be sent: hydrated, not already submitting,
+ * values valid against the form's schema and, for edit forms, actually changed.
+ */
 function SubmitButton({
   children,
   className,
   size = "lg",
   variant = "default",
+  requireChanges = false,
 }: SubmitButtonProps) {
   const form = useFormContext();
   const hydrated = useHydrated();
+  const schema = form.options.validators?.onDynamic;
   return (
-    <form.Subscribe selector={(state) => state.isSubmitting}>
-      {(isSubmitting) => (
+    <form.Subscribe
+      selector={(state) => {
+        const current = parseWith(schema, state.values);
+        return {
+          isSubmitting: state.isSubmitting,
+          valid: current.valid,
+          // Compared after normalisation (trimmed…): « Nom » and « Nom  » are the same value.
+          unchanged:
+            JSON.stringify(current.output) ===
+            JSON.stringify(parseWith(schema, form.options.defaultValues).output),
+        };
+      }}
+    >
+      {({ isSubmitting, unchanged, valid }) => (
         <Button
           type="submit"
           size={size}
           variant={variant}
           className={cn("w-full", className)}
-          disabled={!hydrated || isSubmitting}
+          disabled={!hydrated || isSubmitting || !valid || (requireChanges && unchanged)}
         >
           {isSubmitting ? <Icon icon={Loading03Icon} className="animate-spin" aria-hidden /> : null}
           {children}
@@ -273,6 +296,26 @@ function SubmitButton({
     </form.Subscribe>
   );
 }
+
+/**
+ * Silent synchronous parse with the form's Standard Schema (Zod). Without a usable schema,
+ * values are considered valid and compared as they are.
+ */
+function parseWith(schema: unknown, values: unknown): { valid: boolean; output: unknown } {
+  if (!schema || typeof schema !== "object" || !("~standard" in schema)) {
+    return { valid: true, output: values };
+  }
+  const result = (schema as StandardSchemaV1)["~standard"].validate(values);
+  if (result instanceof Promise) return { valid: true, output: values };
+  return result.issues ? { valid: false, output: values } : { valid: true, output: result.value };
+}
+
+type StandardResult = { value?: unknown; issues?: ReadonlyArray<unknown> };
+type StandardSchemaV1 = {
+  "~standard": {
+    validate: (value: unknown) => StandardResult | Promise<StandardResult>;
+  };
+};
 
 export const { useAppForm } = createFormHook({
   fieldContext,

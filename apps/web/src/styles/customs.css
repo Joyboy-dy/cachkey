@@ -52,6 +52,20 @@
 }
 
 /*
+ * shadcn/ui « new-york » dropdown preset: menu items ship with the `cursor-default` utility,
+ * which beats the base layer above. Unlayered on purpose so it wins. Radix marks disabled
+ * items with an empty `data-disabled` attribute.
+ */
+:is(
+  [data-slot="dropdown-menu-item"],
+  [data-slot="dropdown-menu-checkbox-item"],
+  [data-slot="dropdown-menu-radio-item"],
+  [data-slot="dropdown-menu-sub-trigger"]
+):not([data-disabled]) {
+  cursor: pointer;
+}
+
+/*
  * Theme switch (lib/theme.ts): a View Transition cross-fades the whole page once, on the
  * compositor. Slightly longer and eased so light ↔ dark feels soft rather than abrupt.
  * Scoped to theme changes only; reduced motion skips the transition entirely (in JS).
