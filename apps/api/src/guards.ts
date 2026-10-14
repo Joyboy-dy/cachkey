@@ -24,6 +24,9 @@ export class HttpError extends Error {
   }
 }
 
+/** Organisation chosen per request by the CLI, instead of the session's active one. */
+export const ORGANIZATION_HEADER = "x-cachkey-organization";
+
 export function isMemberRole(value: string): value is MemberRole {
   return (memberRoles as readonly string[]).includes(value);
 }
@@ -37,7 +40,9 @@ export async function requireSession(headers: Headers) {
 /** Active organisation of the session and the caller's role in it. */
 export async function requireMembership(headers: Headers) {
   const session = await requireSession(headers);
-  const organizationId = session.session.activeOrganizationId;
+  // The CLI names the organisation of the linked folder; membership is still checked below.
+  const organizationId =
+    headers.get(ORGANIZATION_HEADER)?.trim() || session.session.activeOrganizationId;
   if (!organizationId) throw new HttpError(409, "NO_ACTIVE_ORGANIZATION");
   const member = await prisma.member.findUnique({
     where: { organizationId_userId: { organizationId, userId: session.user.id } },

@@ -14,7 +14,8 @@ Monorepo [Bun](https://bun.sh) (workspaces) en TypeScript strict.
 ```
 apps/
   web/        TanStack Start (Router, Query, Form) · Tailwind CSS v4 · shadcn/ui
-  api/        Elysia · Better Auth
+  api/        Elysia · Better Auth · API publique /api/v1 (OpenAPI)
+  cli/        Outil en ligne de commande `cachkey` (pull, run)
 packages/
   db/         Prisma (PostgreSQL) — schéma et client
   emails/     Templates React Email + transports (SMTP / Resend)
@@ -91,6 +92,22 @@ apparaissent alors automatiquement sur les pages de connexion et d'inscription.
 3. Authorization callback URL : `http://localhost:3000/api/auth/callback/github`
 
 En production, remplacer `http://localhost:3000` par la valeur de `APP_URL`.
+
+## Ligne de commande
+
+Installation locale : `cd apps/cli && bun link` (puis `cachkey --help`).
+
+```bash
+cachkey login                  # code à valider dans le navigateur (/device)
+cachkey link                   # associe le dossier à un projet et un environnement
+cachkey secrets                # liste ; get / set / rm / import pour le reste
+cachkey run -- npm start       # lance la commande avec les variables
+```
+
+Sur un serveur ou en CI : créez un jeton dans **Projet → Paramètres → Jetons d'accès**
+(lecture seule, un environnement) et définissez `CACHKEY_URL` et `CACHKEY_TOKEN`
+(`$env:CACHKEY_TOKEN="…"` sous PowerShell). API publique : `/api/v1/docs`.
+`bun run --filter @cachkey/cli compile` produit un exécutable autonome.
 
 ## Scripts
 

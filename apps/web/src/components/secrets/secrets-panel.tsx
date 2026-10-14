@@ -478,7 +478,12 @@ function SecretRow({
               {secret.updatedBy ? ` par ${secret.updatedBy.name}` : ""}
             </p>
           </div>
-          {shown ? null : (
+          {shown ? null : secret.empty ? (
+            // Emptiness is not secret: say it instead of dots that suggest a value.
+            <span className="mt-1 w-fit rounded-md border border-dashed border-muted-foreground/40 px-2 py-0.5 text-xs text-muted-foreground md:mt-0">
+              Aucune valeur
+            </span>
+          ) : (
             <button
               type="button"
               onClick={() => void toggle()}

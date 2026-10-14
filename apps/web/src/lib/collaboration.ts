@@ -9,6 +9,10 @@ import {
   type ProjectAccessDto,
   projectAccessDtoSchema,
   type ProjectAccessInput,
+  type CreatedServiceToken,
+  type ServiceTokenDto,
+  serviceTokenDtoSchema,
+  type ServiceTokenInput,
 } from "@cachkey/shared";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
@@ -98,6 +102,34 @@ export const accessApi = {
     request<{ status: true }>("PUT", accessPath(slug, userId), input),
   remove: (slug: string, userId: string) =>
     request<{ status: true }>("DELETE", accessPath(slug, userId)),
+};
+
+// ── Service tokens ───────────────────────────────────────────────────────────
+
+export const getServiceTokens = createServerFn({ method: "GET" })
+  .inputValidator(z.string().min(1).max(64))
+  .handler(async ({ data: slug }): Promise<ServiceTokenDto[]> => {
+    const response = await fetchApiAsVisitor(`/api/projects/${encodeURIComponent(slug)}/tokens`);
+    if (!response?.ok) return [];
+    const parsed = z.array(serviceTokenDtoSchema).safeParse(await response.json());
+    return parsed.success ? parsed.data : [];
+  });
+
+export const serviceTokensQueryOptions = (organizationId: string, slug: string) =>
+  queryOptions({
+    queryKey: ["tokens", organizationId, slug],
+    queryFn: () => getServiceTokens({ data: slug }),
+    staleTime: 15_000,
+  });
+
+const tokensPath = (slug: string) => `/api/projects/${encodeURIComponent(slug)}/tokens`;
+
+export const tokensApi = {
+  /** The full token is in the response, once: it never goes to the query cache. */
+  create: (slug: string, input: ServiceTokenInput) =>
+    request<CreatedServiceToken>("POST", tokensPath(slug), input),
+  revoke: (slug: string, id: string) =>
+    request<{ status: true }>("DELETE", `${tokensPath(slug)}/${encodeURIComponent(id)}`),
 };
 
 // ── Audit log ────────────────────────────────────────────────────────────────

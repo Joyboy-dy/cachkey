@@ -74,6 +74,8 @@ export type EnvironmentDto = z.infer<typeof environmentDtoSchema>;
 export const secretDtoSchema = z.object({
   id: z.string(),
   key: z.string(),
+  /** Whether the value is empty: shown even while values are masked. */
+  empty: z.boolean(),
   version: z.number(),
   updatedAt: z.string(),
   updatedBy: authorSchema,

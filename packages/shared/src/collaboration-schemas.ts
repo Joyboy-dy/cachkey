@@ -94,6 +94,7 @@ export const auditActions = [
   "secret.restored",
   "environment.imported",
   "environment.exported",
+  "environment.pulled",
   "environment.created",
   "environment.renamed",
   "environment.deleted",
@@ -109,12 +110,19 @@ export const auditActions = [
   "member.removed",
   "member.left",
   "member.ownership_transferred",
+  "token.created",
+  "token.revoked",
 ] as const;
 export type AuditAction = (typeof auditActions)[number];
 
 /** Families used to filter the log. */
 export const auditCategories = {
-  reads: ["secret.revealed", "secret.version_revealed", "environment.exported"],
+  reads: [
+    "secret.revealed",
+    "secret.version_revealed",
+    "environment.exported",
+    "environment.pulled",
+  ],
   changes: [
     "secret.created",
     "secret.updated",
@@ -141,6 +149,8 @@ export const auditCategories = {
     "member.removed",
     "member.left",
     "member.ownership_transferred",
+    "token.created",
+    "token.revoked",
   ],
 } as const satisfies Record<string, readonly AuditAction[]>;
 export type AuditCategory = keyof typeof auditCategories;

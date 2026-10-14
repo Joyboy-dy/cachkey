@@ -40,6 +40,15 @@ export function decrypt(key: Buffer, payload: string, aad: string): Buffer {
   ]);
 }
 
+/**
+ * Whether a ciphertext holds an empty plaintext, without decrypting it: GCM adds no padding,
+ * so an empty value is the tag alone. (The length of a value is not secret from the database.)
+ */
+export function isEmptyCiphertext(payload: string): boolean {
+  const bodyPart = payload.split(".")[2];
+  return bodyPart !== undefined && Buffer.from(bodyPart, "base64").length === TAG_BYTES;
+}
+
 export function generateDataKey(): Buffer {
   return randomBytes(32);
 }

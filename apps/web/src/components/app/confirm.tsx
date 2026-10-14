@@ -307,7 +307,9 @@ export function HoldToConfirmButton({
       <p
         id={hintId}
         className={cn(
-          "text-center text-xs text-muted-foreground sm:text-right",
+          // w-0 + min-w-full: the hint wraps under the button instead of widening the
+          // footer item, which pushed the button away from « Annuler ».
+          "text-center text-xs text-balance text-muted-foreground sm:w-0 sm:min-w-full sm:text-right",
           disabled && "opacity-60",
         )}
       >

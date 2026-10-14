@@ -97,7 +97,7 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
   avec auteur, projet, environnement, adresse IP et date. Page « Activité » filtrable par type
   et par projet, pagination par curseur. Aucune valeur secrète n'y est jamais écrite.
 
-## Phase 6 — Accès programmatique ⏳
+## Phase 6 — Accès programmatique ✅
 
 - Jetons de service (machine tokens) à portée limitée.
 - API publique documentée (OpenAPI via Elysia).
@@ -120,6 +120,20 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 
 ## Journal
 
+- **2026-10-14** — CLI façon `gh` : `cachkey login` (code validé dans le navigateur sur
+  `/device`, session propre au terminal, visible et révocable dans Appareils), `link`
+  (`.cachkey.json` sans secret), `orgs`, `projects`, `envs`, `secrets`, `get`, `set` (saisie
+  masquée), `rm` (confirmation), `import`, `pull`, `run`, `logout`. Mêmes droits que
+  l'utilisateur ; actions marquées « en ligne de commande » dans le journal. Vérifié en
+  réel : connexion, lecture, ajout, modification, import, suppression, déconnexion (session
+  révoquée, 401).
+- **2026-10-14** — Phase 6 terminée : jetons d'accès (lecture seule, un environnement,
+  expiration, haché en base, affiché une seule fois, révocation), API publique `/api/v1`
+  documentée (OpenAPI + Scalar sur `/api/v1/docs`), CLI `cachkey` (`pull`, `run`, `whoami`),
+  lectures par jeton dans le journal d'activité. Variables vides signalées « Aucune valeur »
+  même masquées. Vérifié : format, lint, types, tests, build ; en réel (API + CLI +
+  navigateur) : création, lecture JSON / .env, jeton invalide ou révoqué refusé (401),
+  `run` (variables injectées, code de sortie transmis), 320 px et thème sombre.
 - **2026-10-14** — Phase 5 terminée. Vérifié : format, lint, types, tests, build ; en réel
   (API + Mailpit + navigateur) : invitation (email reçu, détails refusés à une autre adresse,
   acceptation), membre sans accès (liste vide, 404), accès en lecture limité à un

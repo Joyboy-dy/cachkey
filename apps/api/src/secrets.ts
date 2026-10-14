@@ -20,6 +20,7 @@ import {
   decryptSecret,
   encryptSecret,
   generateDataKey,
+  isEmptyCiphertext,
   unwrapDataKey,
   wrapDataKey,
 } from "./crypto";
@@ -54,7 +55,10 @@ function parse<T>(schema: z.ZodType<T>, body: unknown): T {
 }
 
 /** The project's data key, created on first use (projects from before encryption have none). */
-async function dataKeyOf(project: { id: string; encryptedKey: string | null }): Promise<Buffer> {
+export async function dataKeyOf(project: {
+  id: string;
+  encryptedKey: string | null;
+}): Promise<Buffer> {
   if (project.encryptedKey) return unwrapDataKey(masterKey, project.encryptedKey, project.id);
   const wrapped = wrapDataKey(masterKey, generateDataKey(), project.id);
   // Only one concurrent request may set it; the others read the winner's key.
@@ -113,12 +117,14 @@ function secretDto(secret: {
   id: string;
   key: string;
   version: number;
+  value: string;
   updatedAt: Date;
   updatedBy: { id: string; name: string; avatarSeed: string | null } | null;
 }): SecretDto {
   return {
     id: secret.id,
     key: secret.key,
+    empty: isEmptyCiphertext(secret.value),
     version: secret.version,
     updatedAt: secret.updatedAt.toISOString(),
     updatedBy: secret.updatedBy,
@@ -154,6 +160,23 @@ async function writeValue(
       data: { secretId: secret.id, version, value: encrypted, createdById: userId },
     }),
   ]);
+}
+
+/** Every variable of an environment with its decrypted value, sorted by name. */
+export async function environmentValues(
+  project: { id: string; encryptedKey: string | null },
+  environmentId: string,
+): Promise<{ key: string; value: string }[]> {
+  const dataKey = await dataKeyOf(project);
+  const secrets = await prisma.secret.findMany({
+    where: { environmentId },
+    orderBy: { key: "asc" },
+    select: { key: true, value: true },
+  });
+  return secrets.map((secret) => ({
+    key: secret.key,
+    value: decryptSecret(dataKey, environmentId, secret.value),
+  }));
 }
 
 function isUniqueViolation(error: unknown): boolean {
@@ -259,7 +282,14 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
     const secrets = await prisma.secret.findMany({
       where: { environmentId: environment.id },
       orderBy: { key: "asc" },
-      select: { id: true, key: true, version: true, updatedAt: true, updatedBy: author },
+      select: {
+        id: true,
+        key: true,
+        value: true,
+        version: true,
+        updatedAt: true,
+        updatedBy: author,
+      },
     });
     return secrets.map(secretDto);
   })
@@ -279,7 +309,14 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
           updatedById: membership.userId,
           versions: { create: { version: 1, value: encrypted, createdById: membership.userId } },
         },
-        select: { id: true, key: true, version: true, updatedAt: true, updatedBy: author },
+        select: {
+          id: true,
+          key: true,
+          value: true,
+          version: true,
+          updatedAt: true,
+          updatedBy: author,
+        },
       });
       await audit(
         actorOf(membership),
@@ -500,17 +537,9 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
 
   .post("/environments/:env/export", async ({ request, params }) => {
     const { membership, project, environment } = await scope(request.headers, params);
-    const dataKey = await dataKeyOf(project);
-    const secrets = await prisma.secret.findMany({
-      where: { environmentId: environment.id },
-      orderBy: { key: "asc" },
-      select: { key: true, value: true },
-    });
+    const secrets = await environmentValues(project, environment.id);
     const content = serializeDotenv(
-      secrets.map((secret) => ({
-        key: secret.key,
-        value: decryptSecret(dataKey, environment.id, secret.value),
-      })),
+      secrets,
       `${project.name} — ${environment.name}\nExporté depuis Cachkey le ${new Date().toISOString()}`,
     );
     await audit(

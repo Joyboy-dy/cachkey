@@ -25,6 +25,10 @@ function requestMeta(request?: Request) {
   };
 }
 
+function fromCli(request?: Request): boolean {
+  return request?.headers.get("user-agent")?.startsWith("cachkey-cli/") ?? false;
+}
+
 export async function audit(actor: AuditActor, entry: AuditEntry, request?: Request) {
   try {
     await prisma.auditEvent.create({
@@ -37,7 +41,10 @@ export async function audit(actor: AuditActor, entry: AuditEntry, request?: Requ
         projectName: entry.project?.name ?? null,
         environmentName: entry.environmentName ?? null,
         target: entry.target ?? null,
-        metadata: entry.details ?? undefined,
+        // Actions made from the CLI are told apart in the log.
+        metadata: fromCli(request)
+          ? { ...entry.details, via: "cli" }
+          : (entry.details ?? undefined),
         ...requestMeta(request),
       },
     });

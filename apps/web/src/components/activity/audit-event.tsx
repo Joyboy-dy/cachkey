@@ -1,6 +1,8 @@
 import type { AuditEventDto } from "@cachkey/shared";
+import { Key01Icon } from "@hugeicons/core-free-icons";
 import type { ReactNode } from "react";
 import { UserAvatar } from "@/components/app/user-avatar";
+import { Icon } from "@/components/ui/icon";
 import { roleLabel } from "@/lib/roles";
 
 /*
@@ -95,6 +97,20 @@ export function describeEvent(event: AuditEventDto): ReactNode {
         <>
           a exporté {plural(numberDetail(event, "variables"), "variable", "variables")} au format
           .env
+        </>
+      );
+    case "environment.pulled":
+      return <>a récupéré {plural(numberDetail(event, "variables"), "variable", "variables")}</>;
+    case "token.created":
+      return (
+        <>
+          a créé le jeton d’accès <Strong>{target}</Strong>
+        </>
+      );
+    case "token.revoked":
+      return (
+        <>
+          a révoqué le jeton d’accès <Strong>{target}</Strong>
         </>
       );
     case "environment.created":
@@ -198,7 +214,9 @@ export function AuditEventRow({ event }: { event: AuditEventDto }) {
           className="mt-0.5 size-7"
         />
       ) : (
-        <span className="mt-0.5 size-7 shrink-0 rounded-lg bg-secondary" />
+        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
+          {event.details?.via === "token" ? <Icon icon={Key01Icon} className="size-3.5" /> : null}
+        </span>
       )}
       <div className="min-w-0 flex-1 text-sm leading-5">
         <p className="text-muted-foreground">
@@ -213,6 +231,12 @@ export function AuditEventRow({ event }: { event: AuditEventDto }) {
             </>
           ) : null}
           <time dateTime={event.createdAt}>{time.format(new Date(event.createdAt))}</time>
+          {event.details?.via === "cli" ? (
+            <>
+              <span aria-hidden>·</span>
+              <span>en ligne de commande</span>
+            </>
+          ) : null}
           {event.ip ? (
             <>
               <span aria-hidden>·</span>

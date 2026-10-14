@@ -1,4 +1,9 @@
-import { ComputerIcon, Loading03Icon, SmartPhone01Icon } from "@hugeicons/core-free-icons";
+import {
+  CommandLineIcon,
+  ComputerIcon,
+  Loading03Icon,
+  SmartPhone01Icon,
+} from "@hugeicons/core-free-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -52,7 +57,7 @@ function SessionsPage() {
   return (
     <SectionCard
       title="Appareils connectés"
-      description="Les appareils et navigateurs actuellement connectés à votre compte."
+      description="Les navigateurs et terminaux (ligne de commande) actuellement connectés à votre compte."
       aside={
         others.length > 0 ? (
           <Button
@@ -88,7 +93,12 @@ function SessionsPage() {
             return (
               <li key={item.id} className="flex items-center gap-4 px-5 py-4 sm:px-6">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background">
-                  <Icon icon={device.mobile ? SmartPhone01Icon : ComputerIcon} className="size-5" />
+                  <Icon
+                    icon={
+                      device.cli ? CommandLineIcon : device.mobile ? SmartPhone01Icon : ComputerIcon
+                    }
+                    className="size-5"
+                  />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-2 text-sm leading-5 font-medium">

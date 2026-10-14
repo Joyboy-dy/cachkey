@@ -14,7 +14,7 @@ import {
 } from "@cachkey/shared";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
-import { organization } from "better-auth/plugins";
+import { bearer, deviceAuthorization, organization } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./db";
 import { sendEmail } from "./email";
@@ -22,6 +22,9 @@ import { env } from "./env";
 import { afterMembershipChange, organizationHooks, sendInvitation } from "./organization-events";
 
 const ONE_HOUR = 60 * 60;
+
+/** The only device-flow client: Cachkey's own command-line tool. */
+export const CLI_CLIENT_ID = "cachkey-cli";
 
 type SocialProviders = NonNullable<BetterAuthOptions["socialProviders"]>;
 
@@ -163,6 +166,16 @@ export const auth = betterAuth({
   },
 
   plugins: [
+    // `cachkey login`: the CLI shows a code, the user approves it on /device, the CLI receives
+    // a session of its own (sent as a Bearer token, revocable from « Appareils connectés »).
+    deviceAuthorization({
+      verificationUri: "/device",
+      expiresIn: "10m",
+      interval: "5s",
+      validateClient: (clientId) => clientId === CLI_CLIENT_ID,
+    }),
+    // Lets that session authenticate with `Authorization: Bearer` instead of a cookie.
+    bearer(),
     organization({
       creatorRole: "owner",
       organizationLimit: 20,

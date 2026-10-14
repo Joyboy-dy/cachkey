@@ -1,0 +1,18 @@
+{
+  "name": "@cachkey/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "cachkey": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "bun src/index.ts",
+    "build": "bun build src/index.ts --target bun --outfile dist/cachkey.js",
+    "compile": "bun build src/index.ts --compile --outfile dist/cachkey",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cachkey/shared": "workspace:*"
+  }
+}

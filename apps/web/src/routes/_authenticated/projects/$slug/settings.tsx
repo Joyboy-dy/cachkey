@@ -12,11 +12,12 @@ import {
 import { SectionCard } from "@/components/app/page";
 import { AccessCard } from "@/components/projects/access-card";
 import { ProjectForm } from "@/components/projects/project-form";
+import { TokensCard } from "@/components/projects/tokens-card";
 import { EnvironmentNameDialog } from "@/components/secrets/environment-dialogs";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
-import { projectAccessQueryOptions } from "@/lib/collaboration";
+import { projectAccessQueryOptions, serviceTokensQueryOptions } from "@/lib/collaboration";
 import { environmentsApi, environmentsQueryOptions } from "@/lib/secrets";
 import { projectQueryOptions, projectsApi } from "@/lib/workspace";
 
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/projects/$slug/settings")(
     await Promise.all([
       queryClient.ensureQueryData(environmentsQueryOptions(organization.id, params.slug)),
       queryClient.ensureQueryData(projectAccessQueryOptions(organization.id, params.slug)),
+      queryClient.ensureQueryData(serviceTokensQueryOptions(organization.id, params.slug)),
     ]);
   },
   component: SettingsTab,
@@ -49,6 +51,11 @@ function SettingsTab() {
       <GeneralCard project={project} />
       <EnvironmentsCard organizationId={organization.id} projectSlug={project.slug} />
       <AccessCard
+        organizationId={organization.id}
+        projectSlug={project.slug}
+        environments={environments}
+      />
+      <TokensCard
         organizationId={organization.id}
         projectSlug={project.slug}
         environments={environments}

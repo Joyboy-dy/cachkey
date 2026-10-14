@@ -37,6 +37,8 @@ const messages: Record<string, string> = {
   TOO_MANY_ENVIRONMENTS: "Ce projet a atteint le nombre maximal d’environnements (20).",
   SECRET_NOT_FOUND: "Cette variable n’existe plus. Actualisez la page.",
   SECRET_ALREADY_EXISTS: "Une variable porte déjà ce nom dans cet environnement.",
+  TOO_MANY_TOKENS: "Ce projet a atteint le nombre maximal de jetons d’accès (50).",
+  TOKEN_NOT_FOUND: "Ce jeton n’existe pas ou a déjà été révoqué.",
   TOO_MANY_SECRETS: "Cet environnement a atteint le nombre maximal de variables (500).",
   VERSION_NOT_FOUND: "Cette version n’existe plus.",
   ORGANIZATION_ALREADY_EXISTS: "Cet identifiant d’organisation est déjà utilisé.",
