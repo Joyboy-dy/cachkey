@@ -13,6 +13,7 @@ export default tseslint.config(
       "**/.react-email/**",
       "**/src/generated/**",
       "**/routeTree.gen.ts",
+      ".agents/**",
     ],
   },
   js.configs.recommended,

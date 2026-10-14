@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DEFAULT_AUTHENTICATED_PATH } from "@/lib/auth/redirect";
 import { sessionQueryOptions } from "@/lib/auth/session";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 const searchSchema = z.object({
   /** Set by Better Auth when the verification token is invalid or expired. */
@@ -89,10 +90,7 @@ function VerificationFailed() {
         )}
       </div>
       <AuthFooterLink>
-        <Link
-          to="/sign-in"
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
-        >
+        <Link to="/sign-in" className={textLinkVariants()}>
           Retour à la connexion
         </Link>
       </AuthFooterLink>

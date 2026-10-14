@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { sessionQueryKey } from "@/lib/auth/session";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 const searchSchema = z.object({
   token: z.string().optional().catch(undefined),
@@ -118,10 +119,7 @@ function InvalidLink() {
         <Link to="/forgot-password">Demander un nouveau lien</Link>
       </Button>
       <AuthFooterLink>
-        <Link
-          to="/sign-in"
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
-        >
+        <Link to="/sign-in" className={textLinkVariants()}>
           Retour à la connexion
         </Link>
       </AuthFooterLink>

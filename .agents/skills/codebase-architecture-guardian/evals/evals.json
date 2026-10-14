@@ -1,0 +1,31 @@
+{
+  "skill_name": "codebase-architecture-guardian",
+  "evals": [
+    {
+      "id": "unknown-repo",
+      "prompt": "Add a billing feature to this unfamiliar repository, but first determine where its domain logic and external provider adapter should live.",
+      "expectations": [
+        "Inventories repository before proposing folders",
+        "Finds analogous ownership patterns",
+        "Avoids imposing a generic architecture template"
+      ]
+    },
+    {
+      "id": "refactor-boundaries",
+      "prompt": "This module is hard to test and imports UI, database, and provider code. Plan a safe refactor without breaking public callers.",
+      "expectations": [
+        "Traces dependency direction",
+        "Plans compatibility and tests",
+        "Uses incremental migration"
+      ]
+    },
+    {
+      "id": "boundary-style",
+      "prompt": "Make the settings page visually more polished without changing architecture.",
+      "expectations": [
+        "Does not initiate an architecture refactor",
+        "Hands visual work to frontend-aesthetics"
+      ]
+    }
+  ]
+}

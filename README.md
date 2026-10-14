@@ -36,7 +36,7 @@ donc cookies first-party et aucune configuration CORS. Détails :
 
 ```bash
 bun install                 # installe les dépendances et génère le client Prisma
-cp .env.example .env        # puis renseigner BETTER_AUTH_SECRET (openssl rand -base64 32)
+cp .env.example .env.local  # puis renseigner BETTER_AUTH_SECRET (openssl rand -base64 32)
 bun run services:up         # PostgreSQL (port 5433) + Mailpit (SMTP 1026, UI 8026)
 bun run db:migrate          # applique les migrations
 bun run dev                 # web → http://localhost:3000 · api → http://localhost:3001
@@ -50,12 +50,14 @@ bun run dev                 # web → http://localhost:3000 · api → http://lo
 | Prévisualisation emails  | http://localhost:3002 (`bun run dev:emails`) |
 
 Les ports Docker peuvent être modifiés avec `CACHKEY_POSTGRES_PORT`, `CACHKEY_SMTP_PORT`
-et `CACHKEY_MAILPIT_UI_PORT` (pensez à adapter `.env`).
+et `CACHKEY_MAILPIT_UI_PORT` (pensez à adapter `.env.local`).
 
 ## Variables d'environnement
 
-Toutes les variables sont documentées dans [.env.example](.env.example). Un seul fichier
-`.env` à la racine est utilisé par l'API, le web et Prisma. Il n'est jamais commité.
+Toutes les variables sont documentées dans [.env.example](.env.example). En local, un seul
+fichier `.env.local` à la racine sert à l’API, au web et à Prisma ; en production, partir de
+[.env.production.example](.env.production.example) (`.env.prod`). Ces fichiers réels ne sont
+jamais commités.
 
 | Variable                                    | Requis | Rôle                                                      |
 | ------------------------------------------- | ------ | --------------------------------------------------------- |
@@ -95,6 +97,8 @@ En production, remplacer `http://localhost:3000` par la valeur de `APP_URL`.
 | ------------------------- | -------------------------------------------------- |
 | `bun run dev`             | Web + API en mode développement                    |
 | `bun run dev:emails`      | Prévisualisation des templates React Email         |
+| `bun run check`           | Format, lint, types, tests et contrats UI          |
+| `bun run test`            | Tests unitaires (`bun test`)                       |
 | `bun run build`           | Build de production (web et API)                   |
 | `bun run typecheck`       | Vérification TypeScript de tous les packages       |
 | `bun run lint`            | ESLint                                             |
@@ -103,6 +107,7 @@ En production, remplacer `http://localhost:3000` par la valeur de `APP_URL`.
 | `bun run db:migrate`      | Crée / applique une migration (développement)      |
 | `bun run db:deploy`       | Applique les migrations (production)               |
 | `bun run db:studio`       | Prisma Studio                                      |
+| `bun run icons:generate`  | Génère les composants d’icônes depuis `apps/web/public/icons` |
 
 ## Identité visuelle
 

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Project extensions (focus, cursors, motion) — not part of shadcn/ui spec. */
+@import "./styles/customs.css";
 
 /* ── Geist (SIL OFL 1.1) — shipped with the Cachkey brand kit ─────────────── */
 @font-face {
@@ -49,6 +51,9 @@
   --popover-foreground: var(--cachkey-ink);
   --primary: var(--cachkey-orange);
   --primary-foreground: var(--cachkey-ink);
+  /* Pressed/hovered primary keeps an ink label above 5:1. */
+  --primary-hover: #ea6a0f;
+  --primary-active: #dc6410;
   --secondary: #f8e9e5;
   --secondary-foreground: var(--cachkey-ink);
   --muted: #f8e9e5;
@@ -60,8 +65,10 @@
   --success: #15803d;
   --success-foreground: #ffffff;
   --border: #ebe2df;
-  --input: #d8cdca;
-  --ring: var(--cachkey-orange);
+  /* Field boundaries and focus indicators need 3:1 against white (WCAG 1.4.11):
+     #9c918d = 3.07:1, #d4580f = 4.04:1 on cards, 3.77:1 on the page. */
+  --input: #9c918d;
+  --ring: #d4580f;
 }
 
 @theme inline {
@@ -76,6 +83,8 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -100,46 +109,6 @@
   * {
     @apply border-border;
   }
-
-  /*
-   * Focus — one global, discreet indicator. Shown for keyboard navigation only
-   * (:focus-visible), never on mouse click. :where() keeps specificity at zero so
-   * components can still adjust it (e.g. a negative offset inside a field).
-   */
-  :where(*):focus {
-    outline: none;
-  }
-  :where(a, button, summary, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-  /* Text fields style their own focus (orange border + light halo): see components/ui/input.tsx. */
-
-  /* Cursor — every enabled interactive control shows a pointer; disabled ones do not. */
-  :where(
-    button,
-    summary,
-    select,
-    [role="button"],
-    [role="tab"],
-    [role="menuitem"],
-    [role="option"],
-    [role="checkbox"],
-    [role="switch"],
-    input[type="checkbox"],
-    input[type="radio"],
-    input[type="submit"],
-    input[type="button"],
-    input[type="reset"],
-    input[type="file"],
-    label[for]:has(+ :is(input[type="checkbox"], input[type="radio"]))
-  ):not(:disabled, [aria-disabled="true"]) {
-    cursor: pointer;
-  }
-  :where(:disabled, [aria-disabled="true"]) {
-    cursor: not-allowed;
-  }
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -147,25 +116,10 @@
   body {
     @apply bg-background font-sans text-foreground;
   }
-}
 
-/* Brand motion: whole-sign fade-in, 180–240 ms; disabled for reduced motion. */
-@keyframes cachkey-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-.animate-brand-in {
-  animation: cachkey-fade-in 220ms ease-out both;
-}
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  /* shadcn/ui official cursor baseline (equivalent of `shadcn init --pointer`). */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }

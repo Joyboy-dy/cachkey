@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --env-file=../../.env --bun vite dev",
+    "dev": "bun --env-file=../../.env.local --bun vite dev",
     "build": "bun --bun vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"

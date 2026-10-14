@@ -8,6 +8,7 @@ import { useAppForm } from "@/components/form/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { authClient } from "@/lib/auth/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 export const Route = createFileRoute("/_guest/forgot-password")({
   head: () => ({ meta: [{ title: "Mot de passe oublié · Cachkey" }] }),
@@ -73,10 +74,7 @@ function ForgotPasswordPage() {
       </form.AppForm>
 
       <AuthFooterLink>
-        <Link
-          to="/sign-in"
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
-        >
+        <Link to="/sign-in" className={textLinkVariants()}>
           Retour à la connexion
         </Link>
       </AuthFooterLink>

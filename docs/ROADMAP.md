@@ -85,6 +85,7 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 
 ## Journal
 
+- **2026-10-14** — Audit via les skills projet (`.agents/skills`) : contrastes WCAG des champs et du focus, accessibilité des formulaires, responsive 320 px, tests unitaires, `bun run check`, règles d’environnement (`.env.local`, `.env.production.example`), `AGENTS.md` et `.agents/rules/`.
 - **2026-10-14** — Refonte des pages d’authentification : mise en page centrée, fond « cipher field » animé (canvas, sans dépendance), logo au-dessus du formulaire, révélation des caractères au survol.
 - **2026-10-12** — Phases 0 et 1 réalisées : fondation monorepo et authentification complète.
   Vérifié : format, lint, types, build (web + API) ; parcours inscription → email → vérification

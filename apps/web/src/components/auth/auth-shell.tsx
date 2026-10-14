@@ -43,9 +43,11 @@ export function AuthHeader({ title, description, icon }: AuthHeaderProps) {
           {icon}
         </div>
       ) : null}
-      <h1 className="text-2xl leading-[30px] font-bold tracking-tight">{title}</h1>
+      <h1 className="text-2xl leading-[30px] font-bold tracking-tight text-balance">{title}</h1>
       {description ? (
-        <p className="mt-2 text-sm leading-[22px] text-muted-foreground">{description}</p>
+        <p className="mt-2 text-sm leading-[22px] text-pretty text-muted-foreground">
+          {description}
+        </p>
       ) : null}
     </header>
   );

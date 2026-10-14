@@ -12,7 +12,7 @@
     "dev:api": "bun run --filter @cachkey/api dev",
     "dev:emails": "bun run --filter @cachkey/emails dev",
     "build": "bun run --filter './apps/*' build",
-    "typecheck": "bun run --filter '*' typecheck",
+    "typecheck": "bun run --filter '*' typecheck && tsc -p scripts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -22,7 +22,13 @@
     "db:generate": "bun run --filter @cachkey/db generate",
     "db:migrate": "bun run --filter @cachkey/db migrate",
     "db:deploy": "bun run --filter @cachkey/db deploy",
-    "db:studio": "bun run --filter @cachkey/db studio"
+    "db:studio": "bun run --filter @cachkey/db studio",
+    "test": "bun test",
+    "check:ui": "node scripts/check-ui-cursor-contracts.mjs",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test && bun run check:ui && bun run check:icons",
+    "icons:generate": "bun scripts/icons/generate-icons.ts",
+    "icons:migrate": "bun scripts/icons/migrate-icons.ts",
+    "check:icons": "bun scripts/icons/migrate-icons.ts --check"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

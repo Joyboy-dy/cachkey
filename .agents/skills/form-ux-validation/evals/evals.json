@@ -1,0 +1,33 @@
+{
+  "skill_name": "form-ux-validation",
+  "evals": [
+    {
+      "id": "library-neutral",
+      "prompt": "Fix validation and unsaved-change behavior in this form. First detect the existing form, schema, router, and notification libraries; do not add a new library unless necessary.",
+      "expectations": [
+        "Detects stack before prescribing",
+        "Keeps authoritative server validation",
+        "Handles dirty reset only after success",
+        "Uses existing notification system"
+      ]
+    },
+    {
+      "id": "server-client-drift",
+      "prompt": "The browser accepts a field value but the API rejects it. Diagnose client/server validation drift and add regression coverage.",
+      "expectations": [
+        "Compares field and constraint semantics",
+        "Does not weaken server validation",
+        "Adds or proposes a shared/mapped contract test"
+      ]
+    },
+    {
+      "id": "nonreact",
+      "prompt": "Improve validation and error accessibility in a Vue form that uses the project's existing validation library.",
+      "expectations": [
+        "Does not force React-specific tooling",
+        "Preserves current library when sound",
+        "Covers labels, errors, focus and submit states"
+      ]
+    }
+  ]
+}

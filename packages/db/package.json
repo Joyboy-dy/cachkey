@@ -8,9 +8,9 @@
   "scripts": {
     "generate": "prisma generate",
     "postinstall": "prisma generate",
-    "migrate": "bun --env-file=../../.env prisma migrate dev",
-    "deploy": "bun --env-file=../../.env prisma migrate deploy",
-    "studio": "bun --env-file=../../.env prisma studio",
+    "migrate": "bun --env-file=../../.env.local prisma migrate dev",
+    "deploy": "bun --env-file=../../.env.local prisma migrate deploy",
+    "studio": "bun --env-file=../../.env.local prisma studio",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

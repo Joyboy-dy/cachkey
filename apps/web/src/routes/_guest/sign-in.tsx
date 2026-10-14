@@ -14,6 +14,7 @@ import { getAuthErrorMessage, getOAuthErrorMessage } from "@/lib/auth/errors";
 import { publicConfigQueryOptions } from "@/lib/auth/public-config";
 import { DEFAULT_AUTHENTICATED_PATH, safeRedirectPath } from "@/lib/auth/redirect";
 import { sessionQueryKey } from "@/lib/auth/session";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 const searchSchema = z.object({
   redirect: z.string().optional().catch(undefined),
@@ -110,10 +111,7 @@ function SignInPage() {
                 label="Mot de passe"
                 autoComplete="current-password"
                 labelAside={
-                  <Link
-                    to="/forgot-password"
-                    className="text-[13px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                  >
+                  <Link to="/forgot-password" className={textLinkVariants({ variant: "subtle" })}>
                     Mot de passe oublié ?
                   </Link>
                 }
@@ -129,7 +127,7 @@ function SignInPage() {
         <Link
           to="/sign-up"
           search={search.redirect ? { redirect: search.redirect } : {}}
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
+          className={textLinkVariants()}
         >
           Créer un compte
         </Link>

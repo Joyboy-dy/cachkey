@@ -12,6 +12,7 @@ import { authClient } from "@/lib/auth/auth-client";
 import { getAuthErrorMessage, getOAuthErrorMessage } from "@/lib/auth/errors";
 import { publicConfigQueryOptions } from "@/lib/auth/public-config";
 import { DEFAULT_AUTHENTICATED_PATH, safeRedirectPath } from "@/lib/auth/redirect";
+import { textLinkVariants } from "@/components/ui/text-link";
 
 const searchSchema = z.object({
   redirect: z.string().optional().catch(undefined),
@@ -113,7 +114,7 @@ function SignUpPage() {
         <Link
           to="/sign-in"
           search={search.redirect ? { redirect: search.redirect } : {}}
-          className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
+          className={textLinkVariants()}
         >
           Se connecter
         </Link>
