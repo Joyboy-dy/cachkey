@@ -120,6 +120,8 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
   avec le code. ✅ (`docs/README.md`, skill `.agents/skills/cachkey-docs`)
 - CONTRIBUTING, SECURITY.md, versionnement sémantique, notes de version (`CHANGELOG.md`) ✅
   (licence : AGPL-3.0-only, adoptée).
+- Publication de la version 0.1.0 ✅ : dépôt public, tag `v0.1.0`, release GitHub, images
+  GHCR publiques (amd64, arm64), signalement privé des failles activé.
 - Plus tard (avec un nom de domaine) : page d'accueil et documentation publique générées
   depuis ces mêmes fichiers.
 
@@ -127,6 +129,13 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 
 ## Journal
 
+- **2026-10-14** — Version **0.1.0** publiée. PR unique (phases 1 à 8) fusionnée dans `main`,
+  branches de phase supprimées (toutes contenues dans `main`). Historique vérifié avant
+  publication : aucun `.env` réel ni secret. Dépôt passé en public, signalement privé des
+  failles activé (`SECURITY.md`). CHANGELOG : section `[0.1.0]`. Tag annoté `v0.1.0`, release
+  GitHub « Cachkey 0.1.0 ». Images `ghcr.io/joyboy-dy/cachkey-{api,web}` publiées
+  (`0.1.0`, `0.1`, `0`, `latest`, amd64 et arm64) et rendues publiques ; téléchargement
+  anonyme vérifié.
 - **2026-10-14** — Phase 8, revue de sécurité. Corrigé : IP du visiteur lue dans la partie
   falsifiable de `X-Forwarded-For` (contournement de la limite de tentatives, vérifié : 429
   malgré une adresse inventée) ; aucun en-tête de sécurité (ajoutés au serveur de production :
