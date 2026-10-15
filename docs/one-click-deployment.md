@@ -54,7 +54,8 @@ Tant que Cachkey n'est pas au catalogue Dokploy :
    ```
    Renseignez `APP_URL` et l'envoi d'emails.
 4. Onglet **Domains** : ajoutez votre domaine sur le service `cachkey` (l'application web),
-   port `3000`.
+   port `3000`. Si vous remplacez le domaine généré par le vôtre, mettez `APP_URL` à jour
+   (`https://votre-domaine`) puis redéployez.
 5. Déployez. Au premier démarrage, l'API crée la base de données ; les redémarrages
    suivants ne rejouent rien.
 

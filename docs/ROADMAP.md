@@ -136,8 +136,8 @@ son architecture ni son comportement.
   `deploy/compose.build.yaml`. `APP_URL` transmis au web (HSTS).
 - Template Dokploy ✅ (`deploy/templates/dokploy/cachkey/`) : validations du dépôt Dokploy
   passées, PR au catalogue ouverte ([Dokploy/templates#1225](https://github.com/Dokploy/templates/pull/1225),
-  base `canary`, en examen). ⏳ Test sur une vraie instance Dokploy (import Base64 de la
-  prévisualisation) et fusion par les mainteneurs.
+  base `canary`, en examen). Testé sur une vraie instance Dokploy (correctif `cachkey-api`). ⏳ Fusion par les
+  mainteneurs.
 - Template Coolify « Docker Compose Empty » ✅ (`deploy/templates/coolify/`). Catalogue
   officiel : non éligible (1 000 étoiles GitHub requises).
 - Documentation `docs/one-click-deployment.md` ✅ : catalogue officiel / template importable /
@@ -149,6 +149,12 @@ son architecture ni son comportement.
 
 ## Journal
 
+- **2026-10-15** — Premier test sur une vraie instance Dokploy (avec d'autres applications,
+  Cloudflare devant) : toutes les pages en erreur, le web recevait « connexion refusée » sur
+  `http://api:3001`. Cause : le service public est aussi branché sur `dokploy-network`, où
+  `api` désignait le service d'une autre application. Correctif : service interne
+  `cachkey-api` (Dokploy et Coolify). Rappel ajouté : `APP_URL` doit suivre le domaine
+  réel. Vérifié sur l'instance : `/api/health` OK, session OK, HSTS actif.
 - **2026-10-15** — PR au catalogue Dokploy ouverte (Dokploy/templates#1225). Base corrigée
   vers `canary` (branche des contributions ; sur `main`, la PR embarquait le template Wazuh
   déjà présent sur `canary`). Template aligné sur leurs conventions après revue : service

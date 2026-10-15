@@ -22,6 +22,9 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
 - Le conteneur web reçoit `APP_URL` : l'en-tête HSTS s'active en HTTPS.
 - Template Dokploy : le service web s'appelle désormais `cachkey` (convention du catalogue
   Dokploy). Sur un déploiement manuel existant, rattachez le domaine au service `cachkey`.
+- Templates Dokploy et Coolify : le service interne de l'API s'appelle `cachkey-api`. Avec
+  `api`, le web pouvait joindre le service `api` d'une autre application du même serveur
+  (connexion refusée, erreur à l'ouverture de toutes les pages).
 
 ## [0.1.0] — 2026-10-14
 
