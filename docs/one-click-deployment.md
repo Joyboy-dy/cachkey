@@ -45,7 +45,7 @@ Tant que Cachkey n'est pas au catalogue Dokploy :
 
 1. Dans votre projet Dokploy, créez un service **Compose**.
 2. Collez le contenu de `deploy/templates/dokploy/cachkey/docker-compose.yml`.
-3. Onglet **Environment** : reprenez les variables de `template.toml` (`[config.env]`) en
+3. Onglet **Environment** : reprenez les variables de `template.toml` (liste `env`) en
    générant les secrets vous-même :
    ```bash
    openssl rand -hex 32      # POSTGRES_PASSWORD
@@ -53,7 +53,8 @@ Tant que Cachkey n'est pas au catalogue Dokploy :
    openssl rand -base64 32   # ENCRYPTION_KEY — à sauvegarder hors du serveur
    ```
    Renseignez `APP_URL` et l'envoi d'emails.
-4. Onglet **Domains** : ajoutez votre domaine sur le service `web`, port `3000`.
+4. Onglet **Domains** : ajoutez votre domaine sur le service `cachkey` (l'application web),
+   port `3000`.
 5. Déployez. Au premier démarrage, l'API crée la base de données ; les redémarrages
    suivants ne rejouent rien.
 
