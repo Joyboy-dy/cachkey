@@ -16,13 +16,14 @@ services:
     environment:
       # Domain assigned by Coolify, routed to port 3000 of this service.
       - APP_URL=${SERVICE_URL_WEB_3000}
-      - API_INTERNAL_URL=http://api:3001
+      # Unique name: on a shared network, a plain `api` could resolve to another app.
+      - API_INTERNAL_URL=http://cachkey-api:3001
     depends_on:
-      api:
+      cachkey-api:
         condition: service_healthy
 
   # Applies pending database migrations at startup, then serves /api.
-  api:
+  cachkey-api:
     image: ghcr.io/joyboy-dy/cachkey-api:0.1.0
     environment:
       - APP_URL=${SERVICE_URL_WEB_3000}
