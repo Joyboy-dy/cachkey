@@ -134,9 +134,10 @@ son architecture ni son comportement.
   seul le web publié (127.0.0.1), PostgreSQL persistant, variables obligatoires avec message,
   aucun chemin local, utilisable copié seul ; build depuis les sources dans
   `deploy/compose.build.yaml`. `APP_URL` transmis au web (HSTS).
-- Template Dokploy ✅ préparé (`deploy/templates/dokploy/cachkey/`, copie de travail
-  `../dokploy-templates`, branche `add-cachkey-template`) : validations du dépôt Dokploy
-  passées. ⏳ Test sur une vraie instance Dokploy et PR au catalogue, après accord.
+- Template Dokploy ✅ (`deploy/templates/dokploy/cachkey/`) : validations du dépôt Dokploy
+  passées, PR au catalogue ouverte ([Dokploy/templates#1225](https://github.com/Dokploy/templates/pull/1225),
+  base `canary`, en examen). ⏳ Test sur une vraie instance Dokploy (import Base64 de la
+  prévisualisation) et fusion par les mainteneurs.
 - Template Coolify « Docker Compose Empty » ✅ (`deploy/templates/coolify/`). Catalogue
   officiel : non éligible (1 000 étoiles GitHub requises).
 - Documentation `docs/one-click-deployment.md` ✅ : catalogue officiel / template importable /
@@ -148,6 +149,12 @@ son architecture ni son comportement.
 
 ## Journal
 
+- **2026-10-15** — PR au catalogue Dokploy ouverte (Dokploy/templates#1225). Base corrigée
+  vers `canary` (branche des contributions ; sur `main`, la PR embarquait le template Wazuh
+  déjà présent sur `canary`). Template aligné sur leurs conventions après revue : service
+  public nommé `cachkey` comme le dossier, variables en liste `env = [...]`. Revérifié :
+  validations Dokploy, déploiement vierge, e2e 5/5, redémarrage. Non vérifié : instance
+  Dokploy réelle.
 - **2026-10-14** — Phase 9 (distribution). Compose générique audité : `build:` sorti dans
   `compose.build.yaml`, version épinglée `0.1.0`, `APP_URL` manquant côté web corrigé (HSTS
   inactif en production jusque-là). Template Dokploy (`template.toml` : domaine, secrets générés

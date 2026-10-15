@@ -20,6 +20,8 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
 ### Corrigé
 
 - Le conteneur web reçoit `APP_URL` : l'en-tête HSTS s'active en HTTPS.
+- Template Dokploy : le service web s'appelle désormais `cachkey` (convention du catalogue
+  Dokploy). Sur un déploiement manuel existant, rattachez le domaine au service `cachkey`.
 
 ## [0.1.0] — 2026-10-14
 

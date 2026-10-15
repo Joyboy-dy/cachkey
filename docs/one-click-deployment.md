@@ -20,9 +20,9 @@ lancer (Dokploy, Coolify…). Les images sont publiques : `ghcr.io/joyboy-dy/cac
 | Dokploy        | Template importable   | [`deploy/templates/dokploy/cachkey/`](../deploy/templates/dokploy/cachkey) |
 | Coolify        | Template importable   | [`deploy/templates/coolify/docker-compose.yml`](../deploy/templates/coolify/docker-compose.yml) |
 
-Cachkey n'est **dans aucun catalogue officiel** pour l'instant. Une proposition au catalogue
-Dokploy est prête mais pas encore soumise ; Coolify exige 1 000 étoiles GitHub avant
-d'accepter un service.
+Cachkey n'est **dans aucun catalogue officiel** pour l'instant. La proposition au catalogue
+Dokploy est en cours d'examen ([Dokploy/templates#1225](https://github.com/Dokploy/templates/pull/1225)),
+pas encore acceptée ; Coolify exige 1 000 étoiles GitHub avant d'accepter un service.
 
 ## Avant de commencer : l'envoi d'emails est obligatoire
 
