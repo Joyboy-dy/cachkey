@@ -4,6 +4,7 @@ import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-ro
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { type Feedback, FeedbackAlert } from "@/components/app/feedback";
+import { UserAvatar } from "@/components/app/user-avatar";
 import { AuthHeader, AuthShell } from "@/components/auth/auth-shell";
 import { useAppForm } from "@/components/form/form";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,8 @@ import { cn } from "@/lib/utils";
 
 /*
  * Approval page of `cachkey login` (device authorization). The terminal shows a short code
- * and opens this page; the signed-in user checks that the codes match, then allows or
- * refuses. Allowing gives the terminal a session with the same rights as the user.
+ * and this page's address; the signed-in user checks the account and that the codes match,
+ * then allows or refuses. Allowing gives the terminal a session with the same rights as the user.
  */
 
 /** « wdjb-mjht », « WDJB MJHT » → « WDJBMJHT », as stored by Better Auth. */
@@ -180,6 +181,14 @@ function DevicePage() {
         </div>
       ) : (
         <>
+          <div className="mb-3 flex items-center gap-3 rounded-xl border bg-card px-4 py-3">
+            <UserAvatar user={session.user} className="size-10" />
+            <div className="min-w-0 text-sm leading-5">
+              <p className="text-xs text-muted-foreground">Ce terminal sera connecté au compte</p>
+              <p className="truncate font-medium">{session.user.name}</p>
+              <p className="truncate text-muted-foreground">{session.user.email}</p>
+            </div>
+          </div>
           <div className="mb-5 rounded-xl border bg-card px-4 py-4 text-center">
             <p className="text-xs text-muted-foreground">
               Vérifiez que ce code est celui affiché dans votre terminal

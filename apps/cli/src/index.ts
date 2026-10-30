@@ -23,7 +23,17 @@ import {
   saveCredentials,
   saveLink,
 } from "./config";
-import { choose, CliError, confirm, info, interactive, openBrowser, readSecret } from "./terminal";
+import {
+  choose,
+  CliError,
+  confirm,
+  copyToClipboard,
+  info,
+  interactive,
+  onKeys,
+  openBrowser,
+  readSecret,
+} from "./terminal";
 
 /*
  * Cachkey CLI.
@@ -154,15 +164,51 @@ async function login({ options, credentials }: Context): Promise<number> {
   }>("POST", "/api/auth/device/code", { client_id: CLIENT_ID });
 
   const url = new URL(code.verification_uri_complete, baseUrl).toString();
-  info(`\nVotre code : ${formatUserCode(code.user_code)}\n`);
-  const opened = !options.noBrowser && interactive && openBrowser(url);
-  info(
-    opened
-      ? `Le navigateur s'ouvre sur ${url}\nVérifiez que le code affiché est le même, puis autorisez ce terminal.`
-      : `Ouvrez cette adresse dans un navigateur et autorisez ce terminal :\n  ${url}`,
-  );
+  info(`\nVotre code : ${formatUserCode(code.user_code)}`);
+  info(`Adresse : ${url}\n`);
+  // The browser never opens without consent: the default one may be signed in to another
+  // account, and a code used there cannot be used again elsewhere.
+  const stopKeys = !options.noBrowser && interactive ? offerBrowser(url) : null;
+  if (!stopKeys) info("Ouvrez cette adresse dans un navigateur et autorisez ce terminal.");
   info("En attente de votre autorisation… (Ctrl+C pour annuler)");
+  try {
+    return await waitForApproval(api, baseUrl, code);
+  } finally {
+    stopKeys?.();
+  }
+}
 
+/** Enter opens the default browser, « c » copies the address; returns the stop function. */
+function offerBrowser(url: string): () => void {
+  info("Appuyez sur Entrée pour ouvrir le navigateur par défaut, ou sur « c » pour copier");
+  info("l'adresse et la coller dans le navigateur de votre choix.");
+  info("Vérifiez que le code affiché est le même, puis autorisez ce terminal.\n");
+  let opened = false;
+  return onKeys({
+    "\r": () => {
+      if (opened) return;
+      opened = true;
+      info(
+        openBrowser(url)
+          ? "Navigateur ouvert. Vérifiez le compte connecté avant d'autoriser."
+          : "Impossible d'ouvrir le navigateur : copiez l'adresse ci-dessus.",
+      );
+    },
+    c: () => {
+      void copyToClipboard(url).then((copied) =>
+        info(
+          copied ? "Adresse copiée." : "Impossible de copier : sélectionnez l'adresse ci-dessus.",
+        ),
+      );
+    },
+  });
+}
+
+async function waitForApproval(
+  api: Api,
+  baseUrl: string,
+  code: { device_code: string; interval: number; expires_in: number },
+): Promise<number> {
   let interval = Math.max(code.interval, 1) * 1000;
   const deadline = Date.now() + code.expires_in * 1000;
   while (Date.now() < deadline) {

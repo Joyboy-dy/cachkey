@@ -21,14 +21,23 @@ Pour un exécutable autonome, sans Bun sur la machine cible :
 cachkey login
 ```
 
-Un code s'affiche et le navigateur s'ouvre sur la page `/device` de votre instance ; vérifiez
-que le code est le même, puis validez. Le terminal reçoit sa propre session, visible et
-révocable dans Mon compte → Appareils connectés. Il agit avec **vos** droits.
+Un code et l'adresse de la page `/device` de votre instance s'affichent. Le navigateur ne
+s'ouvre jamais tout seul :
+
+- **Entrée** ouvre le navigateur par défaut ;
+- **c** copie l'adresse, à coller dans le navigateur de votre choix (utile si le navigateur par
+  défaut est connecté à un autre compte Cachkey).
+
+Sur la page, vérifiez le compte affiché et que le code est le même, puis autorisez. Le
+terminal reçoit sa propre session, visible et révocable dans Mon compte → Appareils connectés.
+Il agit avec **vos** droits. Un code ne sert qu'une fois : s'il a été utilisé dans le mauvais
+navigateur, relancez `cachkey login`.
 
 - L'instance utilisée est, dans l'ordre : `--url`, la variable `CACHKEY_URL`, celle de la
   dernière connexion, puis `http://localhost:3000`.
-- Sans navigateur (serveur distant) : `cachkey login --no-browser`, puis ouvrez l'adresse
-  affichée sur un autre appareil.
+- Sans navigateur (serveur distant) : `cachkey login --no-browser` ne propose pas de
+  l'ouvrir ; ouvrez l'adresse affichée sur un autre appareil. Hors terminal interactif (CI,
+  script), rien n'est jamais ouvert.
 - La session est enregistrée dans `%APPDATA%\cachkey\credentials.json` (Windows) ou
   `~/.config/cachkey/credentials.json`, lisible par vous seul. `CACHKEY_CONFIG_DIR` change
   ce dossier.
@@ -100,7 +109,7 @@ même nom), sans fichier écrit sur le disque. Le code de sortie est celui de la
 | `--token <jeton>`                    | Jeton d'accès (sinon `CACHKEY_TOKEN`).                        |
 | `--overwrite`                        | `import` remplace les variables existantes.                   |
 | `--yes`, `-y`                        | Pas de confirmation.                                          |
-| `--no-browser`                       | `login` n'ouvre pas le navigateur.                            |
+| `--no-browser`                       | `login` ne propose pas d'ouvrir le navigateur.                |
 | `-h`, `--help` · `-v`, `--version`   | Aide, version.                                                |
 
 ## Sur un serveur ou en CI

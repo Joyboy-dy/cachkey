@@ -19,6 +19,9 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
 
 ### Corrigé
 
+- CLI : `cachkey login` n'ouvre plus le navigateur par défaut sans demander. Entrée l'ouvre,
+  « c » copie l'adresse pour un autre navigateur ; la page `/device` met en avant le compte
+  qui va être autorisé.
 - Le conteneur web reçoit `APP_URL` : l'en-tête HSTS s'active en HTTPS.
 - Template Dokploy : le service web s'appelle désormais `cachkey` (convention du catalogue
   Dokploy). Sur un déploiement manuel existant, rattachez le domaine au service `cachkey`.

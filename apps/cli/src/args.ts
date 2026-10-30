@@ -79,7 +79,7 @@ Options
   --url <adresse>     Instance Cachkey (sinon CACHKEY_URL, puis celle de la connexion).
   --token <jeton>     Jeton d'accès d'un serveur ou d'une CI (sinon CACHKEY_TOKEN).
   --yes, -y           Ne demande pas de confirmation.
-  --no-browser        N'ouvre pas le navigateur lors de la connexion.
+  --no-browser        Ne propose pas d'ouvrir le navigateur lors de la connexion.
   -h, --help · -v, --version
 
 Sur un serveur ou en CI, utilisez un jeton d'accès (CACHKEY_TOKEN) : pull, run et whoami
