@@ -12,7 +12,7 @@
 
 services:
   web:
-    image: ghcr.io/joyboy-dy/cachkey-web:0.1.0
+    image: ghcr.io/joyboy-dy/cachkey-web:0.2.0
     environment:
       # Domain assigned by Coolify, routed to port 3000 of this service.
       - APP_URL=${SERVICE_URL_WEB_3000}
@@ -24,7 +24,7 @@ services:
 
   # Applies pending database migrations at startup, then serves /api.
   cachkey-api:
-    image: ghcr.io/joyboy-dy/cachkey-api:0.1.0
+    image: ghcr.io/joyboy-dy/cachkey-api:0.2.0
     environment:
       - APP_URL=${SERVICE_URL_WEB_3000}
       - DATABASE_URL=postgresql://cachkey:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/cachkey

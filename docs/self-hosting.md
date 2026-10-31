@@ -81,7 +81,7 @@ docker compose -f deploy/compose.yaml -f deploy/compose.build.yaml --env-file .e
 Les images publiées sont `ghcr.io/joyboy-dy/cachkey-api` et `ghcr.io/joyboy-dy/cachkey-web`
 (amd64 et arm64). Les versions `x.y.z` suivent les tags Git `vx.y.z` ; `main` suit la branche
 principale. Par défaut, `deploy/compose.yaml` utilise la dernière version publiée
-(`CACHKEY_VERSION`, actuellement `0.1.0`).
+(`CACHKEY_VERSION`, actuellement `0.2.0`).
 
 Dokploy, Coolify et autres plateformes : voir [Déploiement en un clic](one-click-deployment.md).
 

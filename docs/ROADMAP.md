@@ -122,6 +122,7 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
   (licence : AGPL-3.0-only, adoptée).
 - Publication de la version 0.1.0 ✅ : dépôt public, tag `v0.1.0`, release GitHub, images
   GHCR publiques (amd64, arm64), signalement privé des failles activé.
+- Version 0.2.0 ✅ : issues #5 (connexion CLI), #6 (double authentification), #7 (briques).
 - Plus tard (avec un nom de domaine) : page d'accueil et documentation publique générées
   depuis ces mêmes fichiers.
 
@@ -130,14 +131,14 @@ Légende : ✅ terminé · 🚧 en cours · ⏳ à venir
 Objectif : installer Cachkey depuis les plateformes compatibles Docker Compose, sans changer
 son architecture ni son comportement.
 
-- `deploy/compose.yaml` générique ✅ : images GHCR publiques épinglées (`0.1.0` par défaut),
+- `deploy/compose.yaml` générique ✅ : images GHCR publiques épinglées (dernière version par défaut),
   seul le web publié (127.0.0.1), PostgreSQL persistant, variables obligatoires avec message,
   aucun chemin local, utilisable copié seul ; build depuis les sources dans
   `deploy/compose.build.yaml`. `APP_URL` transmis au web (HSTS).
-- Template Dokploy ✅ (`deploy/templates/dokploy/cachkey/`) : validations du dépôt Dokploy
-  passées, PR au catalogue ouverte ([Dokploy/templates#1225](https://github.com/Dokploy/templates/pull/1225),
-  base `canary`, en examen). Testé sur une vraie instance Dokploy (correctif `cachkey-api`). ⏳ Fusion par les
-  mainteneurs.
+- Template Dokploy ✅ (`deploy/templates/dokploy/cachkey/`) : au catalogue officiel
+  ([Dokploy/templates#1225](https://github.com/Dokploy/templates/pull/1225), fusionnée le
+  2026-10-15 dans `canary`). Testé sur une vraie instance Dokploy (correctif `cachkey-api`).
+  Chaque version publiée demande une PR qui change la version dans `blueprints/cachkey/`.
 - Template Coolify « Docker Compose Empty » ✅ (`deploy/templates/coolify/`). Catalogue
   officiel : non éligible (1 000 étoiles GitHub requises).
 - Documentation `docs/one-click-deployment.md` ✅ : catalogue officiel / template importable /
@@ -148,6 +149,12 @@ son architecture ni son comportement.
 ---
 
 ## Journal
+
+- **2026-10-31** — PR #8 (issues #5, #6, #7) fusionnée. Revue Codex : saisie d'une variable
+  écrasée au rafraîchissement de la liste, variables partagées inaccessibles après la
+  suppression de la dernière brique ; corrigées. Version **0.2.0** : CHANGELOG, CLI,
+  `deploy/compose.yaml`, templates Dokploy et Coolify, docs. Template du catalogue Dokploy
+  trouvé déjà fusionné (2026-10-15) : documentation corrigée.
 
 - **2026-10-30** — Issues #5, #6 et #7 (branche `feat/issues-5-6-7`).
   #5 : `cachkey login` n'ouvre plus le navigateur sans accord (Entrée l'ouvre, « c » copie

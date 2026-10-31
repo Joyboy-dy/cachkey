@@ -6,6 +6,10 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
 
 ## [Non publié]
 
+## [0.2.0] — 2026-10-31
+
+Connexion CLI plus sûre, double authentification et briques.
+
 ### Ajouté
 
 - Double authentification (Mon compte → Sécurité) : application d'authentification avec QR
@@ -21,7 +25,7 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
   indiquée dans le journal d'activité. CLI : `cachkey bricks [create]`, `--brick`, champ
   `brick` de `.cachkey.json`. Les projets existants reçoivent une brique principale qui
   garde leurs variables et leurs jetons : rien ne change tant qu'ils ne sont pas découpés.
-- Templates de déploiement : Dokploy (`deploy/templates/dokploy/cachkey/`, prêt pour leur
+- Templates de déploiement : Dokploy (`deploy/templates/dokploy/cachkey/`, accepté dans leur
   catalogue) et Coolify (« Docker Compose Empty »), guide `docs/one-click-deployment.md`.
 
 ### Modifié
@@ -30,7 +34,7 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
   en tableaux, sans texte d'aperçu caché ; les liens longs se coupent sur mobile.
 - Saisie des codes à 6 chiffres case par case, et cases à cocher et boutons radio harmonisés
   dans toute l'interface.
-- `deploy/compose.yaml` utilise les images publiées, épinglées par défaut sur `0.1.0`, et
+- `deploy/compose.yaml` utilise les images publiées, épinglées par défaut sur `0.2.0`, et
   fonctionne copié seul ; la construction depuis les sources passe par
   `deploy/compose.build.yaml`.
 
@@ -82,5 +86,6 @@ Première version publique.
 - Avertissement contre l'hameçonnage sur la page d'autorisation d'un terminal.
 - Dépendances : plus aucune vulnérabilité connue (`bun audit`).
 
-[Non publié]: https://github.com/Joyboy-dy/cachkey/compare/v0.1.0...HEAD
+[Non publié]: https://github.com/Joyboy-dy/cachkey/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Joyboy-dy/cachkey/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Joyboy-dy/cachkey/releases/tag/v0.1.0

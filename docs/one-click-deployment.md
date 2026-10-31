@@ -2,7 +2,7 @@
 
 Cachkey s'installe avec Docker Compose, directement ou depuis une plateforme qui sait en
 lancer (Dokploy, Coolify…). Les images sont publiques : `ghcr.io/joyboy-dy/cachkey-api` et
-`ghcr.io/joyboy-dy/cachkey-web`, pour amd64 et arm64, épinglées sur la version `0.1.0`.
+`ghcr.io/joyboy-dy/cachkey-web`, pour amd64 et arm64, épinglées sur la version `0.2.0`.
 
 ## Trois niveaux de disponibilité
 
@@ -17,12 +17,14 @@ lancer (Dokploy, Coolify…). Les images sont publiques : `ghcr.io/joyboy-dy/cac
 | Plateforme     | Niveau                | Fichier                                                         |
 | -------------- | --------------------- | --------------------------------------------------------------- |
 | Docker Compose | Compose compatible    | [`deploy/compose.yaml`](../deploy/compose.yaml)                 |
-| Dokploy        | Template importable   | [`deploy/templates/dokploy/cachkey/`](../deploy/templates/dokploy/cachkey) |
+| Dokploy        | Catalogue officiel    | [`deploy/templates/dokploy/cachkey/`](../deploy/templates/dokploy/cachkey) |
 | Coolify        | Template importable   | [`deploy/templates/coolify/docker-compose.yml`](../deploy/templates/coolify/docker-compose.yml) |
 
-Cachkey n'est **dans aucun catalogue officiel** pour l'instant. La proposition au catalogue
-Dokploy est en cours d'examen ([Dokploy/templates#1225](https://github.com/Dokploy/templates/pull/1225)),
-pas encore acceptée ; Coolify exige 1 000 étoiles GitHub avant d'accepter un service.
+Cachkey est au **catalogue officiel de Dokploy** depuis le 15 octobre 2026
+([Dokploy/templates#1225](https://github.com/Dokploy/templates/pull/1225)). Le catalogue
+passe à une nouvelle version de Cachkey une fois sa mise à jour acceptée par les mainteneurs
+de Dokploy : il peut donc avoir un peu de retard sur la dernière version publiée. Coolify
+exige 1 000 étoiles GitHub avant d'accepter un service.
 
 ## Avant de commencer : l'envoi d'emails est obligatoire
 
@@ -41,7 +43,13 @@ lui-même : on peut le copier seul sur un serveur, à côté d'un fichier de var
 
 ## Dokploy
 
-Tant que Cachkey n'est pas au catalogue Dokploy :
+Depuis le catalogue : dans votre projet Dokploy, choisissez **Create Service → Template**,
+cherchez « Cachkey » et déployez. Dokploy génère le domaine et les secrets ; renseignez
+l'envoi d'emails dans l'onglet **Environment**, puis redéployez. Si vous remplacez le
+domaine généré par le vôtre, mettez `APP_URL` à jour (`https://votre-domaine`).
+
+Pour installer la toute dernière version avant son arrivée au catalogue, importez le template
+du dépôt vous-même :
 
 1. Dans votre projet Dokploy, créez un service **Compose**.
 2. Collez le contenu de `deploy/templates/dokploy/cachkey/docker-compose.yml`.
@@ -58,8 +66,6 @@ Tant que Cachkey n'est pas au catalogue Dokploy :
    (`https://votre-domaine`) puis redéployez.
 5. Déployez. Au premier démarrage, l'API crée la base de données ; les redémarrages
    suivants ne rejouent rien.
-
-Une fois le template au catalogue, Dokploy générera lui-même le domaine et les secrets.
 
 ## Coolify (« Docker Compose Empty »)
 

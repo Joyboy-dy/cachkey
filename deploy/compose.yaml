@@ -48,7 +48,7 @@ services:
 
   # Applies pending database migrations at startup, then serves /api (healthcheck built in).
   api:
-    image: ghcr.io/joyboy-dy/cachkey-api:${CACHKEY_VERSION:-0.1.0}
+    image: ghcr.io/joyboy-dy/cachkey-api:${CACHKEY_VERSION:-0.2.0}
     restart: unless-stopped
     environment: *app-environment
     depends_on:
@@ -56,7 +56,7 @@ services:
         condition: service_healthy
 
   web:
-    image: ghcr.io/joyboy-dy/cachkey-web:${CACHKEY_VERSION:-0.1.0}
+    image: ghcr.io/joyboy-dy/cachkey-web:${CACHKEY_VERSION:-0.2.0}
     restart: unless-stopped
     environment:
       # Public address: enables HSTS once served over HTTPS.

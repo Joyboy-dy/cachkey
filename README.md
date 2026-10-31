@@ -5,7 +5,7 @@
 Cachkey est une application open source et auto-hébergeable de gestion des secrets techniques,
 clés API et variables d'environnement pour les développeurs et les équipes.
 
-> Statut : version [0.1.0](https://github.com/Joyboy-dy/cachkey/releases/tag/v0.1.0) publiée — phases 0 à 8 terminées. Voir [docs/ROADMAP.md](docs/ROADMAP.md).
+> Statut : version [0.2.0](https://github.com/Joyboy-dy/cachkey/releases/tag/v0.2.0) publiée — phases 0 à 8 terminées. Voir [docs/ROADMAP.md](docs/ROADMAP.md).
 > Documentation utilisateur : [docs/](docs/README.md).
 
 ## Architecture
