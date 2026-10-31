@@ -37,7 +37,9 @@ Projet « Boutique »
   et administrateurs). La brique principale peut être renommée, pas supprimée. Jusqu'à
   10 briques par projet, un seul niveau.
 - Dès la deuxième brique, l'onglet Variables affiche un sélecteur de brique à côté de celui
-  de l'environnement, avec une entrée « Variables partagées ».
+  de l'environnement, avec une entrée « Variables partagées ». Il reste affiché après la
+  suppression de la dernière brique tant qu'il reste des variables partagées : elles
+  s'ajoutent toujours à la brique principale.
 - Une brique reçoit les variables partagées **et** les siennes. Si elle redéfinit une
   variable partagée, sa valeur l'emporte (« Remplace la valeur partagée »).
 - L'export d'une brique, `cachkey pull` et les jetons d'accès donnent ce que l'application

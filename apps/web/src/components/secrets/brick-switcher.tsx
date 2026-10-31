@@ -20,7 +20,7 @@ import { Icon } from "@/components/ui/icon";
 
 /**
  * Brick selector of the « Variables » tab, next to the environment one. Only shown once a
- * project has a second brick; the shared variables come last.
+ * project has a second brick, or shared variables left; the shared variables come last.
  */
 export function BrickSwitcher({
   projectSlug,

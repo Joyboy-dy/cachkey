@@ -112,10 +112,14 @@ function SecretForm({
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [pending, setPending] = useState(false);
 
+  // A refetch of the list hands new `scope` and `secret` objects: depending on their fields
+  // only keeps it from reloading the value over what the user is typing.
+  const { slug, env, brick } = scope;
+  const secretId = secret?.id;
   useEffect(() => {
-    if (!secret) return;
+    if (!secretId) return;
     let cancelled = false;
-    void secretsApi.reveal(scope, secret.id).then(({ data, error }) => {
+    void secretsApi.reveal({ slug, env, brick }, secretId).then(({ data, error }) => {
       if (cancelled) return;
       if (error) {
         setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
@@ -127,7 +131,7 @@ function SecretForm({
     return () => {
       cancelled = true;
     };
-  }, [scope, secret]);
+  }, [slug, env, brick, secretId]);
 
   const loaded = saved !== null;
   const keyResult = secretKeySchema.safeParse(key);

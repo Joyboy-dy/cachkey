@@ -6,7 +6,7 @@ import {
   SHARED_BRICK_SLUG,
 } from "@cachkey/shared";
 import { Layers01Icon } from "@hugeicons/core-free-icons";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 import { BrickSwitcher } from "@/components/secrets/brick-switcher";
@@ -25,7 +25,8 @@ const searchSchema = z.object({
 /**
  * « Variables » tab: one environment at a time, chosen in the selector (`?env=`). Projects
  * split into bricks also show one brick at a time (`?brick=`, `shared` for the shared
- * variables); the others never see the notion.
+ * variables); the others never see the notion. A project back to a single brick keeps the
+ * selector while shared variables remain: they are still delivered with the main brick.
  */
 export const Route = createFileRoute("/_authenticated/projects/$slug/")({
   validateSearch: searchSchema,
@@ -35,7 +36,11 @@ export const Route = createFileRoute("/_authenticated/projects/$slug/")({
     const bricks = await queryClient.ensureQueryData(
       bricksQueryOptions(organization.id, params.slug),
     );
-    const brick = pickBrick(bricks, deps.brick)?.slug;
+    const shared =
+      bricks.length < 2
+        ? await queryClient.ensureQueryData(sharedOptions(organization.id, params.slug))
+        : [];
+    const brick = pickBrick(bricks, hasShared(shared), deps.brick)?.slug;
     const environments = await queryClient.ensureQueryData(
       environmentsQueryOptions(organization.id, params.slug, brick),
     );
@@ -54,12 +59,21 @@ function pickEnvironment(environments: EnvironmentDto[], slug: string | undefine
   return environments.find((environment) => environment.slug === slug) ?? environments[0];
 }
 
+/** Environments counted in the shared variables, to know whether any remain. */
+function sharedOptions(organizationId: string, slug: string) {
+  return environmentsQueryOptions(organizationId, slug, SHARED_BRICK_SLUG);
+}
+
+function hasShared(environments: EnvironmentDto[] | undefined) {
+  return (environments ?? []).some((environment) => environment.secretCount > 0);
+}
+
 /**
  * Brick of the URL (the main one when absent or unknown), or null for a project that has
- * a single brick: the API then uses the main brick.
+ * a single brick and no shared variable: the API then uses the main brick.
  */
-function pickBrick(bricks: BrickDto[], slug: string | undefined) {
-  if (bricks.length < 2) return null;
+function pickBrick(bricks: BrickDto[], shared: boolean, slug: string | undefined) {
+  if (bricks.length < 2 && !shared) return null;
   if (slug === SHARED_BRICK_SLUG) return { slug, name: "Variables partagées" };
   const brick = bricks.find((item) => item.slug === slug) ?? bricks.find((item) => item.main);
   return brick ? { slug: brick.slug, name: brick.name } : null;
@@ -70,7 +84,12 @@ function VariablesTab() {
   const { slug } = Route.useParams();
   const search = Route.useSearch();
   const { data: bricks } = useSuspenseQuery(bricksQueryOptions(organization.id, slug));
-  const brick = pickBrick(bricks, search.brick);
+  // Loaded with the route for single-brick projects only (see the loader).
+  const { data: shared } = useQuery({
+    ...sharedOptions(organization.id, slug),
+    enabled: bricks.length < 2,
+  });
+  const brick = pickBrick(bricks, bricks.length < 2 && hasShared(shared), search.brick);
   const { data: environments } = useSuspenseQuery(
     environmentsQueryOptions(organization.id, slug, brick?.slug),
   );
