@@ -15,7 +15,7 @@ export type ResetPasswordProps = {
 
 export default function ResetPassword({ appUrl, name, resetUrl }: ResetPasswordProps) {
   return (
-    <EmailLayout preview="Réinitialisez le mot de passe de votre compte Cachkey." appUrl={appUrl}>
+    <EmailLayout appUrl={appUrl}>
       <EmailHeading>Réinitialisez votre mot de passe</EmailHeading>
       <EmailText>Bonjour {name},</EmailText>
       <EmailText>

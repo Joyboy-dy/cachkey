@@ -149,6 +149,24 @@ son architecture ni son comportement.
 
 ## Journal
 
+- **2026-10-30** — Issues #5, #6 et #7 (branche `feat/issues-5-6-7`).
+  #5 : `cachkey login` n'ouvre plus le navigateur sans accord (Entrée l'ouvre, « c » copie
+  l'adresse), `/device` met en avant le compte autorisé. #6 : double authentification
+  (plugin `twoFactor`, table `two_factors`) : QR code, codes de secours, appareil de confiance
+  30 jours, page `/two-factor`, emails de notification ; Google / GitHub : confiance au
+  fournisseur ; récupération par l'administrateur (SQL documenté). Couches suivantes de
+  l'issue (2FA obligatoire par organisation, passkeys, confirmation récente, alertes de
+  connexion) non faites. #7 : briques V1 (table `bricks`, brique principale et brique
+  partagée cachée par projet, valeurs liées à leur brique sans rechiffrer la principale,
+  jetons et CLI par brique, journal). V2 (accès des membres par brique) non faite.
+  Vérifié : `bun run check`, e2e 5/5, parcours briques et 2FA par l'API, 479 valeurs
+  existantes déchiffrées après migration, interface (2FA, briques, 320 px, thèmes), CLI
+  interactive. Non vérifié : vraie application d'authentification sur téléphone, Google /
+  GitHub avec 2FA, touche « c » (presse-papiers) de la CLI.
+  Retours de test : emails refaits en tableaux (score Mailpit 87 % → 96 %, test de garde),
+  nom « Cachkey (dev) » dans l'application d'authentification hors production, codes saisis
+  avec `InputOTP`, cases à cocher et boutons radio shadcn (`Checkbox`, `RadioGroup`) partout.
+
 - **2026-10-15** — Premier test sur une vraie instance Dokploy (avec d'autres applications,
   Cloudflare devant) : toutes les pages en erreur, le web recevait « connexion refusée » sur
   `http://api:3001`. Cause : le service public est aussi branché sur `dokploy-network`, où

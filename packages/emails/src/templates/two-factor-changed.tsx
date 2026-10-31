@@ -26,7 +26,7 @@ const CONTENT: Record<TwoFactorChangedProps["reason"], { heading: string; body: 
 export default function TwoFactorChanged({ appUrl, name, reason }: TwoFactorChangedProps) {
   const { heading, body } = CONTENT[reason];
   return (
-    <EmailLayout preview={`${heading} sur votre compte Cachkey.`} appUrl={appUrl}>
+    <EmailLayout appUrl={appUrl}>
       <EmailHeading>{heading}</EmailHeading>
       <EmailText>Bonjour {name},</EmailText>
       <EmailText>{body}</EmailText>

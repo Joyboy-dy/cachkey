@@ -15,10 +15,7 @@ export type VerifyEmailProps = {
 
 export default function VerifyEmail({ appUrl, name, verificationUrl }: VerifyEmailProps) {
   return (
-    <EmailLayout
-      preview="Confirmez votre adresse email pour activer votre compte Cachkey."
-      appUrl={appUrl}
-    >
+    <EmailLayout appUrl={appUrl}>
       <EmailHeading>Confirmez votre adresse email</EmailHeading>
       <EmailText>Bonjour {name},</EmailText>
       <EmailText>

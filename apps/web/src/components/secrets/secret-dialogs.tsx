@@ -20,6 +20,7 @@ import { type Feedback, FeedbackAlert } from "@/components/app/feedback";
 import { ShowMore } from "@/components/app/show-more";
 import { UserAvatar } from "@/components/app/user-avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogBody,
@@ -623,22 +624,24 @@ function ImportForm({
         </div>
 
         {preview && preview.conflicts > 0 ? (
-          <label htmlFor={overwriteId} className="flex items-start gap-3 text-sm leading-5">
-            <input
+          <div className="flex items-start gap-3">
+            <Checkbox
               id={overwriteId}
-              type="checkbox"
               checked={overwrite}
-              onChange={(event) => setOverwrite(event.target.checked)}
-              className="mt-0.5 size-4 accent-primary"
+              onCheckedChange={(checked) => setOverwrite(checked === true)}
+              aria-describedby={`${overwriteId}-description`}
+              className="mt-0.5"
             />
-            <span>
-              Remplacer{" "}
-              {preview.conflicts > 1 ? "les variables existantes" : "la variable existante"}
-              <span className="block text-muted-foreground">
+            <div className="grid gap-0.5 text-sm leading-5">
+              <Label htmlFor={overwriteId} className="cursor-pointer leading-5">
+                Remplacer{" "}
+                {preview.conflicts > 1 ? "les variables existantes" : "la variable existante"}
+              </Label>
+              <p id={`${overwriteId}-description`} className="text-muted-foreground">
                 L’ancienne valeur reste dans l’historique. Sinon, elle est conservée telle quelle.
-              </span>
-            </span>
-          </label>
+              </p>
+            </div>
+          </div>
         ) : null}
       </DialogBody>
       <DialogFooter>

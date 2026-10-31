@@ -133,5 +133,9 @@ confirmation de changement d'email, suppression de compte) et deux transports im
 - `smtp` (nodemailer) — Mailpit en développement, ou tout relais SMTP ;
 - `resend` — API HTTP Resend, sélectionné avec `EMAIL_PROVIDER=resend`.
 
+Les templates sont construits en tableaux avec attributs HTML (`bgcolor`, `width`, `align`)
+et n'utilisent que des propriétés CSS bien prises en charge par les clients mail (ni `margin`,
+ni `display`, ni texte d'aperçu caché) ; `packages/emails/src/render.test.ts` le vérifie.
+
 L'API choisit le transport au démarrage (`apps/api/src/email.ts`). Un échec d'envoi est journalisé
 sans interrompre le parcours ; l'utilisateur peut redemander un email.

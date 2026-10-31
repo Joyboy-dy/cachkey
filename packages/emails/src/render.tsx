@@ -14,9 +14,17 @@ export type RenderedEmail = {
   text: string;
 };
 
+/**
+ * React 19 adds `<link rel="preload">` for every `<img>`: useless in an email and ignored
+ * by most mail clients (flagged by compatibility checks), so it is removed.
+ */
+function stripPreloadLinks(html: string): string {
+  return html.replace(/<link rel="preload"[^>]*>/g, "");
+}
+
 async function renderBoth(element: ReactElement): Promise<Omit<RenderedEmail, "subject">> {
   const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);
-  return { html, text };
+  return { html: stripPreloadLinks(html), text };
 }
 
 export async function renderVerifyEmail(props: VerifyEmailProps): Promise<RenderedEmail> {

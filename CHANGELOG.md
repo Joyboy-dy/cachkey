@@ -26,6 +26,10 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
 
 ### Modifié
 
+- Emails compatibles avec davantage de clients mail (Outlook, Gmail, Yahoo…) : mise en page
+  en tableaux, sans texte d'aperçu caché ; les liens longs se coupent sur mobile.
+- Saisie des codes à 6 chiffres case par case, et cases à cocher et boutons radio harmonisés
+  dans toute l'interface.
 - `deploy/compose.yaml` utilise les images publiées, épinglées par défaut sur `0.1.0`, et
   fonctionne copié seul ; la construction depuis les sources passe par
   `deploy/compose.build.yaml`.

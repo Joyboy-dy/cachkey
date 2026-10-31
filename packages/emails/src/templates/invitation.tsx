@@ -24,10 +24,7 @@ export default function Invitation({
   acceptUrl,
 }: InvitationProps) {
   return (
-    <EmailLayout
-      preview={`${inviterName} vous invite à rejoindre ${organizationName} sur Cachkey.`}
-      appUrl={appUrl}
-    >
+    <EmailLayout appUrl={appUrl}>
       <EmailHeading>Rejoignez {organizationName}</EmailHeading>
       <EmailText>Bonjour,</EmailText>
       <EmailText>
