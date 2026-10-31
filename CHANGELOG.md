@@ -8,17 +8,37 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
 
 ### Ajouté
 
+- Double authentification (Mon compte → Sécurité) : application d'authentification avec QR
+  code, 10 codes de secours à usage unique (copie, téléchargement, renouvellement), appareil
+  de confiance pendant 30 jours, email à chaque activation, désactivation ou renouvellement.
+  S'applique à la connexion par email et mot de passe. Une instance de développement ou
+  locale apparaît dans l'application sous « Cachkey (dev) » pour ne pas la confondre avec la
+  production.
+- Briques : un projet peut être découpé en parties indépendantes (front-end, API…), chacune
+  avec ses variables, en partageant environnements, membres et variables partagées (héritées
+  par toutes les briques, redéfinissables). Sélecteur de brique dans l'onglet Variables,
+  gestion dans les paramètres du projet, jetons d'accès limités à une brique, brique
+  indiquée dans le journal d'activité. CLI : `cachkey bricks [create]`, `--brick`, champ
+  `brick` de `.cachkey.json`. Les projets existants reçoivent une brique principale qui
+  garde leurs variables et leurs jetons : rien ne change tant qu'ils ne sont pas découpés.
 - Templates de déploiement : Dokploy (`deploy/templates/dokploy/cachkey/`, prêt pour leur
   catalogue) et Coolify (« Docker Compose Empty »), guide `docs/one-click-deployment.md`.
 
 ### Modifié
 
+- Emails compatibles avec davantage de clients mail (Outlook, Gmail, Yahoo…) : mise en page
+  en tableaux, sans texte d'aperçu caché ; les liens longs se coupent sur mobile.
+- Saisie des codes à 6 chiffres case par case, et cases à cocher et boutons radio harmonisés
+  dans toute l'interface.
 - `deploy/compose.yaml` utilise les images publiées, épinglées par défaut sur `0.1.0`, et
   fonctionne copié seul ; la construction depuis les sources passe par
   `deploy/compose.build.yaml`.
 
 ### Corrigé
 
+- CLI : `cachkey login` n'ouvre plus le navigateur par défaut sans demander. Entrée l'ouvre,
+  « c » copie l'adresse pour un autre navigateur ; la page `/device` met en avant le compte
+  qui va être autorisé.
 - Le conteneur web reçoit `APP_URL` : l'en-tête HSTS s'active en HTTPS.
 - Template Dokploy : le service web s'appelle désormais `cachkey` (convention du catalogue
   Dokploy). Sur un déploiement manuel existant, rattachez le domaine au service `cachkey`.

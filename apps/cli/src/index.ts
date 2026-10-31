@@ -1,11 +1,14 @@
 #!/usr/bin/env bun
 import {
+  type BrickDto,
   type EnvironmentDto,
   type ImportResult,
+  mainBrick,
   parseDotenv,
   type ProjectDto,
   type SecretDto,
   serializeDotenv,
+  SHARED_BRICK_SLUG,
   type Workspace,
 } from "@cachkey/shared";
 import { chmod } from "node:fs/promises";
@@ -23,13 +26,24 @@ import {
   saveCredentials,
   saveLink,
 } from "./config";
-import { choose, CliError, confirm, info, interactive, openBrowser, readSecret } from "./terminal";
+import {
+  choose,
+  CliError,
+  confirm,
+  copyToClipboard,
+  info,
+  interactive,
+  onKeys,
+  openBrowser,
+  readSecret,
+} from "./terminal";
 
 /*
  * Cachkey CLI.
  *
- * - Signed in (`cachkey login`): acts as the user, with the user's rights, on the project and
- *   environment of the linked folder (`cachkey link`) or of --org/--project/--env.
+ * - Signed in (`cachkey login`): acts as the user, with the user's rights, on the project,
+ *   environment and brick of the linked folder (`cachkey link`) or of --org/--project/--env
+ *   /--brick. Without a brick, the main one: projects without bricks never see the notion.
  * - With a service token (CACHKEY_TOKEN): read-only, for servers and CI (pull, run, whoami).
  */
 
@@ -39,7 +53,7 @@ const DEVICE_GRANT = "urn:ietf:params:oauth:grant-type:device_code";
 type Context = { options: Options; credentials: Credentials | null };
 
 type Scope = { api: Api; organization: { id: string; name: string } };
-type Target = Scope & { project: string; environment: string };
+type Target = Scope & { project: string; environment: string; brick: string | undefined };
 
 const enc = encodeURIComponent;
 
@@ -86,7 +100,7 @@ async function resolveScope(context: Context): Promise<Scope> {
   return { api: api.withOrganization(organization.id), organization };
 }
 
-/** Project and environment: options first, then the linked folder. */
+/** Project, environment and brick: options first, then the linked folder. */
 async function resolveTarget(context: Context, needs: "project" | "environment"): Promise<Target> {
   const scope = await resolveScope(context);
   const link = (await findLink())?.link;
@@ -98,14 +112,27 @@ async function resolveTarget(context: Context, needs: "project" | "environment")
       "Aucun projet pour ce dossier. Lancez « cachkey link » ou précisez --project et --env.",
     );
   }
-  return { ...scope, project, environment };
+  // The folder's brick only applies to the folder's project.
+  const brick =
+    context.options.brick ?? (sameOrg && link?.project === project ? link.brick : undefined);
+  return { ...scope, project, environment, brick };
 }
 
-const envPath = (target: Target) =>
-  `/api/projects/${enc(target.project)}/environments/${enc(target.environment)}`;
+/** `/api/projects/…/environments/…<suffix>?brick=…` (no brick: the main one). */
+const envPath = (target: Target, suffix = "") =>
+  `/api/projects/${enc(target.project)}/environments/${enc(target.environment)}${suffix}${
+    target.brick ? `?brick=${enc(target.brick)}` : ""
+  }`;
+
+/** « production », « production (web) », « production (variables partagées) ». */
+function where(target: Target): string {
+  if (!target.brick) return target.environment;
+  const brick = target.brick === SHARED_BRICK_SLUG ? "variables partagées" : target.brick;
+  return `${target.environment} (${brick})`;
+}
 
 async function findSecret(target: Target, key: string): Promise<SecretDto | null> {
-  const secrets = await target.api.request<SecretDto[]>("GET", `${envPath(target)}/secrets`);
+  const secrets = await target.api.request<SecretDto[]>("GET", envPath(target, "/secrets"));
   return secrets.find((secret) => secret.key === key) ?? null;
 }
 
@@ -118,24 +145,27 @@ async function loadValues(
     const data = await tokenApi(context, token).request<{
       project: { name: string };
       environment: { name: string; slug: string };
+      brick?: { name: string; slug: string };
       secrets: Record<string, string>;
     }>("GET", "/api/v1/secrets");
+    const brick = data.brick && data.brick.slug !== mainBrick.slug ? `${data.brick.name}, ` : "";
     return {
       values: data.secrets,
-      label: `${data.project.name} (${data.environment.name})`,
+      label: `${data.project.name} (${brick}${data.environment.name})`,
       environment: data.environment.slug,
     };
   }
   const target = await resolveTarget(context, "environment");
+  // A brick receives the shared variables too, its own winning: the export merges them.
   const { content } = await target.api.request<{ content: string }>(
     "POST",
-    `${envPath(target)}/export`,
+    envPath(target, "/export"),
   );
   return {
     values: Object.fromEntries(
       parseDotenv(content).entries.map((entry) => [entry.key, entry.value]),
     ),
-    label: `${target.project} (${target.environment})`,
+    label: `${target.project} (${where(target)})`,
     environment: target.environment,
   };
 }
@@ -154,15 +184,51 @@ async function login({ options, credentials }: Context): Promise<number> {
   }>("POST", "/api/auth/device/code", { client_id: CLIENT_ID });
 
   const url = new URL(code.verification_uri_complete, baseUrl).toString();
-  info(`\nVotre code : ${formatUserCode(code.user_code)}\n`);
-  const opened = !options.noBrowser && interactive && openBrowser(url);
-  info(
-    opened
-      ? `Le navigateur s'ouvre sur ${url}\nVérifiez que le code affiché est le même, puis autorisez ce terminal.`
-      : `Ouvrez cette adresse dans un navigateur et autorisez ce terminal :\n  ${url}`,
-  );
+  info(`\nVotre code : ${formatUserCode(code.user_code)}`);
+  info(`Adresse : ${url}\n`);
+  // The browser never opens without consent: the default one may be signed in to another
+  // account, and a code used there cannot be used again elsewhere.
+  const stopKeys = !options.noBrowser && interactive ? offerBrowser(url) : null;
+  if (!stopKeys) info("Ouvrez cette adresse dans un navigateur et autorisez ce terminal.");
   info("En attente de votre autorisation… (Ctrl+C pour annuler)");
+  try {
+    return await waitForApproval(api, baseUrl, code);
+  } finally {
+    stopKeys?.();
+  }
+}
 
+/** Enter opens the default browser, « c » copies the address; returns the stop function. */
+function offerBrowser(url: string): () => void {
+  info("Appuyez sur Entrée pour ouvrir le navigateur par défaut, ou sur « c » pour copier");
+  info("l'adresse et la coller dans le navigateur de votre choix.");
+  info("Vérifiez que le code affiché est le même, puis autorisez ce terminal.\n");
+  let opened = false;
+  return onKeys({
+    "\r": () => {
+      if (opened) return;
+      opened = true;
+      info(
+        openBrowser(url)
+          ? "Navigateur ouvert. Vérifiez le compte connecté avant d'autoriser."
+          : "Impossible d'ouvrir le navigateur : copiez l'adresse ci-dessus.",
+      );
+    },
+    c: () => {
+      void copyToClipboard(url).then((copied) =>
+        info(
+          copied ? "Adresse copiée." : "Impossible de copier : sélectionnez l'adresse ci-dessus.",
+        ),
+      );
+    },
+  });
+}
+
+async function waitForApproval(
+  api: Api,
+  baseUrl: string,
+  code: { device_code: string; interval: number; expires_in: number },
+): Promise<number> {
   let interval = Math.max(code.interval, 1) * 1000;
   const deadline = Date.now() + code.expires_in * 1000;
   while (Date.now() < deadline) {
@@ -228,11 +294,15 @@ async function whoami(context: Context): Promise<number> {
       organization: { name: string };
       project: { name: string };
       environment: { name: string };
+      brick?: { name: string; slug: string };
     }>("GET", "/api/v1/token");
     rows.push(
       ["Jeton", data.name],
       ["Organisation", data.organization.name],
       ["Projet", data.project.name],
+      ...(data.brick && data.brick.slug !== mainBrick.slug
+        ? [["Brique", data.brick.name] as [string, string]]
+        : []),
       ["Environnement", data.environment.name],
       [
         "Expiration",
@@ -255,6 +325,7 @@ async function whoami(context: Context): Promise<number> {
       rows.push(
         ["Organisation", found.link.organization.name],
         ["Projet", found.link.project],
+        ...(found.link.brick ? [["Brique", found.link.brick] as [string, string]] : []),
         ["Environnement", found.link.environment],
         ["Dossier lié", found.path],
       );
@@ -300,12 +371,29 @@ async function link(context: Context): Promise<number> {
     : await choose("Environnement", environments, (item) => item.name);
   if (!environment) throw new CliError(`Environnement introuvable : ${options.env}.`);
 
+  // Only asked once the project is split into bricks (e.g. `apps/web` → web).
+  const bricks = await scoped.request<BrickDto[]>(
+    "GET",
+    `/api/projects/${enc(project.slug)}/bricks`,
+  );
+  let brick: { slug: string; name: string } | undefined;
+  if (options.brick === SHARED_BRICK_SLUG) {
+    brick = { slug: SHARED_BRICK_SLUG, name: "variables partagées" };
+  } else if (options.brick) {
+    brick = bricks.find((item) => item.slug === options.brick);
+    if (!brick) throw new CliError(`Brique introuvable : ${options.brick}.`);
+  } else if (bricks.length > 1) {
+    brick = await choose("Brique", bricks, (item) => `${item.name} (${item.slug})`);
+  }
+
   const path = await saveLink({
     organization: { id: organization.id, name: organization.name },
     project: project.slug,
     environment: environment.slug,
+    ...(brick ? { brick: brick.slug } : {}),
   });
-  info(`Dossier lié à ${project.name} (${environment.name}) : ${path}`);
+  const place = brick ? `${brick.name}, ${environment.name}` : environment.name;
+  info(`Dossier lié à ${project.name} (${place}) : ${path}`);
   info(`${LINK_FILE} ne contient aucun secret : vous pouvez le partager avec votre équipe.`);
   return 0;
 }
@@ -339,9 +427,10 @@ async function listProjects(context: Context): Promise<number> {
 
 async function listEnvs(context: Context): Promise<number> {
   const target = await resolveTarget(context, "project");
+  const brick = target.brick ? `?brick=${enc(target.brick)}` : "";
   const environments = await target.api.request<EnvironmentDto[]>(
     "GET",
-    `/api/projects/${enc(target.project)}/environments`,
+    `/api/projects/${enc(target.project)}/environments${brick}`,
   );
   for (const environment of environments) {
     const count = environment.secretCount;
@@ -352,8 +441,8 @@ async function listEnvs(context: Context): Promise<number> {
 
 async function listSecrets(context: Context): Promise<number> {
   const target = await resolveTarget(context, "environment");
-  const secrets = await target.api.request<SecretDto[]>("GET", `${envPath(target)}/secrets`);
-  if (secrets.length === 0) info(`Aucune variable dans ${target.environment}.`);
+  const secrets = await target.api.request<SecretDto[]>("GET", envPath(target, "/secrets"));
+  if (secrets.length === 0) info(`Aucune variable dans ${where(target)}.`);
   for (const secret of secrets) {
     const date = new Date(secret.updatedAt).toLocaleDateString("fr-FR");
     console.log(`${secret.key.padEnd(36)} ${(secret.empty ? "(vide)" : "").padEnd(8)}${date}`);
@@ -364,10 +453,10 @@ async function listSecrets(context: Context): Promise<number> {
 async function getSecret(context: Context, key: string): Promise<number> {
   const target = await resolveTarget(context, "environment");
   const secret = await findSecret(target, key);
-  if (!secret) throw new CliError(`La variable ${key} n'existe pas dans ${target.environment}.`);
+  if (!secret) throw new CliError(`La variable ${key} n'existe pas dans ${where(target)}.`);
   const { value } = await target.api.request<{ value: string }>(
     "POST",
-    `${envPath(target)}/secrets/${enc(secret.id)}/reveal`,
+    envPath(target, `/secrets/${enc(secret.id)}/reveal`),
   );
   // No trailing newline when piped, so `$(cachkey get X)` gets the exact value.
   process.stdout.write(process.stdout.isTTY ? `${value}\n` : value);
@@ -379,11 +468,11 @@ async function setSecret(context: Context, key: string, given: string | null): P
   const value = given ?? (await readSecret(`Valeur de ${key} (masquée) : `));
   const existing = await findSecret(target, key);
   if (existing) {
-    await target.api.request("PATCH", `${envPath(target)}/secrets/${enc(existing.id)}`, { value });
-    info(`${key} modifiée dans ${target.environment}.`);
+    await target.api.request("PATCH", envPath(target, `/secrets/${enc(existing.id)}`), { value });
+    info(`${key} modifiée dans ${where(target)}.`);
   } else {
-    await target.api.request("POST", `${envPath(target)}/secrets`, { key, value });
-    info(`${key} ajoutée dans ${target.environment}.`);
+    await target.api.request("POST", envPath(target, "/secrets"), { key, value });
+    info(`${key} ajoutée dans ${where(target)}.`);
   }
   return 0;
 }
@@ -391,16 +480,16 @@ async function setSecret(context: Context, key: string, given: string | null): P
 async function removeSecret(context: Context, key: string): Promise<number> {
   const target = await resolveTarget(context, "environment");
   const secret = await findSecret(target, key);
-  if (!secret) throw new CliError(`La variable ${key} n'existe pas dans ${target.environment}.`);
+  if (!secret) throw new CliError(`La variable ${key} n'existe pas dans ${where(target)}.`);
   const confirmed =
     context.options.yes ||
-    (await confirm(`Supprimer ${key} et tout son historique de ${target.environment} ?`));
+    (await confirm(`Supprimer ${key} et tout son historique de ${where(target)} ?`));
   if (!confirmed) {
     info("Rien n'a été supprimé.");
     return 1;
   }
-  await target.api.request("DELETE", `${envPath(target)}/secrets/${enc(secret.id)}`);
-  info(`${key} supprimée de ${target.environment}.`);
+  await target.api.request("DELETE", envPath(target, `/secrets/${enc(secret.id)}`));
+  info(`${key} supprimée de ${where(target)}.`);
   return 0;
 }
 
@@ -408,12 +497,12 @@ async function importFile(context: Context, file: string): Promise<number> {
   const target = await resolveTarget(context, "environment");
   const handle = Bun.file(file);
   if (!(await handle.exists())) throw new CliError(`Fichier introuvable : ${file}.`);
-  const result = await target.api.request<ImportResult>("POST", `${envPath(target)}/import`, {
+  const result = await target.api.request<ImportResult>("POST", envPath(target, "/import"), {
     content: await handle.text(),
     overwrite: context.options.overwrite,
   });
   info(
-    `${target.environment} : ${result.created} ajoutée(s), ${result.updated} remplacée(s), ${result.unchanged} identique(s), ${result.skipped} gardée(s).`,
+    `${where(target)} : ${result.created} ajoutée(s), ${result.updated} remplacée(s), ${result.unchanged} identique(s), ${result.skipped} gardée(s).`,
   );
   if (result.skipped > 0 && !context.options.overwrite) {
     info("Les variables existantes ont été gardées : ajoutez --overwrite pour les remplacer.");
@@ -528,6 +617,31 @@ async function envCreate(context: Context, name: string): Promise<number> {
   return 0;
 }
 
+async function listBricks(context: Context): Promise<number> {
+  const target = await resolveTarget(context, "project");
+  const bricks = await target.api.request<BrickDto[]>(
+    "GET",
+    `/api/projects/${enc(target.project)}/bricks`,
+  );
+  for (const brick of bricks) {
+    console.log(`${brick.slug.padEnd(28)} ${brick.name}${brick.main ? " (principale)" : ""}`);
+  }
+  console.log(`${SHARED_BRICK_SLUG.padEnd(28)} Variables partagées (héritées par toutes)`);
+  return 0;
+}
+
+async function brickCreate(context: Context, name: string): Promise<number> {
+  const target = await resolveTarget(context, "project");
+  const brick = await target.api.request<BrickDto>(
+    "POST",
+    `/api/projects/${enc(target.project)}/bricks`,
+    { name },
+  );
+  info(`Brique ${brick.name} créée dans ${target.project}. Liez-y un dossier : cachkey link`);
+  console.log(brick.slug);
+  return 0;
+}
+
 /** Like `git init`: creates a project for this folder and links the folder to it. */
 async function init(context: Context, given: string | null): Promise<number> {
   const existing = await findLink();
@@ -625,6 +739,10 @@ function dispatch(command: Command, context: Context): Promise<number> | number 
       return projectCreate(context, command.projectName);
     case "env-create":
       return envCreate(context, command.envName);
+    case "bricks":
+      return listBricks(context);
+    case "brick-create":
+      return brickCreate(context, command.brickName);
     case "secrets":
       return listSecrets(context);
     case "get":

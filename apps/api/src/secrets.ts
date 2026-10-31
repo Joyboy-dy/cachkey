@@ -12,6 +12,7 @@ import {
   secretUpdateSchema,
   type SecretVersionDto,
   serializeDotenv,
+  SHARED_BRICK_SLUG,
   slugify,
 } from "@cachkey/shared";
 import { Elysia } from "elysia";
@@ -22,6 +23,7 @@ import {
   generateDataKey,
   isEmptyCiphertext,
   unwrapDataKey,
+  type ValueOwner,
   wrapDataKey,
 } from "./crypto";
 import { prisma } from "./db";
@@ -37,6 +39,10 @@ import {
 
 /*
  * Environments and their encrypted variables, under /api/projects/:slug.
+ *
+ * Variables belong to an environment and a brick, chosen with `?brick=<slug>` (the main
+ * brick when left out, `shared` for the shared variables). Exports merge the shared
+ * variables with the brick's own, the brick winning.
  *
  * Owners and admins manage everything; members only see the projects and environments
  * shared with them, read-only or with write access (see guards.ts). Values never leave the
@@ -82,13 +88,51 @@ async function findEnvironment(projectId: string, slug: string) {
   return environment;
 }
 
+export type BrickRow = { id: string; name: string; slug: string; kind: string };
+
+/** Every brick of a project, the shared one included: main first, then by position. */
+export async function projectBricks(projectId: string): Promise<BrickRow[]> {
+  const bricks = await prisma.brick.findMany({
+    where: { projectId },
+    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+    select: { id: true, name: true, slug: true, kind: true },
+  });
+  return bricks.sort((a, b) => Number(b.kind === "main") - Number(a.kind === "main"));
+}
+
+/** The brick of `?brick=` (the main one when left out); 404 for an unknown one. */
+function pickBrick(bricks: BrickRow[], slug: string | undefined): BrickRow {
+  const brick = slug
+    ? bricks.find((item) => item.slug === slug)
+    : bricks.find((item) => item.kind === "main");
+  if (!brick) throw new HttpError(404, "BRICK_NOT_FOUND");
+  return brick;
+}
+
+/** Where a value of this brick lives, for encryption (see crypto.ts). */
+export function ownerOf(environmentId: string, brick: { id: string; kind: string }): ValueOwner {
+  return { environmentId, brickId: brick.kind === "main" ? null : brick.id };
+}
+
+/** Brick written in the audit log, only once a project is actually split into bricks. */
+export function brickLabel(bricks: BrickRow[], brick: BrickRow): string | null {
+  return brick.kind !== "main" || bricks.some((item) => item.kind === "custom") ? brick.name : null;
+}
+
+type BrickQuery = { brick?: string };
+
+function brickSlugOf(query: BrickQuery): string | undefined {
+  return query.brick?.trim() || undefined;
+}
+
 /**
- * Project + environment of the URL, checked against the caller's access. An environment
- * outside the access answers 404, like a missing one.
+ * Project + environment of the URL and brick of the query, checked against the caller's
+ * access. An environment outside the access answers 404, like a missing one.
  */
 async function scope(
   headers: Headers,
   params: { slug: string; env: string },
+  query: BrickQuery,
   needed: "read" | "write" = "read",
 ) {
   const { membership, project, grant } = await requireProject(headers, params.slug, needed);
@@ -96,7 +140,17 @@ async function scope(
   if (!coversEnvironment(grant, environment.id)) {
     throw new HttpError(404, "ENVIRONMENT_NOT_FOUND");
   }
-  return { membership, project, environment };
+  const bricks = await projectBricks(project.id);
+  const brick = pickBrick(bricks, brickSlugOf(query));
+  return {
+    membership,
+    project,
+    environment,
+    brick,
+    owner: ownerOf(environment.id, brick),
+    /** Project, environment and brick of the audit entries. */
+    where: { project, environmentName: environment.name, brickName: brickLabel(bricks, brick) },
+  };
 }
 
 function actorOf(membership: Membership): AuditActor {
@@ -107,8 +161,10 @@ function actorOf(membership: Membership): AuditActor {
   };
 }
 
-async function findSecret(environmentId: string, id: string) {
-  const secret = await prisma.secret.findFirst({ where: { id, environmentId } });
+async function findSecret(owner: ValueOwner, brickId: string, id: string) {
+  const secret = await prisma.secret.findFirst({
+    where: { id, environmentId: owner.environmentId, brickId },
+  });
   if (!secret) throw new HttpError(404, "SECRET_NOT_FOUND");
   return secret;
 }
@@ -162,21 +218,37 @@ async function writeValue(
   ]);
 }
 
-/** Every variable of an environment with its decrypted value, sorted by name. */
+/**
+ * Every variable a brick receives in an environment, with its decrypted value, sorted by
+ * name: the shared variables, replaced by the brick's own when both define a name.
+ */
 export async function environmentValues(
   project: { id: string; encryptedKey: string | null },
   environmentId: string,
+  brick: { id: string; kind: string },
 ): Promise<{ key: string; value: string }[]> {
   const dataKey = await dataKeyOf(project);
-  const secrets = await prisma.secret.findMany({
-    where: { environmentId },
-    orderBy: { key: "asc" },
-    select: { key: true, value: true },
-  });
-  return secrets.map((secret) => ({
-    key: secret.key,
-    value: decryptSecret(dataKey, environmentId, secret.value),
-  }));
+  const shared =
+    brick.kind === "shared"
+      ? null
+      : await prisma.brick.findUnique({
+          where: { projectId_slug: { projectId: project.id, slug: SHARED_BRICK_SLUG } },
+          select: { id: true, kind: true },
+        });
+  const values = new Map<string, string>();
+  for (const source of shared ? [shared, brick] : [brick]) {
+    const secrets = await prisma.secret.findMany({
+      where: { environmentId, brickId: source.id },
+      select: { key: true, value: true },
+    });
+    const owner = ownerOf(environmentId, source);
+    for (const secret of secrets) {
+      values.set(secret.key, decryptSecret(dataKey, owner, secret.value));
+    }
+  }
+  return [...values]
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([key, value]) => ({ key, value }));
 }
 
 function isUniqueViolation(error: unknown): boolean {
@@ -191,16 +263,26 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
 
   // ── Environments ──────────────────────────────────────────────────────────
 
-  /** Only the environments the caller's access covers. */
-  .get("/environments", async ({ request, params }): Promise<EnvironmentDto[]> => {
+  /**
+   * Only the environments the caller's access covers. `secretCount` counts the variables of
+   * `?brick=` when given, of every brick otherwise.
+   */
+  .get("/environments", async ({ request, params, query }): Promise<EnvironmentDto[]> => {
     const { project, grant } = await requireProject(request.headers, params.slug);
+    const slug = brickSlugOf(query);
+    const brick = slug ? pickBrick(await projectBricks(project.id), slug) : null;
     const environments = await prisma.environment.findMany({
       where: {
         projectId: project.id,
         ...(grant.environmentIds ? { id: { in: grant.environmentIds } } : {}),
       },
       orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-      select: { id: true, name: true, slug: true, _count: { select: { secrets: true } } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        _count: { select: { secrets: brick ? { where: { brickId: brick.id } } : true } },
+      },
     });
     return environments.map(({ _count, ...environment }) => ({
       ...environment,
@@ -277,10 +359,10 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
 
   // ── Variables (without values) ───────────────────────────────────────────
 
-  .get("/environments/:env/secrets", async ({ request, params }): Promise<SecretDto[]> => {
-    const { environment } = await scope(request.headers, params);
+  .get("/environments/:env/secrets", async ({ request, params, query }): Promise<SecretDto[]> => {
+    const { environment, brick } = await scope(request.headers, params, query);
     const secrets = await prisma.secret.findMany({
-      where: { environmentId: environment.id },
+      where: { environmentId: environment.id, brickId: brick.id },
       orderBy: { key: "asc" },
       select: {
         id: true,
@@ -294,16 +376,24 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
     return secrets.map(secretDto);
   })
 
-  .post("/environments/:env/secrets", async ({ request, params, body, set }) => {
-    const { membership, project, environment } = await scope(request.headers, params, "write");
+  .post("/environments/:env/secrets", async ({ request, params, query, body, set }) => {
+    const { membership, project, environment, brick, owner, where } = await scope(
+      request.headers,
+      params,
+      query,
+      "write",
+    );
     const { key, value } = parse(secretSchema, body);
-    const count = await prisma.secret.count({ where: { environmentId: environment.id } });
+    const count = await prisma.secret.count({
+      where: { environmentId: environment.id, brickId: brick.id },
+    });
     if (count >= MAX_SECRETS_PER_ENVIRONMENT) throw new HttpError(409, "TOO_MANY_SECRETS");
-    const encrypted = encryptSecret(await dataKeyOf(project), environment.id, value);
+    const encrypted = encryptSecret(await dataKeyOf(project), owner, value);
     try {
       const secret = await prisma.secret.create({
         data: {
           environmentId: environment.id,
+          brickId: brick.id,
           key,
           value: encrypted,
           updatedById: membership.userId,
@@ -320,7 +410,7 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
       });
       await audit(
         actorOf(membership),
-        { action: "secret.created", project, environmentName: environment.name, target: key },
+        { ...where, action: "secret.created", target: key },
         request,
       );
       set.status = 201;
@@ -331,12 +421,16 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
     }
   })
 
-  .patch("/environments/:env/secrets/:id", async ({ request, params, body }) => {
-    const { membership, project, environment } = await scope(request.headers, params, "write");
-    const secret = await findSecret(environment.id, params.id);
+  .patch("/environments/:env/secrets/:id", async ({ request, params, query, body }) => {
+    const { membership, project, brick, owner, where } = await scope(
+      request.headers,
+      params,
+      query,
+      "write",
+    );
+    const secret = await findSecret(owner, brick.id, params.id);
     const input = parse(secretUpdateSchema, body);
     const actor = actorOf(membership);
-    const base = { project, environmentName: environment.name };
 
     let key = secret.key;
     if (input.key !== undefined && input.key !== secret.key) {
@@ -352,22 +446,18 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
       key = input.key;
       await audit(
         actor,
-        { ...base, action: "secret.renamed", target: key, details: { from: secret.key } },
+        { ...where, action: "secret.renamed", target: key, details: { from: secret.key } },
         request,
       );
     }
     if (input.value !== undefined) {
       const dataKey = await dataKeyOf(project);
-      if (decryptSecret(dataKey, environment.id, secret.value) !== input.value) {
-        await writeValue(
-          secret,
-          encryptSecret(dataKey, environment.id, input.value),
-          membership.userId,
-        );
+      if (decryptSecret(dataKey, owner, secret.value) !== input.value) {
+        await writeValue(secret, encryptSecret(dataKey, owner, input.value), membership.userId);
         await audit(
           actor,
           {
-            ...base,
+            ...where,
             action: "secret.updated",
             target: key,
             details: { version: secret.version + 1 },
@@ -379,13 +469,18 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
     return { status: true };
   })
 
-  .delete("/environments/:env/secrets/:id", async ({ request, params }) => {
-    const { membership, project, environment } = await scope(request.headers, params, "write");
-    const secret = await findSecret(environment.id, params.id);
+  .delete("/environments/:env/secrets/:id", async ({ request, params, query }) => {
+    const { membership, brick, owner, where } = await scope(
+      request.headers,
+      params,
+      query,
+      "write",
+    );
+    const secret = await findSecret(owner, brick.id, params.id);
     await prisma.secret.delete({ where: { id: secret.id } });
     await audit(
       actorOf(membership),
-      { action: "secret.deleted", project, environmentName: environment.name, target: secret.key },
+      { ...where, action: "secret.deleted", target: secret.key },
       request,
     );
     return { status: true };
@@ -393,16 +488,19 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
 
   // ── Values: explicit reveal only, always logged ──────────────────────────
 
-  .post("/environments/:env/secrets/:id/reveal", async ({ request, params }) => {
-    const { membership, project, environment } = await scope(request.headers, params);
-    const secret = await findSecret(environment.id, params.id);
-    const value = decryptSecret(await dataKeyOf(project), environment.id, secret.value);
+  .post("/environments/:env/secrets/:id/reveal", async ({ request, params, query }) => {
+    const { membership, project, brick, owner, where } = await scope(
+      request.headers,
+      params,
+      query,
+    );
+    const secret = await findSecret(owner, brick.id, params.id);
+    const value = decryptSecret(await dataKeyOf(project), owner, secret.value);
     await audit(
       actorOf(membership),
       {
+        ...where,
         action: "secret.revealed",
-        project,
-        environmentName: environment.name,
         target: secret.key,
         details: { version: secret.version },
       },
@@ -415,9 +513,9 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
 
   .get(
     "/environments/:env/secrets/:id/versions",
-    async ({ request, params }): Promise<SecretVersionDto[]> => {
-      const { environment } = await scope(request.headers, params);
-      const secret = await findSecret(environment.id, params.id);
+    async ({ request, params, query }): Promise<SecretVersionDto[]> => {
+      const { brick, owner } = await scope(request.headers, params, query);
+      const secret = await findSecret(owner, brick.id, params.id);
       const versions = await prisma.secretVersion.findMany({
         where: { secretId: secret.id },
         orderBy: { version: "desc" },
@@ -431,125 +529,154 @@ export const secretRoutes = new Elysia({ prefix: "/api/projects/:slug" })
     },
   )
 
-  .post("/environments/:env/secrets/:id/versions/:version/reveal", async ({ request, params }) => {
-    const { membership, project, environment } = await scope(request.headers, params);
-    const secret = await findSecret(environment.id, params.id);
-    const version = await findVersion(secret.id, params.version);
-    const value = decryptSecret(await dataKeyOf(project), environment.id, version.value);
-    await audit(
-      actorOf(membership),
-      {
-        action: "secret.version_revealed",
-        project,
-        environmentName: environment.name,
-        target: secret.key,
-        details: { version: version.version },
-      },
-      request,
-    );
-    return { value };
-  })
-
-  /** Makes an old value current again, as a new version (history is never rewritten). */
-  .post("/environments/:env/secrets/:id/versions/:version/restore", async ({ request, params }) => {
-    const { membership, project, environment } = await scope(request.headers, params, "write");
-    const secret = await findSecret(environment.id, params.id);
-    const version = await findVersion(secret.id, params.version);
-    if (version.version !== secret.version) {
-      await writeValue(secret, version.value, membership.userId);
+  .post(
+    "/environments/:env/secrets/:id/versions/:version/reveal",
+    async ({ request, params, query }) => {
+      const { membership, project, brick, owner, where } = await scope(
+        request.headers,
+        params,
+        query,
+      );
+      const secret = await findSecret(owner, brick.id, params.id);
+      const version = await findVersion(secret.id, params.version);
+      const value = decryptSecret(await dataKeyOf(project), owner, version.value);
       await audit(
         actorOf(membership),
         {
-          action: "secret.restored",
-          project,
-          environmentName: environment.name,
+          ...where,
+          action: "secret.version_revealed",
           target: secret.key,
-          details: { restored: version.version, version: secret.version + 1 },
+          details: { version: version.version },
         },
         request,
       );
-    }
-    return { status: true };
-  })
+      return { value };
+    },
+  )
+
+  /** Makes an old value current again, as a new version (history is never rewritten). */
+  .post(
+    "/environments/:env/secrets/:id/versions/:version/restore",
+    async ({ request, params, query }) => {
+      const { membership, brick, owner, where } = await scope(
+        request.headers,
+        params,
+        query,
+        "write",
+      );
+      const secret = await findSecret(owner, brick.id, params.id);
+      const version = await findVersion(secret.id, params.version);
+      if (version.version !== secret.version) {
+        await writeValue(secret, version.value, membership.userId);
+        await audit(
+          actorOf(membership),
+          {
+            ...where,
+            action: "secret.restored",
+            target: secret.key,
+            details: { restored: version.version, version: secret.version + 1 },
+          },
+          request,
+        );
+      }
+      return { status: true };
+    },
+  )
 
   // ── .env import / export ─────────────────────────────────────────────────
 
-  .post("/environments/:env/import", async ({ request, params, body }): Promise<ImportResult> => {
-    const { membership, project, environment } = await scope(request.headers, params, "write");
-    const userId = membership.userId;
-    const { content, overwrite } = parse(importSchema, body);
-    const { entries, invalidLines } = parseDotenv(content);
-    const dataKey = await dataKeyOf(project);
-
-    const existing = new Map(
-      (await prisma.secret.findMany({ where: { environmentId: environment.id } })).map((secret) => [
-        secret.key,
-        secret,
-      ]),
-    );
-    const newCount = entries.filter((entry) => !existing.has(entry.key)).length;
-    if (existing.size + newCount > MAX_SECRETS_PER_ENVIRONMENT) {
-      throw new HttpError(409, "TOO_MANY_SECRETS");
-    }
-
-    const result: ImportResult = { created: 0, updated: 0, unchanged: 0, skipped: 0, invalidLines };
-    for (const { key, value } of entries) {
-      if (value.length > MAX_SECRET_VALUE_LENGTH) {
-        result.skipped++;
-        continue;
-      }
-      const current = existing.get(key);
-      const encrypted = encryptSecret(dataKey, environment.id, value);
-      if (!current) {
-        await prisma.secret.create({
-          data: {
-            environmentId: environment.id,
-            key,
-            value: encrypted,
-            updatedById: userId,
-            versions: { create: { version: 1, value: encrypted, createdById: userId } },
-          },
-        });
-        result.created++;
-      } else if (decryptSecret(dataKey, environment.id, current.value) === value) {
-        result.unchanged++;
-      } else if (overwrite) {
-        await writeValue(current, encrypted, userId);
-        result.updated++;
-      } else {
-        result.skipped++;
-      }
-    }
-    if (result.created || result.updated) {
-      await audit(
-        actorOf(membership),
-        {
-          action: "environment.imported",
-          project,
-          environmentName: environment.name,
-          details: { created: result.created, updated: result.updated },
-        },
-        request,
+  .post(
+    "/environments/:env/import",
+    async ({ request, params, query, body }): Promise<ImportResult> => {
+      const { membership, project, environment, brick, owner, where } = await scope(
+        request.headers,
+        params,
+        query,
+        "write",
       );
-    }
-    return result;
-  })
+      const userId = membership.userId;
+      const { content, overwrite } = parse(importSchema, body);
+      const { entries, invalidLines } = parseDotenv(content);
+      const dataKey = await dataKeyOf(project);
 
-  .post("/environments/:env/export", async ({ request, params }) => {
-    const { membership, project, environment } = await scope(request.headers, params);
-    const secrets = await environmentValues(project, environment.id);
+      const existing = new Map(
+        (
+          await prisma.secret.findMany({
+            where: { environmentId: environment.id, brickId: brick.id },
+          })
+        ).map((secret) => [secret.key, secret]),
+      );
+      const newCount = entries.filter((entry) => !existing.has(entry.key)).length;
+      if (existing.size + newCount > MAX_SECRETS_PER_ENVIRONMENT) {
+        throw new HttpError(409, "TOO_MANY_SECRETS");
+      }
+
+      const result: ImportResult = {
+        created: 0,
+        updated: 0,
+        unchanged: 0,
+        skipped: 0,
+        invalidLines,
+      };
+      for (const { key, value } of entries) {
+        if (value.length > MAX_SECRET_VALUE_LENGTH) {
+          result.skipped++;
+          continue;
+        }
+        const current = existing.get(key);
+        const encrypted = encryptSecret(dataKey, owner, value);
+        if (!current) {
+          await prisma.secret.create({
+            data: {
+              environmentId: environment.id,
+              brickId: brick.id,
+              key,
+              value: encrypted,
+              updatedById: userId,
+              versions: { create: { version: 1, value: encrypted, createdById: userId } },
+            },
+          });
+          result.created++;
+        } else if (decryptSecret(dataKey, owner, current.value) === value) {
+          result.unchanged++;
+        } else if (overwrite) {
+          await writeValue(current, encrypted, userId);
+          result.updated++;
+        } else {
+          result.skipped++;
+        }
+      }
+      if (result.created || result.updated) {
+        await audit(
+          actorOf(membership),
+          {
+            ...where,
+            action: "environment.imported",
+            details: { created: result.created, updated: result.updated },
+          },
+          request,
+        );
+      }
+      return result;
+    },
+  )
+
+  /** The brick's own variables merged over the shared ones: what the application receives. */
+  .post("/environments/:env/export", async ({ request, params, query }) => {
+    const { membership, project, environment, brick, where } = await scope(
+      request.headers,
+      params,
+      query,
+    );
+    const secrets = await environmentValues(project, environment.id, brick);
+    const title = [project.name, where.brickName, environment.name].filter(Boolean).join(" — ");
     const content = serializeDotenv(
       secrets,
-      `${project.name} — ${environment.name}\nExporté depuis Cachkey le ${new Date().toISOString()}`,
+      `${title}\nExporté depuis Cachkey le ${new Date().toISOString()}`,
     );
     await audit(
       actorOf(membership),
-      {
-        action: "environment.exported",
-        project,
-        environmentName: environment.name,
-        details: { variables: secrets.length },
-      },
+      { ...where, action: "environment.exported", details: { variables: secrets.length } },
       request,
     );
     return { filename: `.env.${environment.slug}`, content };

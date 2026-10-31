@@ -70,7 +70,7 @@ export function EnvironmentSwitcher({
                   <Link
                     to="/projects/$slug"
                     params={{ slug: projectSlug }}
-                    search={{ env: environment.slug }}
+                    search={(previous) => ({ ...previous, env: environment.slug })}
                     aria-current={active ? "true" : undefined}
                     className="flex items-center gap-2"
                   >
@@ -122,7 +122,7 @@ export function EnvironmentSwitcher({
             await navigate({
               to: "/projects/$slug",
               params: { slug: projectSlug },
-              search: { env: data.slug },
+              search: (previous) => ({ ...previous, env: data.slug }),
             });
             return null;
           }}

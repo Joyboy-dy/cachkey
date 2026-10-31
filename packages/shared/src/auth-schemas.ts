@@ -59,6 +59,48 @@ export const resetPasswordSchema = z
   });
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
+/** Code of an authenticator app (TOTP): 6 digits, spaces ignored. */
+export const totpCodeField = z
+  .string()
+  .transform((value) => value.replace(/\s/g, ""))
+  .pipe(z.string().regex(/^\d{6}$/, "Le code contient 6 chiffres."));
+
+/**
+ * Backup code, as Better Auth generates them (« abcde-12345 », case-sensitive).
+ * Spaces are ignored and the dash is added back when it was left out.
+ */
+export const backupCodeField = z
+  .string()
+  .transform((value) => value.replace(/\s/g, ""))
+  .transform((value) =>
+    /^[A-Za-z0-9]{10}$/.test(value) ? `${value.slice(0, 5)}-${value.slice(5)}` : value,
+  )
+  .pipe(
+    z
+      .string()
+      .regex(/^[A-Za-z0-9]{5}-[A-Za-z0-9]{5}$/, "Un code de secours contient 10 caractères."),
+  );
+
+/** Second step of sign-in, with an authenticator code. */
+export const twoFactorSignInSchema = z.object({
+  code: totpCodeField,
+  trustDevice: z.boolean(),
+});
+
+/** Second step of sign-in, with a backup code. */
+export const backupCodeSignInSchema = z.object({
+  code: backupCodeField,
+  trustDevice: z.boolean(),
+});
+
+/** Enabling, disabling 2FA or renewing backup codes asks for the password again. */
+export const confirmPasswordSchema = z.object({
+  password: z.string().min(1, "Saisissez votre mot de passe."),
+});
+
+/** Last step of enabling 2FA: the first code shown by the app. */
+export const verifyTotpSchema = z.object({ code: totpCodeField });
+
 /** Public, non-sensitive instance configuration exposed by the API. */
 export const socialProviderIds = ["google", "github"] as const;
 export type SocialProviderId = (typeof socialProviderIds)[number];

@@ -12,6 +12,7 @@ export type AuditEntry = {
   action: AuditAction;
   project?: { id: string; name: string } | null;
   environmentName?: string | null;
+  brickName?: string | null;
   target?: string | null;
   details?: Record<string, string | number | boolean>;
 };
@@ -40,6 +41,7 @@ export async function audit(actor: AuditActor, entry: AuditEntry, request?: Requ
         projectId: entry.project?.id ?? null,
         projectName: entry.project?.name ?? null,
         environmentName: entry.environmentName ?? null,
+        brickName: entry.brickName ?? null,
         target: entry.target ?? null,
         // Actions made from the CLI are told apart in the log.
         metadata: fromCli(request)
@@ -65,6 +67,7 @@ export const auditEventSelect = {
   actor: { select: { name: true, avatarSeed: true } },
   projectName: true,
   environmentName: true,
+  brickName: true,
   target: true,
   metadata: true,
   ip: true,
@@ -79,6 +82,7 @@ type AuditRow = {
   actor: { name: string; avatarSeed: string | null } | null;
   projectName: string | null;
   environmentName: string | null;
+  brickName: string | null;
   target: string | null;
   metadata: unknown;
   ip: string | null;
@@ -101,6 +105,7 @@ export function toAuditEventDtos(row: AuditRow): AuditEventDto[] {
       },
       projectName: row.projectName,
       environmentName: row.environmentName,
+      brickName: row.brickName,
       target: row.target,
       details:
         metadata && typeof metadata === "object" && !Array.isArray(metadata)

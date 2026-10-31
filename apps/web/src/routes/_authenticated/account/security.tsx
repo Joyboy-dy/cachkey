@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { LinkedAccountsCard, PasswordCard } from "@/components/account/security-cards";
+import { TwoFactorCard } from "@/components/account/two-factor-card";
 import type { Feedback } from "@/components/app/feedback";
 import { getOAuthErrorMessage } from "@/lib/auth/errors";
 import { publicConfigQueryOptions } from "@/lib/auth/public-config";
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/account/security")({
 
 function SecurityPage() {
   const search = Route.useSearch();
+  const { session } = Route.useRouteContext();
 
   let notice: Feedback = null;
   if (search.error) {
@@ -32,6 +34,7 @@ function SecurityPage() {
   return (
     <>
       <PasswordCard />
+      <TwoFactorCard enabled={Boolean(session.user.twoFactorEnabled)} />
       <LinkedAccountsCard notice={notice} />
     </>
   );

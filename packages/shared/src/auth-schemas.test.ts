@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import {
+  backupCodeSignInSchema,
   PASSWORD_MIN_LENGTH,
   resetPasswordSchema,
   signInSchema,
   signUpSchema,
+  twoFactorSignInSchema,
 } from "./auth-schemas";
 
 const validSignUp = {
@@ -69,5 +71,35 @@ describe("resetPasswordSchema", () => {
     expect(
       resetPasswordSchema.safeParse({ password, confirmPassword: `${password}x` }).success,
     ).toBe(false);
+  });
+});
+
+describe("twoFactorSignInSchema", () => {
+  test("accepts 6 digits, spaces ignored", () => {
+    const result = twoFactorSignInSchema.safeParse({ code: " 123 456 ", trustDevice: false });
+    expect(result.data?.code).toBe("123456");
+  });
+
+  test("rejects anything else", () => {
+    for (const code of ["12345", "1234567", "12345a", ""]) {
+      const result = twoFactorSignInSchema.safeParse({ code, trustDevice: false });
+      expect(firstMessage(result)).toBe("Le code contient 6 chiffres.");
+    }
+  });
+});
+
+describe("backupCodeSignInSchema", () => {
+  test("keeps the case and adds the dash back", () => {
+    expect(backupCodeSignInSchema.parse({ code: "aB3dE-fG7h9", trustDevice: true }).code).toBe(
+      "aB3dE-fG7h9",
+    );
+    expect(backupCodeSignInSchema.parse({ code: " aB3dE fG7h9 ", trustDevice: true }).code).toBe(
+      "aB3dE-fG7h9",
+    );
+  });
+
+  test("rejects malformed codes", () => {
+    const result = backupCodeSignInSchema.safeParse({ code: "abc", trustDevice: false });
+    expect(firstMessage(result)).toBe("Un code de secours contient 10 caractères.");
   });
 });

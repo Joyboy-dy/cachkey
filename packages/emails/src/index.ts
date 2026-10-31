@@ -4,6 +4,7 @@ export {
   renderInvitation,
   renderPasswordChanged,
   renderResetPassword,
+  renderTwoFactorChanged,
   renderVerifyEmail,
 } from "./render";
 export type { RenderedEmail } from "./render";

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   decryptSecret,
   encryptSecret,
+  secretAad,
   generateDataKey,
   unwrapDataKey,
   wrapDataKey,
@@ -23,20 +24,36 @@ describe("envelope encryption", () => {
   test("encrypts values with a fresh IV and authenticates them", () => {
     const dataKey = generateDataKey();
     const value = "postgres://user:pässwörd@db:5432/app\nligne 2";
-    const first = encryptSecret(dataKey, "env-1", value);
-    const second = encryptSecret(dataKey, "env-1", value);
+    const owner = { environmentId: "env-1", brickId: null };
+    const first = encryptSecret(dataKey, owner, value);
+    const second = encryptSecret(dataKey, owner, value);
     expect(first).not.toBe(second);
     expect(first).not.toContain("postgres");
-    expect(decryptSecret(dataKey, "env-1", first)).toBe(value);
-    expect(decryptSecret(dataKey, "env-1", encryptSecret(dataKey, "env-1", ""))).toBe("");
+    expect(decryptSecret(dataKey, owner, first)).toBe(value);
+    expect(decryptSecret(dataKey, owner, encryptSecret(dataKey, owner, ""))).toBe("");
 
     // Copied to another environment, or tampered with: refused.
-    expect(() => decryptSecret(dataKey, "env-2", first)).toThrow();
+    expect(() =>
+      decryptSecret(dataKey, { environmentId: "env-2", brickId: null }, first),
+    ).toThrow();
     const [version, iv, body = ""] = first.split(".");
     const flipped = Buffer.from(body, "base64");
     flipped[0] = (flipped[0] ?? 0) ^ 1;
     expect(() =>
-      decryptSecret(dataKey, "env-1", `${version}.${iv}.${flipped.toString("base64")}`),
+      decryptSecret(dataKey, owner, `${version}.${iv}.${flipped.toString("base64")}`),
     ).toThrow();
+  });
+
+  test("binds values to their brick, the main brick keeping the original binding", () => {
+    const dataKey = generateDataKey();
+    const main = { environmentId: "env-1", brickId: null };
+    const web = { environmentId: "env-1", brickId: "brick-web" };
+    expect(secretAad(main)).toBe("secret:env-1");
+
+    const value = encryptSecret(dataKey, web, "token");
+    expect(decryptSecret(dataKey, web, value)).toBe("token");
+    // Copied to another brick of the same environment: refused.
+    expect(() => decryptSecret(dataKey, main, value)).toThrow();
+    expect(() => decryptSecret(dataKey, { ...web, brickId: "brick-api" }, value)).toThrow();
   });
 });

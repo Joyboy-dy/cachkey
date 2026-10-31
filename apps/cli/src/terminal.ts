@@ -77,6 +77,58 @@ export async function readSecret(question: string): Promise<string> {
   });
 }
 
+/**
+ * Listens to single key presses (TTY) while something else runs; returns a function that
+ * stops listening. Ctrl+C still quits.
+ */
+export function onKeys(handlers: Record<string, () => void>): () => void {
+  const stdin = process.stdin;
+  stdin.setRawMode(true);
+  stdin.resume();
+  stdin.setEncoding("utf8");
+  let listening = true;
+  const stop = () => {
+    if (!listening) return;
+    listening = false;
+    stdin.off("data", onData);
+    stdin.setRawMode(false);
+    stdin.pause();
+  };
+  const onData = (chunk: string) => {
+    for (const char of chunk) {
+      if (char === "\u0003") {
+        stop();
+        info("\nAnnulé.");
+        process.exit(130);
+      }
+      handlers[char === "\n" ? "\r" : char.toLowerCase()]?.();
+    }
+  };
+  stdin.on("data", onData);
+  return stop;
+}
+
+/** Copies text to the system clipboard; false when no clipboard tool is available. */
+export async function copyToClipboard(text: string): Promise<boolean> {
+  const commands =
+    process.platform === "win32"
+      ? [["clip"]]
+      : process.platform === "darwin"
+        ? [["pbcopy"]]
+        : [["wl-copy"], ["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"]];
+  for (const command of commands) {
+    try {
+      const child = Bun.spawn(command, { stdin: "pipe", stdout: "ignore", stderr: "ignore" });
+      void child.stdin.write(text);
+      await child.stdin.end();
+      if ((await child.exited) === 0) return true;
+    } catch {
+      // Tool not installed: try the next one.
+    }
+  }
+  return false;
+}
+
 /** Opens a URL in the default browser; false when it could not be done. */
 export function openBrowser(url: string): boolean {
   const command =

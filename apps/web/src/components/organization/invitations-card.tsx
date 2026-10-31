@@ -34,6 +34,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { authClient } from "@/lib/auth/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { organizationInvitationsQueryOptions } from "@/lib/collaboration";
@@ -234,7 +235,6 @@ function InviteForm({
   onCancel: () => void;
   onInvited: () => Promise<void>;
 }) {
-  const roleGroup = useId();
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [created, setCreated] = useState<{ id: string; email: string } | null>(null);
   const form = useAppForm({
@@ -280,30 +280,32 @@ function InviteForm({
             {(field) => (
               <fieldset className="grid gap-2">
                 <legend className="mb-2 text-sm leading-none font-medium">Rôle</legend>
-                {invitableRoles.map((role) => (
-                  <label
-                    key={role}
-                    className={cn(
-                      "flex items-start gap-3 rounded-lg border px-3.5 py-3 text-sm transition-colors",
-                      field.state.value === role
-                        ? "border-primary bg-primary/5"
-                        : "hover:border-foreground/30",
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name={roleGroup}
-                      value={role}
-                      checked={field.state.value === role}
-                      onChange={() => field.handleChange(role)}
-                      className="mt-0.5 size-4 accent-primary"
-                    />
-                    <span>
-                      <span className="block font-medium">{ROLE_LABELS[role]}</span>
-                      <span className="block text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</span>
-                    </span>
-                  </label>
-                ))}
+                <RadioGroup
+                  name={field.name}
+                  value={field.state.value}
+                  onValueChange={(value) => field.handleChange(value as typeof field.state.value)}
+                  className="gap-2"
+                >
+                  {invitableRoles.map((role) => (
+                    <label
+                      key={role}
+                      className={cn(
+                        "flex cursor-pointer items-start gap-3 rounded-lg border px-3.5 py-3 text-sm leading-5 transition-colors",
+                        field.state.value === role
+                          ? "border-primary bg-primary/5"
+                          : "hover:border-foreground/30",
+                      )}
+                    >
+                      <RadioGroupItem value={role} className="mt-0.5" />
+                      <span>
+                        <span className="block font-medium">{ROLE_LABELS[role]}</span>
+                        <span className="block text-muted-foreground">
+                          {ROLE_DESCRIPTIONS[role]}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </RadioGroup>
               </fieldset>
             )}
           </form.Field>

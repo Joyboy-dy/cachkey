@@ -120,21 +120,10 @@ function ChangePasswordForm() {
             </form.AppField>
             <form.AppField name="revokeOtherSessions">
               {(field) => (
-                <label className="flex items-start gap-3 text-sm leading-5">
-                  <input
-                    type="checkbox"
-                    name={field.name}
-                    checked={field.state.value}
-                    onChange={(event) => field.handleChange(event.target.checked)}
-                    className="mt-0.5 size-4 accent-foreground"
-                  />
-                  <span>
-                    Déconnecter mes autres appareils
-                    <span className="block text-muted-foreground">
-                      Recommandé si vous pensez que votre mot de passe a été exposé.
-                    </span>
-                  </span>
-                </label>
+                <field.CheckboxField
+                  label="Déconnecter mes autres appareils"
+                  description="Recommandé si vous pensez que votre mot de passe a été exposé."
+                />
               )}
             </form.AppField>
           </div>

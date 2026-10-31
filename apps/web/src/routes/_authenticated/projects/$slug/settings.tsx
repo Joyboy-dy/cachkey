@@ -11,6 +11,7 @@ import {
 } from "@/components/app/confirm";
 import { SectionCard } from "@/components/app/page";
 import { AccessCard } from "@/components/projects/access-card";
+import { BricksCard } from "@/components/projects/bricks-card";
 import { ProjectForm } from "@/components/projects/project-form";
 import { TokensCard } from "@/components/projects/tokens-card";
 import { EnvironmentNameDialog } from "@/components/secrets/environment-dialogs";
@@ -18,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { projectAccessQueryOptions, serviceTokensQueryOptions } from "@/lib/collaboration";
-import { environmentsApi, environmentsQueryOptions } from "@/lib/secrets";
+import { bricksQueryOptions, environmentsApi, environmentsQueryOptions } from "@/lib/secrets";
 import { projectQueryOptions, projectsApi } from "@/lib/workspace";
 
 /** « Paramètres » tab: owners and admins only. */
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/projects/$slug/settings")(
     const { queryClient, organization } = context;
     await Promise.all([
       queryClient.ensureQueryData(environmentsQueryOptions(organization.id, params.slug)),
+      queryClient.ensureQueryData(bricksQueryOptions(organization.id, params.slug)),
       queryClient.ensureQueryData(projectAccessQueryOptions(organization.id, params.slug)),
       queryClient.ensureQueryData(serviceTokensQueryOptions(organization.id, params.slug)),
     ]);
@@ -44,12 +46,14 @@ function SettingsTab() {
   const { slug } = Route.useParams();
   const { data: project } = useSuspenseQuery(projectQueryOptions(organization.id, slug));
   const { data: environments } = useSuspenseQuery(environmentsQueryOptions(organization.id, slug));
+  const { data: bricks } = useSuspenseQuery(bricksQueryOptions(organization.id, slug));
   if (!project) return null;
 
   return (
     <div className="grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6">
       <GeneralCard project={project} />
       <EnvironmentsCard organizationId={organization.id} projectSlug={project.slug} />
+      <BricksCard organizationId={organization.id} projectSlug={project.slug} />
       <AccessCard
         organizationId={organization.id}
         projectSlug={project.slug}
@@ -59,6 +63,7 @@ function SettingsTab() {
         organizationId={organization.id}
         projectSlug={project.slug}
         environments={environments}
+        bricks={bricks}
       />
       <Link
         to="/activity"

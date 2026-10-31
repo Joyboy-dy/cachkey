@@ -98,6 +98,9 @@ export const auditActions = [
   "environment.created",
   "environment.renamed",
   "environment.deleted",
+  "brick.created",
+  "brick.renamed",
+  "brick.deleted",
   "project.created",
   "project.updated",
   "project.deleted",
@@ -135,6 +138,9 @@ export const auditCategories = {
     "environment.created",
     "environment.renamed",
     "environment.deleted",
+    "brick.created",
+    "brick.renamed",
+    "brick.deleted",
     "project.created",
     "project.updated",
     "project.deleted",
@@ -172,6 +178,8 @@ export const auditEventDtoSchema = z.object({
   }),
   projectName: z.string().nullable(),
   environmentName: z.string().nullable(),
+  /** Set for projects split into bricks. */
+  brickName: z.string().nullable(),
   target: z.string().nullable(),
   /** Free-form details already safe to show (counts, roles…). Never a secret value. */
   details: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).nullable(),

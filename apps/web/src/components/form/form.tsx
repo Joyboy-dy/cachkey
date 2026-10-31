@@ -2,8 +2,16 @@ import { createFormHook, createFormHookContexts } from "@tanstack/react-form";
 import { Loading03Icon, ViewIcon, ViewOffSlashIcon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/ui/icon";
 import { type ReactNode, useId, useRef, useState, useSyncExternalStore } from "react";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -203,6 +211,86 @@ function PasswordField({
   );
 }
 
+type CodeFieldProps = {
+  label: string;
+  description?: string;
+  autoFocus?: boolean;
+  /** Sends the form as soon as the 6th digit is typed or pasted (code-only forms). */
+  submitOnComplete?: boolean;
+};
+
+/** 6-digit code from an authenticator app, one slot per digit, filling the form's width. */
+function CodeField({ label, description, autoFocus, submitOnComplete }: CodeFieldProps) {
+  const field = useFieldContext<string>();
+  const form = useFormContext();
+  const id = useId();
+  const errors = errorMessages(field.state.meta.errors);
+  const invalid = errors.length > 0;
+  const slot = (index: number) => (
+    <InputOTPSlot key={index} index={index} aria-invalid={invalid} className="min-w-0 flex-1" />
+  );
+
+  return (
+    <FieldShell id={id} label={label} description={description} errors={errors}>
+      <InputOTP
+        id={id}
+        name={field.name}
+        maxLength={6}
+        pattern={REGEXP_ONLY_DIGITS}
+        value={field.state.value}
+        onChange={field.handleChange}
+        onBlur={field.handleBlur}
+        onComplete={submitOnComplete ? () => void form.handleSubmit() : undefined}
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        autoFocus={autoFocus}
+        aria-invalid={invalid}
+        aria-required
+        aria-describedby={describedBy(id, invalid, description)}
+        containerClassName="w-full"
+      >
+        <InputOTPGroup className="min-w-0 flex-1">{[0, 1, 2].map(slot)}</InputOTPGroup>
+        <InputOTPSeparator />
+        <InputOTPGroup className="min-w-0 flex-1">{[3, 4, 5].map(slot)}</InputOTPGroup>
+      </InputOTP>
+    </FieldShell>
+  );
+}
+
+type CheckboxFieldProps = {
+  label: string;
+  description?: string;
+};
+
+function CheckboxField({ label, description }: CheckboxFieldProps) {
+  const field = useFieldContext<boolean>();
+  const id = useId();
+
+  return (
+    <div className="flex items-start gap-3">
+      <Checkbox
+        id={id}
+        name={field.name}
+        checked={field.state.value}
+        onCheckedChange={(checked) => field.handleChange(checked === true)}
+        onBlur={field.handleBlur}
+        aria-describedby={description ? `${id}-description` : undefined}
+        className="mt-0.5"
+      />
+      <div className="grid gap-0.5 text-sm leading-5">
+        <Label htmlFor={id} className="cursor-pointer leading-5">
+          {label}
+        </Label>
+        {description ? (
+          <p id={`${id}-description`} className="text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 /**
  * Native fallback is a POST (never GET) so credentials can never end up in the URL,
  * and submission is only enabled once React has hydrated (see SubmitButton).
@@ -320,7 +408,7 @@ type StandardSchemaV1 = {
 export const { useAppForm } = createFormHook({
   fieldContext,
   formContext,
-  fieldComponents: { TextField, TextareaField, PasswordField },
+  fieldComponents: { TextField, TextareaField, PasswordField, CodeField, CheckboxField },
   formComponents: { Form, SubmitButton },
 });
 

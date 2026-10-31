@@ -20,6 +20,7 @@ import { type Feedback, FeedbackAlert } from "@/components/app/feedback";
 import { ShowMore } from "@/components/app/show-more";
 import { UserAvatar } from "@/components/app/user-avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogBody,
@@ -35,13 +36,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { formatDateTime } from "@/lib/date";
-import { environmentsApi, secretsApi } from "@/lib/secrets";
+import { environmentsApi, type SecretScope, secretsApi } from "@/lib/secrets";
 import { cn } from "@/lib/utils";
 import type { ApiError } from "@/lib/workspace";
 import { useCopy } from "./use-copy";
 
 type DialogState = { open: boolean; onOpenChange: (open: boolean) => void };
-type Scope = { slug: string; env: string };
+type Scope = SecretScope;
 
 function plural(count: number, one: string, many: string) {
   return `${count} ${count > 1 ? many : one}`;
@@ -111,10 +112,14 @@ function SecretForm({
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [pending, setPending] = useState(false);
 
+  // A refetch of the list hands new `scope` and `secret` objects: depending on their fields
+  // only keeps it from reloading the value over what the user is typing.
+  const { slug, env, brick } = scope;
+  const secretId = secret?.id;
   useEffect(() => {
-    if (!secret) return;
+    if (!secretId) return;
     let cancelled = false;
-    void secretsApi.reveal(scope.slug, scope.env, secret.id).then(({ data, error }) => {
+    void secretsApi.reveal({ slug, env, brick }, secretId).then(({ data, error }) => {
       if (cancelled) return;
       if (error) {
         setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
@@ -126,7 +131,7 @@ function SecretForm({
     return () => {
       cancelled = true;
     };
-  }, [scope.slug, scope.env, secret]);
+  }, [slug, env, brick, secretId]);
 
   const loaded = saved !== null;
   const keyResult = secretKeySchema.safeParse(key);
@@ -146,11 +151,11 @@ function SecretForm({
     setFeedback(null);
     const nextKey = key.trim();
     const { error } = secret
-      ? await secretsApi.update(scope.slug, scope.env, secret.id, {
+      ? await secretsApi.update(scope, secret.id, {
           key: nextKey !== secret.key ? nextKey : undefined,
           value: value !== saved ? value : undefined,
         })
-      : await secretsApi.create(scope.slug, scope.env, { key: nextKey, value });
+      : await secretsApi.create(scope, { key: nextKey, value });
     if (error) {
       setPending(false);
       setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
@@ -277,7 +282,7 @@ function HistoryList({
 
   useEffect(() => {
     let cancelled = false;
-    void secretsApi.versions(scope.slug, scope.env, secret.id).then(({ data, error }) => {
+    void secretsApi.versions(scope, secret.id).then(({ data, error }) => {
       if (cancelled) return;
       if (error) setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
       else setVersions(data);
@@ -285,7 +290,7 @@ function HistoryList({
     return () => {
       cancelled = true;
     };
-  }, [scope.slug, scope.env, secret.id]);
+  }, [scope, secret.id]);
 
   return (
     <DialogBody>
@@ -339,24 +344,14 @@ function VersionRow({
 
   async function toggle() {
     if (value !== null) return setValue(null);
-    const { data, error } = await secretsApi.revealVersion(
-      scope.slug,
-      scope.env,
-      secretId,
-      version.version,
-    );
+    const { data, error } = await secretsApi.revealVersion(scope, secretId, version.version);
     if (error) onError(error);
     else setValue(data.value);
   }
 
   async function restore() {
     setRestoring(true);
-    const { error } = await secretsApi.restoreVersion(
-      scope.slug,
-      scope.env,
-      secretId,
-      version.version,
-    );
+    const { error } = await secretsApi.restoreVersion(scope, secretId, version.version);
     if (error) {
       setRestoring(false);
       onError(error);
@@ -532,7 +527,7 @@ function ImportForm({
     if (!preview || preview.total === 0 || pending) return;
     setPending(true);
     setFeedback(null);
-    const { data, error } = await environmentsApi.import(scope.slug, scope.env, {
+    const { data, error } = await environmentsApi.import(scope, {
       content,
       overwrite,
     });
@@ -633,22 +628,24 @@ function ImportForm({
         </div>
 
         {preview && preview.conflicts > 0 ? (
-          <label htmlFor={overwriteId} className="flex items-start gap-3 text-sm leading-5">
-            <input
+          <div className="flex items-start gap-3">
+            <Checkbox
               id={overwriteId}
-              type="checkbox"
               checked={overwrite}
-              onChange={(event) => setOverwrite(event.target.checked)}
-              className="mt-0.5 size-4 accent-primary"
+              onCheckedChange={(checked) => setOverwrite(checked === true)}
+              aria-describedby={`${overwriteId}-description`}
+              className="mt-0.5"
             />
-            <span>
-              Remplacer{" "}
-              {preview.conflicts > 1 ? "les variables existantes" : "la variable existante"}
-              <span className="block text-muted-foreground">
+            <div className="grid gap-0.5 text-sm leading-5">
+              <Label htmlFor={overwriteId} className="cursor-pointer leading-5">
+                Remplacer{" "}
+                {preview.conflicts > 1 ? "les variables existantes" : "la variable existante"}
+              </Label>
+              <p id={`${overwriteId}-description`} className="text-muted-foreground">
                 L’ancienne valeur reste dans l’historique. Sinon, elle est conservée telle quelle.
-              </span>
-            </span>
-          </label>
+              </p>
+            </div>
+          </div>
         ) : null}
       </DialogBody>
       <DialogFooter>

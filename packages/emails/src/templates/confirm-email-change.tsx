@@ -22,7 +22,7 @@ export default function ConfirmEmailChange({
   confirmUrl,
 }: ConfirmEmailChangeProps) {
   return (
-    <EmailLayout preview="Confirmez le changement d’adresse email de votre compte." appUrl={appUrl}>
+    <EmailLayout appUrl={appUrl}>
       <EmailHeading>Changement d’adresse email</EmailHeading>
       <EmailText>Bonjour {name},</EmailText>
       <EmailText>

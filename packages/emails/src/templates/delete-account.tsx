@@ -15,7 +15,7 @@ export type DeleteAccountProps = {
 
 export default function DeleteAccount({ appUrl, name, deleteUrl }: DeleteAccountProps) {
   return (
-    <EmailLayout preview="Confirmez la suppression de votre compte Cachkey." appUrl={appUrl}>
+    <EmailLayout appUrl={appUrl}>
       <EmailHeading>Suppression de votre compte</EmailHeading>
       <EmailText>Bonjour {name},</EmailText>
       <EmailText>

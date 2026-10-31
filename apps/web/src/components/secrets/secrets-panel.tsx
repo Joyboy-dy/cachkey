@@ -1,4 +1,4 @@
-import type { EnvironmentDto, SecretDto } from "@cachkey/shared";
+import { type EnvironmentDto, type SecretDto, SHARED_BRICK_SLUG } from "@cachkey/shared";
 import {
   Add01Icon,
   Cancel01Icon,
@@ -16,7 +16,8 @@ import {
   ViewIcon,
   ViewOffSlashIcon,
 } from "@hugeicons/core-free-icons";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/app/confirm";
 import { type Feedback, FeedbackAlert } from "@/components/app/feedback";
@@ -32,7 +33,7 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { formatDate } from "@/lib/date";
-import { environmentsApi, secretsApi, secretsQueryOptions } from "@/lib/secrets";
+import { environmentsApi, type SecretScope, secretsApi, secretsQueryOptions } from "@/lib/secrets";
 import { cn } from "@/lib/utils";
 import { HistoryDialog, ImportDialog, RevealedValue, SecretFormDialog } from "./secret-dialogs";
 import { useCopy } from "./use-copy";
@@ -54,26 +55,50 @@ function plural(count: number, one: string, many: string) {
   return `${count} ${count > 1 ? many : one}`;
 }
 
-/** Variables of one environment: masked by default, revealed and copied on demand. */
+/**
+ * Variables of one environment (and one brick, for projects split into bricks): masked by
+ * default, revealed and copied on demand.
+ */
 export function SecretsPanel({
   organizationId,
   projectSlug,
   environment,
+  brick,
   canWrite,
   switcher,
 }: {
   organizationId: string;
   projectSlug: string;
   environment: EnvironmentDto;
+  /**
+   * Brick shown, for projects split into bricks: its slug (`shared` for the shared
+   * variables) and its name. Null for the others: everything is in the main brick.
+   */
+  brick: { slug: string; name: string } | null;
   /** False for read-only access: values can be shown, copied and exported, not changed. */
   canWrite: boolean;
-  /** Environment selector, shown first in the toolbar. */
+  /** Environment (and brick) selectors, shown first in the toolbar. */
   switcher: ReactNode;
 }) {
   const queryClient = useQueryClient();
-  const options = secretsQueryOptions(organizationId, projectSlug, environment.slug);
-  const { data: secrets } = useSuspenseQuery(options);
-  const scope = { slug: projectSlug, env: environment.slug };
+  const scope: SecretScope = { slug: projectSlug, env: environment.slug, brick: brick?.slug };
+  const { data: secrets } = useSuspenseQuery(secretsQueryOptions(organizationId, scope));
+  const sharedView = brick?.slug === SHARED_BRICK_SLUG;
+  // A brick also receives the shared variables: count them and mark the ones it replaces.
+  const { data: shared } = useQuery({
+    ...secretsQueryOptions(organizationId, { ...scope, brick: SHARED_BRICK_SLUG }),
+    enabled: brick !== null && !sharedView,
+  });
+  const ownKeys = useMemo(() => new Set(secrets.map((secret) => secret.key)), [secrets]);
+  const sharedKeys = useMemo(
+    () => new Set(brick && !sharedView ? (shared ?? []).map((secret) => secret.key) : []),
+    [brick, sharedView, shared],
+  );
+  const inherited = [...sharedKeys].filter((key) => !ownKeys.has(key)).length;
+  /** « production », « production (web) », « production (variables partagées) ». */
+  const location = brick
+    ? `${environment.name} (${sharedView ? "variables partagées" : brick.name})`
+    : environment.name;
 
   const searchRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
@@ -112,7 +137,9 @@ export function SecretsPanel({
   const remaining = filtered.length - shown.length;
 
   async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: options.queryKey });
+    await queryClient.invalidateQueries({
+      queryKey: ["secrets", organizationId, projectSlug, environment.slug],
+    });
     await queryClient.invalidateQueries({
       queryKey: ["environments", organizationId, projectSlug],
     });
@@ -127,7 +154,7 @@ export function SecretsPanel({
     const cacheKey = `${secret.id}:${secret.version}`;
     const cached = revealed[cacheKey];
     if (cached !== undefined) return cached;
-    const { data, error } = await secretsApi.reveal(scope.slug, scope.env, secret.id);
+    const { data, error } = await secretsApi.reveal(scope, secret.id);
     if (error) {
       setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
       return null;
@@ -147,7 +174,7 @@ export function SecretsPanel({
   async function exportFile() {
     setExporting(true);
     setFeedback(null);
-    const { data, error } = await environmentsApi.export(scope.slug, scope.env);
+    const { data, error } = await environmentsApi.export(scope);
     setExporting(false);
     if (error) {
       setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
@@ -165,7 +192,7 @@ export function SecretsPanel({
   const revealedCount = Object.keys(revealed).length;
 
   return (
-    <section className="rounded-xl border bg-card" aria-label={`Variables de ${environment.name}`}>
+    <section className="rounded-xl border bg-card" aria-label={`Variables de ${location}`}>
       {/* From tablet width, stays under the top bar while scrolling through long lists. */}
       <div className="z-[5] rounded-t-xl border-b bg-card/95 backdrop-blur-sm sm:sticky sm:top-16">
         <div className="flex flex-wrap items-center gap-2 px-3 py-3 sm:px-4">
@@ -251,6 +278,27 @@ export function SecretsPanel({
           </div>
         </div>
 
+        {sharedView ? (
+          <p className="border-t px-4 py-2 text-xs text-muted-foreground sm:px-5">
+            Ces variables s’ajoutent à celles de chaque brique. Une brique peut en redéfinir une :
+            sa valeur l’emporte.
+          </p>
+        ) : inherited > 0 ? (
+          <p className="border-t px-4 py-2 text-xs text-muted-foreground sm:px-5">
+            {inherited > 1
+              ? `${inherited} variables partagées s’ajoutent à celles-ci.`
+              : "1 variable partagée s’ajoute à celles-ci."}{" "}
+            <Link
+              to="/projects/$slug"
+              params={{ slug: projectSlug }}
+              search={{ env: environment.slug, brick: SHARED_BRICK_SLUG }}
+              className="font-medium text-foreground underline decoration-primary decoration-2 underline-offset-4"
+            >
+              Voir les variables partagées
+            </Link>
+          </p>
+        ) : null}
+
         {empty ? null : (
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t px-4 py-2 text-xs text-muted-foreground sm:px-5">
             <p aria-live="polite">
@@ -306,6 +354,7 @@ export function SecretsPanel({
           </span>
           <h3 className="mt-4 text-base font-semibold">
             Aucune variable dans <span className="font-mono">{environment.name}</span>
+            {brick ? ` (${sharedView ? "variables partagées" : brick.name})` : null}
           </h3>
           <p className="mt-1 max-w-sm text-sm leading-6 text-balance text-muted-foreground">
             {canWrite
@@ -337,6 +386,7 @@ export function SecretsPanel({
               <SecretRow
                 key={secret.id}
                 secret={secret}
+                overridesShared={sharedKeys.has(secret.key)}
                 query={search.trim()}
                 value={revealed[`${secret.id}:${secret.version}`]}
                 onReveal={() => reveal(secret)}
@@ -369,7 +419,7 @@ export function SecretsPanel({
         onOpenChange={onDialogChange}
         scope={scope}
         secret={dialog?.type === "edit" ? dialog.secret : undefined}
-        environmentName={environment.name}
+        environmentName={location}
         onSaved={refresh}
       />
       <HistoryDialog
@@ -384,7 +434,7 @@ export function SecretsPanel({
         open={dialog?.type === "import"}
         onOpenChange={onDialogChange}
         scope={scope}
-        environmentName={environment.name}
+        environmentName={location}
         existingKeys={secrets.map((secret) => secret.key)}
         onImported={refresh}
       />
@@ -396,14 +446,14 @@ export function SecretsPanel({
           dialog?.type === "delete" ? (
             <>
               <code className="font-mono break-all text-foreground">{dialog.secret.key}</code> et
-              tout son historique seront définitivement supprimés de {environment.name}.
+              tout son historique seront définitivement supprimés de {location}.
             </>
           ) : null
         }
         confirmLabel="Supprimer"
         onConfirm={async () => {
           if (dialog?.type !== "delete") return null;
-          const { error } = await secretsApi.remove(scope.slug, scope.env, dialog.secret.id);
+          const { error } = await secretsApi.remove(scope, dialog.secret.id);
           if (error) return getAuthErrorMessage(error);
           await refresh();
           close();
@@ -431,6 +481,7 @@ function HighlightedKey({ value, query }: { value: string; query: string }) {
 
 function SecretRow({
   secret,
+  overridesShared,
   query,
   value,
   onReveal,
@@ -440,6 +491,8 @@ function SecretRow({
   onDelete,
 }: {
   secret: SecretDto;
+  /** The brick redefines a shared variable: its value is the one the brick receives. */
+  overridesShared: boolean;
   query: string;
   value: string | undefined;
   onReveal: () => Promise<string | null>;
@@ -473,6 +526,9 @@ function SecretRow({
               <HighlightedKey value={secret.key} query={query} />
             </code>
             <p className="truncate text-xs text-muted-foreground">
+              {overridesShared ? (
+                <span className="font-medium text-foreground">Remplace la valeur partagée · </span>
+              ) : null}
               {secret.version > 1 ? `v${secret.version} · ` : ""}
               Modifiée le {formatDate(secret.updatedAt)}
               {secret.updatedBy ? ` par ${secret.updatedBy.name}` : ""}

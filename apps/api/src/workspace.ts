@@ -3,6 +3,8 @@ import {
   type AuditPage,
   auditQuerySchema,
   defaultEnvironments,
+  mainBrick,
+  sharedBrick,
   type InvitationDetails,
   type MemberDto,
   type PendingInvitationDto,
@@ -325,6 +327,12 @@ export const workspaceRoutes = new Elysia({ prefix: "/api" })
             ...environment,
             position,
           })),
+        },
+        bricks: {
+          create: [
+            { ...mainBrick, kind: "main" },
+            { ...sharedBrick, kind: "shared" },
+          ],
         },
       },
     });

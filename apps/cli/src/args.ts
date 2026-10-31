@@ -10,6 +10,7 @@ export type Options = {
   org: string | null;
   project: string | null;
   env: string | null;
+  brick: string | null;
   format: Format;
   output: string | null;
   yes: boolean;
@@ -32,6 +33,8 @@ export type Command =
   | { name: "project-create"; projectName: string }
   | { name: "envs" }
   | { name: "env-create"; envName: string }
+  | { name: "bricks" }
+  | { name: "brick-create"; brickName: string }
   | { name: "secrets" }
   | { name: "get"; key: string }
   | { name: "set"; key: string; value: string | null }
@@ -57,6 +60,7 @@ Projets
   cachkey unlink                Retire ce lien.
   cachkey projects [create <nom>]       Liste ou crée des projets.
   cachkey envs [create <nom>]           Liste ou crée des environnements.
+  cachkey bricks [create <nom>]         Liste ou crée des briques (front, API…).
   cachkey orgs                  Liste vos organisations.
 
 Variables
@@ -75,11 +79,12 @@ Utiliser
 
 Options
   --org, --project, --env <identifiant>   Remplacent ceux du dossier lié.
+  --brick <identifiant>   Brique du projet (« shared » : variables partagées).
   --all               Tous les environnements (pull).
   --url <adresse>     Instance Cachkey (sinon CACHKEY_URL, puis celle de la connexion).
   --token <jeton>     Jeton d'accès d'un serveur ou d'une CI (sinon CACHKEY_TOKEN).
   --yes, -y           Ne demande pas de confirmation.
-  --no-browser        N'ouvre pas le navigateur lors de la connexion.
+  --no-browser        Ne propose pas d'ouvrir le navigateur lors de la connexion.
   -h, --help · -v, --version
 
 Sur un serveur ou en CI, utilisez un jeton d'accès (CACHKEY_TOKEN) : pull, run et whoami
@@ -91,6 +96,7 @@ const VALUE_FLAGS = {
   "--org": "org",
   "--project": "project",
   "--env": "env",
+  "--brick": "brick",
   "--output": "output",
   "-o": "output",
   "--format": "format",
@@ -105,6 +111,7 @@ export function parseArgs(argv: readonly string[]): Parsed {
     org: null,
     project: null,
     env: null,
+    brick: null,
     format: "dotenv",
     output: null,
     yes: false,
@@ -193,15 +200,16 @@ function toCommand(
       return extra(1) ?? { name: "init", projectName: args[0] ?? null };
     case "projects":
     case "envs":
+    case "bricks":
       if (args[0] === undefined) return { name };
       if (args[0] !== "create")
         return { error: `Sous-commande inconnue : ${args[0]}. Essayez « ${name} create <nom> ».` };
       if (!args[1]) return { error: `Indiquez le nom : cachkey ${name} create <nom>.` };
       if (args.length > 2)
         return { error: `Mettez le nom entre guillemets s'il contient des espaces.` };
-      return name === "projects"
-        ? { name: "project-create", projectName: args[1] }
-        : { name: "env-create", envName: args[1] };
+      if (name === "projects") return { name: "project-create", projectName: args[1] };
+      if (name === "bricks") return { name: "brick-create", brickName: args[1] };
+      return { name: "env-create", envName: args[1] };
     case "import":
       if (!args[0]) return missing("fichier");
       return extra(1) ?? { name: "import", file: args[0] };

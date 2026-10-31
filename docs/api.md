@@ -20,8 +20,8 @@ Un jeton absent, inconnu, révoqué ou expiré reçoit `401` avec
 
 ## `GET /api/v1/token`
 
-Décrit le jeton : son nom, son expiration, l'organisation, le projet et l'environnement
-auxquels il donne accès. Ne lit aucune valeur.
+Décrit le jeton : son nom, son expiration, l'organisation, le projet, l'environnement et la
+brique auxquels il donne accès. Ne lit aucune valeur.
 
 ```json
 {
@@ -29,13 +29,15 @@ auxquels il donne accès. Ne lit aucune valeur.
   "expiresAt": "2027-01-12T09:00:00.000Z",
   "organization": { "id": "…", "name": "Acme" },
   "project": { "id": "…", "name": "Mon API", "slug": "mon-api" },
-  "environment": { "id": "…", "name": "production", "slug": "production" }
+  "environment": { "id": "…", "name": "production", "slug": "production" },
+  "brick": { "id": "…", "name": "Principale", "slug": "principale" }
 }
 ```
 
 ## `GET /api/v1/secrets`
 
-Toutes les variables de l'environnement du jeton, avec leurs valeurs.
+Toutes les variables de l'environnement du jeton, avec leurs valeurs : les variables
+partagées du projet, puis celles de la brique du jeton, qui l'emportent à nom égal.
 
 | Paramètre | Valeurs                                         |
 | --------- | ----------------------------------------------- |
@@ -50,6 +52,7 @@ curl -H "Authorization: Bearer $CACHKEY_TOKEN" https://cachkey.example.com/api/v
   "organization": { "id": "…", "name": "Acme" },
   "project": { "id": "…", "name": "Mon API", "slug": "mon-api" },
   "environment": { "id": "…", "name": "production", "slug": "production" },
+  "brick": { "id": "…", "name": "Principale", "slug": "principale" },
   "secrets": { "DATABASE_URL": "postgres://…", "STRIPE_KEY": "sk_live_…" }
 }
 ```

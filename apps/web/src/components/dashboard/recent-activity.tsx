@@ -7,7 +7,12 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ActorAvatar, describeEvent, fromCli } from "@/components/activity/audit-event";
+import {
+  ActorAvatar,
+  describeEvent,
+  eventContext,
+  fromCli,
+} from "@/components/activity/audit-event";
 import {
   Drawer,
   DrawerContent,
@@ -55,7 +60,7 @@ function Timeline({
   return (
     <ol className="relative">
       {events.map((event, index) => {
-        const context = [event.projectName, event.environmentName].filter(Boolean).join(" · ");
+        const context = eventContext(event);
         return (
           <li key={event.id} className="relative flex gap-3 pb-5 last:pb-1">
             {/* The thread joining the avatars. */}

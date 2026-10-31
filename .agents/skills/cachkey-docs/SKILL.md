@@ -15,12 +15,12 @@ files, so keep them self-contained and free of repository jargon.
 | ----------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------- |
 | `docs/README.md`                    | Index of every page                                         | —                                                             |
 | `docs/getting-started.md`           | First account → project → variables → usage → team          | onboarding, `getting-started.tsx`                             |
-| `docs/projects-and-variables.md`    | Projects, environments, variables, import/export, history   | `packages/shared/src/secret-schemas.ts`, `dotenv.ts`, `apps/api/src/secrets.ts` |
+| `docs/projects-and-variables.md`    | Projects, environments, bricks, variables, import/export, history | `packages/shared/src/secret-schemas.ts`, `brick-schemas.ts`, `dotenv.ts`, `apps/api/src/secrets.ts`, `bricks.ts` |
 | `docs/team-and-access.md`           | Roles, invitations, project access, activity log, devices   | `workspace-schemas.ts`, `collaboration-schemas.ts`, `guards.ts`, `auth.ts` |
 | `docs/access-tokens.md`             | Service tokens                                              | `token-schemas.ts`, `apps/api/src/tokens.ts`                  |
 | `docs/cli.md`                       | Every CLI command and option                                | `apps/cli/src/args.ts` (`HELP`, `VALUE_FLAGS`), `config.ts`, `index.ts` |
 | `docs/api.md`                       | Public API `/api/v1`                                        | `publicApiRoutes` in `apps/api/src/tokens.ts`                 |
-| `docs/security.md`                  | Encryption, tokens, sessions, access control, operator duty | `crypto.ts`, `auth.ts`, `guards.ts`                           |
+| `docs/security.md`                  | Encryption, tokens, sessions, 2FA, access control, operator duty | `crypto.ts`, `auth.ts`, `guards.ts`, `two-factor-card.tsx` |
 | `docs/self-hosting.md`              | Compose install, update, backup, troubleshooting            | `deploy/`, `.env.production.example`                          |
 | `docs/one-click-deployment.md`      | Platforms (Dokploy, Coolify), catalogue status              | `deploy/compose.yaml`, `deploy/templates/`                    |
 | `docs/authentication.md`            | Internal auth architecture (contributors)                   | `apps/api/src/auth.ts`, web routes                            |

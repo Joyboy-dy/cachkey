@@ -1,4 +1,5 @@
 import {
+  type BrickDto,
   type EnvironmentDto,
   serviceTokenSchema,
   type ServiceTokenDto,
@@ -47,8 +48,9 @@ import { cn } from "@/lib/utils";
 import { textLinkVariants } from "@/components/ui/text-link";
 
 /*
- * Service tokens of a project: read-only access to one environment for a server, a CI job
- * or the command-line tool. The token is shown once, right after creation.
+ * Service tokens of a project: read-only access to one environment (and, for projects split
+ * into bricks, one brick with the shared variables) for a server, a CI job or the
+ * command-line tool. The token is shown once, right after creation.
  */
 
 const LIFETIMES: { value: string; days: TokenLifetime; label: string }[] = [
@@ -61,6 +63,7 @@ const LIFETIMES: { value: string; days: TokenLifetime; label: string }[] = [
 const formSchema = z.object({
   name: serviceTokenSchema.shape.name,
   environmentId: serviceTokenSchema.shape.environmentId,
+  brickId: z.string(),
   lifetime: z.enum(["30", "90", "365", "never"]),
 });
 
@@ -84,10 +87,13 @@ export function TokensCard({
   organizationId,
   projectSlug,
   environments,
+  bricks,
 }: {
   organizationId: string;
   projectSlug: string;
   environments: EnvironmentDto[];
+  /** Bricks of the project: the choice only appears from the second one. */
+  bricks: BrickDto[];
 }) {
   const queryClient = useQueryClient();
   const options = serviceTokensQueryOptions(organizationId, projectSlug);
@@ -137,6 +143,7 @@ export function TokensCard({
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-x-2 text-sm leading-5 font-medium">
                     <span className="truncate">{token.name}</span>
+                    {bricks.length > 1 ? <StatusPill>{token.brick.name}</StatusPill> : null}
                     <StatusPill>{token.environment.name}</StatusPill>
                     {isExpired(token) ? <StatusPill>Expiré</StatusPill> : null}
                   </p>
@@ -169,6 +176,7 @@ export function TokensCard({
             <CreateToken
               projectSlug={projectSlug}
               environments={environments}
+              bricks={bricks}
               onCreated={refresh}
               onDone={() => setCreating(false)}
             />
@@ -201,15 +209,19 @@ export function TokensCard({
 function CreateToken({
   projectSlug,
   environments,
+  bricks,
   onCreated,
   onDone,
 }: {
   projectSlug: string;
   environments: EnvironmentDto[];
+  bricks: BrickDto[];
   onCreated: () => Promise<void>;
   onDone: () => void;
 }) {
   const environmentLabel = useId();
+  const brickLabel = useId();
+  const chooseBrick = bricks.length > 1;
   const lifetimeLabel = useId();
   const [feedback, setFeedback] = useState<Feedback>(null);
   // Kept in component state only: the full token is never cached nor shown again.
@@ -218,6 +230,7 @@ function CreateToken({
     defaultValues: {
       name: "",
       environmentId: environments.at(-1)?.id ?? "",
+      brickId: bricks.find((brick) => brick.main)?.id ?? "",
       lifetime: "90" as "30" | "90" | "365" | "never",
     },
     validationLogic: revalidateLogic(),
@@ -231,6 +244,7 @@ function CreateToken({
       const { data, error } = await tokensApi.create(projectSlug, {
         name: value.name.trim(),
         environmentId: value.environmentId,
+        ...(chooseBrick && value.brickId ? { brickId: value.brickId } : {}),
         expiresInDays: days,
       });
       if (error || !data) {
@@ -249,7 +263,9 @@ function CreateToken({
       <DialogHeader>
         <DialogTitle>Nouveau jeton d’accès</DialogTitle>
         <DialogDescription>
-          Le jeton donne accès en lecture seule aux variables d’un seul environnement.
+          {chooseBrick
+            ? "Le jeton donne accès en lecture seule aux variables d’une brique (avec les variables partagées), dans un seul environnement."
+            : "Le jeton donne accès en lecture seule aux variables d’un seul environnement."}
         </DialogDescription>
       </DialogHeader>
       <form.AppForm>
@@ -265,6 +281,27 @@ function CreateToken({
               />
             )}
           </form.AppField>
+          {chooseBrick ? (
+            <form.AppField name="brickId">
+              {(field) => (
+                <div className="grid gap-2">
+                  <Label id={brickLabel}>Brique</Label>
+                  <Select value={field.state.value} onValueChange={field.handleChange}>
+                    <SelectTrigger aria-labelledby={brickLabel} className="w-full">
+                      <SelectValue placeholder="Choisir une brique" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bricks.map((brick) => (
+                        <SelectItem key={brick.id} value={brick.id}>
+                          {brick.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </form.AppField>
+          ) : null}
           <form.AppField name="environmentId">
             {(field) => (
               <div className="grid gap-2">

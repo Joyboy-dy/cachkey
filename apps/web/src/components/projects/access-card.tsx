@@ -6,11 +6,12 @@ import type {
 } from "@cachkey/shared";
 import { Loading03Icon, PencilEdit02Icon } from "@hugeicons/core-free-icons";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { type FormEvent, useId, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { type Feedback, FeedbackAlert } from "@/components/app/feedback";
 import { SectionCard, StatusPill } from "@/components/app/page";
 import { UserAvatar } from "@/components/app/user-avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogBody,
@@ -21,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { accessApi, projectAccessQueryOptions } from "@/lib/collaboration";
 import { ROLE_LABELS } from "@/lib/roles";
@@ -194,8 +196,6 @@ function AccessForm({
   onCancel: () => void;
   onSave: (userId: string, input: ProjectAccessInput | null) => Promise<string | null>;
 }) {
-  const levelGroup = useId();
-  const scopeGroup = useId();
   const initial = {
     choice: (entry.access?.level ?? "none") as Choice,
     all: !entry.access || entry.access.environmentIds.length === 0,
@@ -234,54 +234,48 @@ function AccessForm({
         <FeedbackAlert feedback={error ? { tone: "error", message: error } : null} />
         <fieldset className="grid gap-2">
           <legend className="mb-2 text-sm leading-none font-medium">Niveau d’accès</legend>
-          {CHOICES.map((option) => (
-            <label
-              key={option.value}
-              className={cn(
-                "flex items-start gap-3 rounded-lg border px-3.5 py-3 text-sm transition-colors",
-                choice === option.value
-                  ? "border-primary bg-primary/5"
-                  : "hover:border-foreground/30",
-              )}
-            >
-              <input
-                type="radio"
-                name={levelGroup}
-                checked={choice === option.value}
-                onChange={() => setChoice(option.value)}
-                className="mt-0.5 size-4 accent-primary"
-              />
-              <span>
-                <span className="block font-medium">{option.label}</span>
-                <span className="block text-muted-foreground">{option.description}</span>
-              </span>
-            </label>
-          ))}
+          <RadioGroup
+            value={choice}
+            onValueChange={(value) => setChoice(value as Choice)}
+            className="gap-2"
+          >
+            {CHOICES.map((option) => (
+              <label
+                key={option.value}
+                className={cn(
+                  "flex cursor-pointer items-start gap-3 rounded-lg border px-3.5 py-3 text-sm leading-5 transition-colors",
+                  choice === option.value
+                    ? "border-primary bg-primary/5"
+                    : "hover:border-foreground/30",
+                )}
+              >
+                <RadioGroupItem value={option.value} className="mt-0.5" />
+                <span>
+                  <span className="block font-medium">{option.label}</span>
+                  <span className="block text-muted-foreground">{option.description}</span>
+                </span>
+              </label>
+            ))}
+          </RadioGroup>
         </fieldset>
 
         {choice === "none" ? null : (
           <fieldset className="grid gap-2">
             <legend className="mb-2 text-sm leading-none font-medium">Environnements</legend>
-            <label className="flex items-center gap-3 text-sm">
-              <input
-                type="radio"
-                name={scopeGroup}
-                checked={all}
-                onChange={() => setAll(true)}
-                className="size-4 accent-primary"
-              />
-              Tous, y compris ceux créés plus tard
-            </label>
-            <label className="flex items-center gap-3 text-sm">
-              <input
-                type="radio"
-                name={scopeGroup}
-                checked={!all}
-                onChange={() => setAll(false)}
-                className="size-4 accent-primary"
-              />
-              Seulement certains
-            </label>
+            <RadioGroup
+              value={all ? "all" : "some"}
+              onValueChange={(value) => setAll(value === "all")}
+              className="gap-2"
+            >
+              <label className="flex cursor-pointer items-center gap-3 text-sm">
+                <RadioGroupItem value="all" />
+                Tous, y compris ceux créés plus tard
+              </label>
+              <label className="flex cursor-pointer items-center gap-3 text-sm">
+                <RadioGroupItem value="some" />
+                Seulement certains
+              </label>
+            </RadioGroup>
             {all ? null : (
               <div className="mt-1 ml-7 grid gap-2 rounded-lg border p-3">
                 {environments.length === 0 ? (
@@ -290,18 +284,19 @@ function AccessForm({
                   </p>
                 ) : (
                   environments.map((environment) => (
-                    <label key={environment.id} className="flex items-center gap-3 text-sm">
-                      <input
-                        type="checkbox"
+                    <label
+                      key={environment.id}
+                      className="flex cursor-pointer items-center gap-3 text-sm"
+                    >
+                      <Checkbox
                         checked={selected.includes(environment.id)}
-                        onChange={(event) =>
+                        onCheckedChange={(checked) =>
                           setSelected((current) =>
-                            event.target.checked
+                            checked === true
                               ? [...current, environment.id]
                               : current.filter((id) => id !== environment.id),
                           )
                         }
-                        className="size-4 accent-primary"
                       />
                       <span className="font-mono text-[13px]">{environment.name}</span>
                     </label>

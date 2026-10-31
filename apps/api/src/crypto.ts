@@ -8,7 +8,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
  * - Each value is encrypted with its project's data key.
  * - AES-256-GCM everywhere, with a random 96-bit IV per encryption. The additional
  *   authenticated data (AAD) binds a ciphertext to its owner, so a value copied into another
- *   project or environment row fails to decrypt instead of leaking.
+ *   project, environment or brick row fails to decrypt instead of leaking.
  *
  * Ciphertext format: `v1.<iv base64>.<ciphertext+tag base64>`.
  */
@@ -62,15 +62,21 @@ export function unwrapDataKey(masterKey: Buffer, wrapped: string, projectId: str
   return decrypt(masterKey, wrapped, `project-key:${projectId}`);
 }
 
-/** AAD of a variable value: tied to its environment, not its name, so renames keep working. */
-export function secretAad(environmentId: string): string {
-  return `secret:${environmentId}`;
+/**
+ * Where a value lives: its environment and its brick. `brickId` is null for the main brick,
+ * whose values keep the binding they had before bricks existed (no re-encryption needed).
+ */
+export type ValueOwner = { environmentId: string; brickId: string | null };
+
+/** AAD of a variable value: tied to its environment and brick, not its name (renames work). */
+export function secretAad({ environmentId, brickId }: ValueOwner): string {
+  return brickId ? `secret:${environmentId}:brick:${brickId}` : `secret:${environmentId}`;
 }
 
-export function encryptSecret(dataKey: Buffer, environmentId: string, value: string): string {
-  return encrypt(dataKey, value, secretAad(environmentId));
+export function encryptSecret(dataKey: Buffer, owner: ValueOwner, value: string): string {
+  return encrypt(dataKey, value, secretAad(owner));
 }
 
-export function decryptSecret(dataKey: Buffer, environmentId: string, payload: string): string {
-  return decrypt(dataKey, payload, secretAad(environmentId)).toString("utf8");
+export function decryptSecret(dataKey: Buffer, owner: ValueOwner, payload: string): string {
+  return decrypt(dataKey, payload, secretAad(owner)).toString("utf8");
 }

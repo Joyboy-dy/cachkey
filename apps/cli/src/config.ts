@@ -21,6 +21,8 @@ export type Link = {
   organization: { id: string; name: string };
   project: string;
   environment: string;
+  /** Brick of the folder, for projects split into bricks (absent: the main brick). */
+  brick?: string;
 };
 
 export const LINK_FILE = ".cachkey.json";

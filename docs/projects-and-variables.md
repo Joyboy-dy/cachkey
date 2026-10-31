@@ -17,16 +17,48 @@ son propre jeu de variables : `DATABASE_URL` peut avoir une valeur différente d
 - Jusqu'à 20 environnements par projet ; nom de 40 caractères au plus.
 - Créer, renommer ou supprimer : propriétaires et administrateurs.
 
+## Briques
+
+Un projet peut être découpé en **briques** : des parties indépendantes, comme le front-end
+et l'API d'un même dépôt, qui ont chacune leurs variables. Elles partagent les
+environnements, les membres et les **variables partagées** du projet.
+
+```
+Projet « Boutique »
+├── Environnements : development · staging · production
+├── Variables partagées : SENTRY_DSN, APP_NAME…   (reçues par toutes les briques)
+├── Brique « web »     : NEXT_PUBLIC_API_URL…
+└── Brique « api »     : DATABASE_URL, STRIPE_KEY…
+```
+
+- Tout projet a une **brique principale**, qui contient toutes ses variables tant qu'il n'est
+  pas découpé : sans seconde brique, rien ne change et la notion n'apparaît nulle part.
+- Ajouter, renommer ou supprimer une brique : Paramètres du projet → Briques (propriétaires
+  et administrateurs). La brique principale peut être renommée, pas supprimée. Jusqu'à
+  10 briques par projet, un seul niveau.
+- Dès la deuxième brique, l'onglet Variables affiche un sélecteur de brique à côté de celui
+  de l'environnement, avec une entrée « Variables partagées ». Il reste affiché après la
+  suppression de la dernière brique tant qu'il reste des variables partagées : elles
+  s'ajoutent toujours à la brique principale.
+- Une brique reçoit les variables partagées **et** les siennes. Si elle redéfinit une
+  variable partagée, sa valeur l'emporte (« Remplace la valeur partagée »).
+- L'export d'une brique, `cachkey pull` et les jetons d'accès donnent ce que l'application
+  reçoit réellement : variables partagées + variables de la brique.
+- Supprimer une brique efface ses variables (dans tous les environnements), leur historique
+  et ses jetons d'accès. Les variables partagées et les autres briques ne changent pas.
+- Les accès des membres portent sur le projet et ses environnements : une personne qui voit
+  un environnement voit toutes ses briques.
+
 ## Variables
 
 Une variable a un nom et une valeur.
 
 - **Nom** : lettres, chiffres et `_`, sans commencer par un chiffre (`API_KEY`,
-  `next_public_url`), 128 caractères au plus, unique dans l'environnement.
+  `next_public_url`), 128 caractères au plus, unique dans l'environnement (et la brique).
 - **Valeur** : jusqu'à 64 Ko (assez pour un certificat ou une clé privée). Une valeur peut
   être vide ; elle est alors signalée « Aucune valeur », même quand les valeurs sont
   masquées.
-- Jusqu'à 500 variables par environnement.
+- Jusqu'à 500 variables par environnement (et par brique).
 
 Les valeurs sont chiffrées à l'enregistrement et masquées à l'affichage. Les afficher, les
 copier ou les exporter est noté dans le journal d'activité (jamais la valeur elle-même).
@@ -54,6 +86,6 @@ une nouvelle version). Supprimer une variable supprime aussi son historique.
 | ------------------------------------------ | :-----: | :------: | :------------------: |
 | Voir les variables et leurs valeurs        |    ✓    |    ✓     |          ✓           |
 | Ajouter, modifier, supprimer, importer     |         |    ✓     |          ✓           |
-| Gérer environnements, accès, jetons        |         |          |          ✓           |
+| Gérer environnements, briques, accès, jetons |       |          |          ✓           |
 
 L'accès peut être limité à certains environnements. Voir [Équipe et accès](team-and-access.md).

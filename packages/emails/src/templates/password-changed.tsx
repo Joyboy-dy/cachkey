@@ -17,7 +17,7 @@ const BODY: Record<NonNullable<PasswordChangedProps["reason"]>, string> = {
 
 export default function PasswordChanged({ appUrl, name, reason = "reset" }: PasswordChangedProps) {
   return (
-    <EmailLayout preview="Le mot de passe de votre compte Cachkey a été modifié." appUrl={appUrl}>
+    <EmailLayout appUrl={appUrl}>
       <EmailHeading>
         {reason === "set" ? "Mot de passe ajouté" : "Mot de passe modifié"}
       </EmailHeading>

@@ -50,7 +50,7 @@ function SignInPage() {
     validators: { onDynamic: signInSchema },
     onSubmit: async ({ value }) => {
       setFormError(null);
-      const { error } = await authClient.signIn.email({
+      const { data, error } = await authClient.signIn.email({
         email: value.email.trim(),
         password: value.password,
       });
@@ -65,6 +65,15 @@ function SignInPage() {
           return;
         }
         setFormError(getAuthErrorMessage(error));
+        return;
+      }
+
+      if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
+        // Password accepted; the session only opens once the second factor is checked.
+        await navigate({
+          to: "/two-factor",
+          search: search.redirect ? { redirect: search.redirect } : {},
+        });
         return;
       }
 
