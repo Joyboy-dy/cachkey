@@ -35,13 +35,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { formatDateTime } from "@/lib/date";
-import { environmentsApi, secretsApi } from "@/lib/secrets";
+import { environmentsApi, type SecretScope, secretsApi } from "@/lib/secrets";
 import { cn } from "@/lib/utils";
 import type { ApiError } from "@/lib/workspace";
 import { useCopy } from "./use-copy";
 
 type DialogState = { open: boolean; onOpenChange: (open: boolean) => void };
-type Scope = { slug: string; env: string };
+type Scope = SecretScope;
 
 function plural(count: number, one: string, many: string) {
   return `${count} ${count > 1 ? many : one}`;
@@ -114,7 +114,7 @@ function SecretForm({
   useEffect(() => {
     if (!secret) return;
     let cancelled = false;
-    void secretsApi.reveal(scope.slug, scope.env, secret.id).then(({ data, error }) => {
+    void secretsApi.reveal(scope, secret.id).then(({ data, error }) => {
       if (cancelled) return;
       if (error) {
         setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
@@ -126,7 +126,7 @@ function SecretForm({
     return () => {
       cancelled = true;
     };
-  }, [scope.slug, scope.env, secret]);
+  }, [scope, secret]);
 
   const loaded = saved !== null;
   const keyResult = secretKeySchema.safeParse(key);
@@ -146,11 +146,11 @@ function SecretForm({
     setFeedback(null);
     const nextKey = key.trim();
     const { error } = secret
-      ? await secretsApi.update(scope.slug, scope.env, secret.id, {
+      ? await secretsApi.update(scope, secret.id, {
           key: nextKey !== secret.key ? nextKey : undefined,
           value: value !== saved ? value : undefined,
         })
-      : await secretsApi.create(scope.slug, scope.env, { key: nextKey, value });
+      : await secretsApi.create(scope, { key: nextKey, value });
     if (error) {
       setPending(false);
       setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
@@ -277,7 +277,7 @@ function HistoryList({
 
   useEffect(() => {
     let cancelled = false;
-    void secretsApi.versions(scope.slug, scope.env, secret.id).then(({ data, error }) => {
+    void secretsApi.versions(scope, secret.id).then(({ data, error }) => {
       if (cancelled) return;
       if (error) setFeedback({ tone: "error", message: getAuthErrorMessage(error) });
       else setVersions(data);
@@ -285,7 +285,7 @@ function HistoryList({
     return () => {
       cancelled = true;
     };
-  }, [scope.slug, scope.env, secret.id]);
+  }, [scope, secret.id]);
 
   return (
     <DialogBody>
@@ -339,24 +339,14 @@ function VersionRow({
 
   async function toggle() {
     if (value !== null) return setValue(null);
-    const { data, error } = await secretsApi.revealVersion(
-      scope.slug,
-      scope.env,
-      secretId,
-      version.version,
-    );
+    const { data, error } = await secretsApi.revealVersion(scope, secretId, version.version);
     if (error) onError(error);
     else setValue(data.value);
   }
 
   async function restore() {
     setRestoring(true);
-    const { error } = await secretsApi.restoreVersion(
-      scope.slug,
-      scope.env,
-      secretId,
-      version.version,
-    );
+    const { error } = await secretsApi.restoreVersion(scope, secretId, version.version);
     if (error) {
       setRestoring(false);
       onError(error);
@@ -532,7 +522,7 @@ function ImportForm({
     if (!preview || preview.total === 0 || pending) return;
     setPending(true);
     setFeedback(null);
-    const { data, error } = await environmentsApi.import(scope.slug, scope.env, {
+    const { data, error } = await environmentsApi.import(scope, {
       content,
       overwrite,
     });

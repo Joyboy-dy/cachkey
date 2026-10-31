@@ -181,6 +181,7 @@ model Project {
   /// Project data key, encrypted with the instance master key (see apps/api/src/crypto.ts).
   encryptedKey   String?         @map("encrypted_key")
   environments   Environment[]
+  bricks         Brick[]
   access         ProjectAccess[]
   serviceTokens  ServiceToken[]
   createdById    String?         @map("created_by_id")
@@ -193,27 +194,54 @@ model Project {
 }
 
 model Environment {
-  id        String   @id @default(cuid())
-  projectId String   @map("project_id")
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id        String         @id @default(cuid())
+  projectId String         @map("project_id")
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name      String
   /// URL identifier, unique inside the project; stable on rename.
   slug      String
-  position  Int      @default(0)
+  position  Int            @default(0)
   secrets   Secret[]
   tokens    ServiceToken[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
 
   @@unique([projectId, slug])
   @@map("environments")
 }
 
-/// A variable of an environment. `value` is always encrypted with the project data key.
+/// Independent part of a project (front-end, API…) with its own variables in every
+/// environment. Each project has one « main » brick (all variables of a project that does not
+/// use bricks) and one hidden « shared » brick whose variables every brick inherits; the
+/// others are « custom ». Environments, members and tokens stay at the project level.
+model Brick {
+  id        String         @id @default(cuid())
+  projectId String         @map("project_id")
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  /// URL / CLI identifier, unique inside the project; stable on rename. The shared brick
+  /// is always `shared`.
+  slug      String
+  /// "main", "shared" or "custom".
+  kind      String         @default("custom")
+  position  Int            @default(0)
+  secrets   Secret[]
+  tokens    ServiceToken[]
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  @@unique([projectId, slug])
+  @@map("bricks")
+}
+
+/// A variable of an environment, in one brick. `value` is always encrypted with the project
+/// data key.
 model Secret {
   id            String          @id @default(cuid())
   environmentId String          @map("environment_id")
   environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  brickId       String          @map("brick_id")
+  brick         Brick           @relation(fields: [brickId], references: [id], onDelete: Cascade)
   key           String
   value         String
   version       Int             @default(1)
@@ -223,7 +251,8 @@ model Secret {
   createdAt     DateTime        @default(now()) @map("created_at")
   updatedAt     DateTime        @updatedAt @map("updated_at")
 
-  @@unique([environmentId, key])
+  @@unique([environmentId, brickId, key])
+  @@index([brickId])
   @@map("secrets")
 }
 
@@ -275,6 +304,8 @@ model AuditEvent {
   projectId       String?      @map("project_id")
   projectName     String?      @map("project_name")
   environmentName String?      @map("environment_name")
+  /// Set for projects split into bricks.
+  brickName       String?      @map("brick_name")
   /// Variable name, member email… depending on the action.
   target          String?
   metadata        Json?
@@ -287,7 +318,8 @@ model AuditEvent {
   @@map("audit_events")
 }
 
-/// Read-only access to one environment for a server, a script or the CLI. Only a hash of
+/// Read-only access to one environment of one brick (with the shared variables) for a server,
+/// a script or the CLI. Only a hash of
 /// the token is stored; the token itself is shown once, at creation.
 model ServiceToken {
   id            String      @id @default(cuid())
@@ -295,6 +327,8 @@ model ServiceToken {
   project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   environmentId String      @map("environment_id")
   environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  brickId       String      @map("brick_id")
+  brick         Brick       @relation(fields: [brickId], references: [id], onDelete: Cascade)
   name          String
   /// SHA-256 of the token (hex). Tokens are random, so a fast hash is enough.
   tokenHash     String      @unique @map("token_hash")

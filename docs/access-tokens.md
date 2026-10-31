@@ -7,6 +7,9 @@ environnement** d'un projet, sans compte utilisateur.
 
 - **Lecture seule** : un jeton ne peut ni créer, ni modifier, ni supprimer.
 - **Un environnement** : choisi à la création, non modifiable.
+- **Une brique**, pour un projet découpé en [briques](projects-and-variables.md#briques) :
+  le jeton lit les variables partagées et celles de sa brique, jamais celles des autres.
+  Sans choix, la brique principale. Supprimer la brique révoque ses jetons.
 - **Durée** : 30 jours, 90 jours, 1 an ou sans expiration.
 - **Affiché une seule fois** : copiez-le à la création. Cachkey n'en garde qu'une empreinte ;
   un jeton perdu ne peut pas être retrouvé, seulement remplacé.
@@ -17,7 +20,7 @@ environnement** d'un projet, sans compte utilisateur.
 ## Créer et révoquer
 
 Paramètres du projet → Jetons d'accès (propriétaires et administrateurs). La liste affiche
-le nom, l'environnement, le début du jeton, l'auteur, l'expiration et la dernière
+le nom, l'environnement (et la brique), le début du jeton, l'auteur, l'expiration et la dernière
 utilisation. La révocation est immédiate.
 
 Chaque lecture des variables par un jeton est notée dans le journal d'activité, au nom du

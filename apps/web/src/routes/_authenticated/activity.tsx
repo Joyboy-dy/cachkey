@@ -50,7 +50,7 @@ const CATEGORIES: { value: AuditCategory | undefined; label: string }[] = [
   { value: undefined, label: "Tout" },
   { value: "reads", label: "Consultations" },
   { value: "changes", label: "Modifications" },
-  { value: "structure", label: "Projets et environnements" },
+  { value: "structure", label: "Projets, environnements et briques" },
   { value: "people", label: "Membres et accès" },
 ];
 

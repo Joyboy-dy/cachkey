@@ -39,6 +39,16 @@ describe("parseArgs", () => {
     expect(command(["login", "--no-browser"]).options.noBrowser).toBe(true);
   });
 
+  test("bricks", () => {
+    expect(command(["bricks"]).command).toEqual({ name: "bricks" });
+    expect(command(["bricks", "create", "web"]).command).toEqual({
+      name: "brick-create",
+      brickName: "web",
+    });
+    expect(command(["pull", "--brick", "api"]).options.brick).toBe("api");
+    expect(command(["set", "A", "b", "--brick=shared"]).options.brick).toBe("shared");
+  });
+
   test("rejects mistakes with a readable message", () => {
     for (const argv of [
       ["run"],

@@ -137,6 +137,25 @@ export function describeEvent(event: AuditEventDto): ReactNode {
           {plural(numberDetail(event, "variables"), "variable", "variables")})
         </>
       );
+    case "brick.created":
+      return (
+        <>
+          a ajouté la brique <Strong>{event.brickName ?? ""}</Strong>
+        </>
+      );
+    case "brick.renamed":
+      return (
+        <>
+          a renommé la brique <Strong>{from}</Strong> en <Strong>{event.brickName ?? ""}</Strong>
+        </>
+      );
+    case "brick.deleted":
+      return (
+        <>
+          a supprimé la brique <Strong>{event.brickName ?? ""}</Strong> (
+          {plural(numberDetail(event, "variables"), "variable", "variables")})
+        </>
+      );
     case "project.created":
       return <>a créé le projet</>;
     case "project.updated":
@@ -207,6 +226,12 @@ export function describeEvent(event: AuditEventDto): ReactNode {
   }
 }
 
+/** Project, brick and environment of an event (the brick of brick events is in the text). */
+export function eventContext(event: AuditEventDto): string {
+  const brick = event.action.startsWith("brick.") ? null : event.brickName;
+  return [event.projectName, brick, event.environmentName].filter(Boolean).join(" · ");
+}
+
 /** Read with a service token. Older events lost `via: "token"` when also sent by the CLI. */
 function byToken(event: AuditEventDto): boolean {
   return (
@@ -244,7 +269,7 @@ export function ActorAvatar({ event, className }: { event: AuditEventDto; classN
 const time = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
 export function AuditEventRow({ event }: { event: AuditEventDto }) {
-  const context = [event.projectName, event.environmentName].filter(Boolean);
+  const context = eventContext(event);
   return (
     <li className="flex gap-3 px-4 py-3 sm:px-5">
       <ActorAvatar event={event} className="mt-0.5 size-7" />
@@ -254,9 +279,9 @@ export function AuditEventRow({ event }: { event: AuditEventDto }) {
           {describeEvent(event)}
         </p>
         <p className="mt-0.5 flex flex-wrap gap-x-1.5 text-xs text-muted-foreground">
-          {context.length ? (
+          {context ? (
             <>
-              <span className="[overflow-wrap:anywhere]">{context.join(" · ")}</span>
+              <span className="[overflow-wrap:anywhere]">{context}</span>
               <span aria-hidden>·</span>
             </>
           ) : null}

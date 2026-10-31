@@ -10,8 +10,9 @@ une faille, voir [SECURITY.md](../SECURITY.md).
 - **Chiffrement en enveloppe** : chaque projet a sa propre clé de données, elle-même chiffrée
   par la clé maîtresse de l'instance (`ENCRYPTION_KEY`). La clé maîtresse ne touche jamais
   les valeurs directement.
-- Chaque valeur chiffrée est liée à son projet (par sa clé) et à son environnement :
-  recopiée dans un autre projet ou un autre environnement, elle ne se déchiffre plus.
+- Chaque valeur chiffrée est liée à son projet (par sa clé), à son environnement et à sa
+  brique : recopiée ailleurs, elle ne se déchiffre plus. Les valeurs de la brique principale
+  gardent la liaison d'origine, sans rechiffrement.
 - Les noms des variables ne sont pas chiffrés ; ne mettez pas de secret dans un nom.
 
 Sans `ENCRYPTION_KEY`, une copie de la base est illisible. Avec elle, tout est lisible :
@@ -20,7 +21,7 @@ conservez-la hors du serveur et séparément des sauvegardes de la base.
 ## Jetons d'accès
 
 - 32 octets aléatoires ; seule leur empreinte SHA-256 est stockée.
-- Lecture seule, un environnement, expiration au choix, révocation immédiate.
+- Lecture seule, un environnement (et une brique), expiration au choix, révocation immédiate.
 
 ## Comptes et sessions
 

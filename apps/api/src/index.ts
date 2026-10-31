@@ -2,6 +2,7 @@ import type { PublicConfig } from "@cachkey/shared";
 import { openapi } from "@elysiajs/openapi";
 import { Elysia } from "elysia";
 import { accountRoutes } from "./account";
+import { brickRoutes } from "./bricks";
 import { auth, enabledSocialProviders } from "./auth";
 import { dashboardRoutes } from "./dashboard";
 import { env } from "./env";
@@ -51,6 +52,7 @@ export const app = new Elysia()
   .use(workspaceRoutes)
   .use(dashboardRoutes)
   .use(secretRoutes)
+  .use(brickRoutes)
   .use(tokenRoutes)
   .use(publicApiRoutes)
   .get("/api/health", () => ({ status: "ok" }))

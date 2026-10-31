@@ -49,8 +49,8 @@ cachkey init            # crée un projet (nom du dossier par défaut) et y lie 
 cachkey link            # ou : lie ce dossier à un projet existant
 ```
 
-Le lien est écrit dans `.cachkey.json` : organisation, projet et environnement par défaut,
-**sans aucun secret**. Il peut être commité et partagé. La CLI le cherche dans le dossier
+Le lien est écrit dans `.cachkey.json` : organisation, projet, environnement et brique par
+défaut, **sans aucun secret**. Il peut être commité et partagé. La CLI le cherche dans le dossier
 courant puis dans ses parents. `--org`, `--project` et `--env` le remplacent ponctuellement.
 
 ## Commandes
@@ -64,6 +64,7 @@ courant puis dans ses parents. `--org`, `--project` et `--env` le remplacent pon
 | `orgs`                          | Liste vos organisations.                                                   |
 | `projects [create <nom>]`       | Liste ou crée des projets.                                                 |
 | `envs [create <nom>]`           | Liste ou crée des environnements.                                          |
+| `bricks [create <nom>]`         | Liste ou crée des briques (voir ci-dessous).                               |
 | `secrets`                       | Liste les variables, sans leurs valeurs.                                   |
 | `get <NOM>`                     | Affiche une valeur.                                                        |
 | `set <NOM> [valeur]`            | Ajoute ou modifie. Sans valeur, elle est saisie au clavier, masquée.       |
@@ -73,6 +74,22 @@ courant puis dans ses parents. `--org`, `--project` et `--env` le remplacent pon
 | `run -- <commande> [args]`      | Lance la commande avec les variables dans son environnement.               |
 
 Nommez un projet ou un environnement contenant des espaces entre guillemets.
+
+## Briques (monorepo)
+
+Pour un projet découpé en [briques](projects-and-variables.md#briques), liez chaque dossier
+à la sienne :
+
+```bash
+cd apps/web && cachkey link --brick web
+cd apps/api && cachkey link --brick api
+```
+
+Sans `--brick`, `link` la demande dès que le projet a plusieurs briques. Ensuite `secrets`,
+`get`, `set`, `rm` et `import` agissent sur la brique du dossier ; `pull` et `run`
+reçoivent les variables partagées plus celles de la brique (la brique l'emporte).
+`--brick shared` cible les variables partagées. Un `.cachkey.json` sans brique utilise la
+brique principale.
 
 ## `pull`
 
@@ -102,6 +119,7 @@ même nom), sans fichier écrit sur le disque. Le code de sortie est celui de la
 | Option                               | Effet                                                         |
 | ------------------------------------ | ------------------------------------------------------------- |
 | `--org`, `--project`, `--env <id>`   | Remplacent ceux du dossier lié.                               |
+| `--brick <id>`                       | Brique (`shared` : variables partagées).                      |
 | `--all`                              | Tous les environnements (`pull`).                             |
 | `--output`, `-o <fichier>`           | Fichier écrit par `pull`.                                     |
 | `--format dotenv\|json`              | Format de `pull`.                                             |
@@ -122,7 +140,8 @@ export CACHKEY_TOKEN=ck_…
 cachkey run -- node server.js
 ```
 
-Avec un jeton, seules `pull`, `run` et `whoami` fonctionnent, sur l'environnement du jeton.
+Avec un jeton, seules `pull`, `run` et `whoami` fonctionnent, sur l'environnement (et la
+brique) du jeton.
 
 ## Traçabilité
 

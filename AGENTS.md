@@ -34,17 +34,17 @@ API keys and environment variables. UI language: **French**. Brand: Cachkey bran
   access checks live in `src/guards.ts` (`requireProject`): owner/admin manage everything,
   members only reach projects/environments granted to them (`ProjectAccess`). Every read or
   change of a secret is written with `audit()` (`src/audit.ts`), never with its value.
-- Service tokens (`apps/api/src/tokens.ts`): read-only access to one environment, only a
-  SHA-256 hash stored, shown once. They open the public API `/api/v1` (Bearer), documented
+- Service tokens (`apps/api/src/tokens.ts`): read-only, one environment and one brick, only
+  a SHA-256 hash stored, shown once. They open the public API `/api/v1` (Bearer), documented
   with OpenAPI at `/api/v1/docs`; only `/api/v1` routes appear in the spec.
 - `apps/cli` — `cachkey` CLI (Bun, no dependency besides `@cachkey/shared`). `cachkey login`
   uses Better Auth device authorization (approval page `/device`) and gets a session sent as
   a Bearer token (`bearer` plugin); `x-cachkey-organization` picks the organisation per
   request (`guards.ts`). Same rights as the user; actions logged with `via: "cli"`.
   `.cachkey.json` (folder link) holds no secret. Service tokens still cover servers and CI.
+- Bricks (`bricks.ts`): « main » + hidden « shared » brick per project, `?brick=`; never shown at one brick.
 - `packages/db` — Prisma 7 (PostgreSQL). Only models actually needed by the current phase.
-- `packages/emails` — React Email templates + `EmailTransport` (SMTP/Mailpit, Resend).
-- `packages/shared` — Zod schemas shared by web and API.
+- `packages/emails` — React Email + `EmailTransport` · `packages/shared` — Zod schemas (web + API).
 
 Rules:
 

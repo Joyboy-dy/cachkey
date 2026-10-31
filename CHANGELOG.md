@@ -14,6 +14,13 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
   S'applique à la connexion par email et mot de passe. Une instance de développement ou
   locale apparaît dans l'application sous « Cachkey (dev) » pour ne pas la confondre avec la
   production.
+- Briques : un projet peut être découpé en parties indépendantes (front-end, API…), chacune
+  avec ses variables, en partageant environnements, membres et variables partagées (héritées
+  par toutes les briques, redéfinissables). Sélecteur de brique dans l'onglet Variables,
+  gestion dans les paramètres du projet, jetons d'accès limités à une brique, brique
+  indiquée dans le journal d'activité. CLI : `cachkey bricks [create]`, `--brick`, champ
+  `brick` de `.cachkey.json`. Les projets existants reçoivent une brique principale qui
+  garde leurs variables et leurs jetons : rien ne change tant qu'ils ne sont pas découpés.
 - Templates de déploiement : Dokploy (`deploy/templates/dokploy/cachkey/`, prêt pour leur
   catalogue) et Coolify (« Docker Compose Empty »), guide `docs/one-click-deployment.md`.
 

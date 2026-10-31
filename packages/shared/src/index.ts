@@ -2,6 +2,7 @@ export * from "./auth-schemas";
 export * from "./account-schemas";
 export * from "./workspace-schemas";
 export * from "./secret-schemas";
+export * from "./brick-schemas";
 export * from "./dotenv";
 export * from "./collaboration-schemas";
 export * from "./text";

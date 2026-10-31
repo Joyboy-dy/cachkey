@@ -2,7 +2,8 @@ import { z } from "zod";
 import { isReadableText, UNREADABLE_TEXT_MESSAGE } from "./text";
 
 /*
- * Service tokens: read-only access to one environment, for servers, scripts and the CLI.
+ * Service tokens: read-only access to one environment of one brick (with the shared
+ * variables), for servers, scripts and the CLI.
  */
 
 /** Every token starts with this prefix, so it is recognisable in logs and secret scanners. */
@@ -22,6 +23,8 @@ export const serviceTokenSchema = z.object({
     .max(60, "Le nom ne peut pas dépasser 60 caractères.")
     .refine(isReadableText, UNREADABLE_TEXT_MESSAGE),
   environmentId: z.string().min(1, "Choisissez un environnement."),
+  /** Brick read by the token (with the shared variables); the main brick when left out. */
+  brickId: z.string().min(1).optional(),
   expiresInDays: z.union([z.literal(30), z.literal(90), z.literal(365), z.null()]),
 });
 export type ServiceTokenInput = z.infer<typeof serviceTokenSchema>;
@@ -32,6 +35,7 @@ export const serviceTokenDtoSchema = z.object({
   /** Beginning of the token, to recognise it (`ck_AbCd…`). */
   prefix: z.string(),
   environment: z.object({ id: z.string(), name: z.string(), slug: z.string() }),
+  brick: z.object({ id: z.string(), name: z.string(), slug: z.string(), main: z.boolean() }),
   createdBy: z
     .object({ id: z.string(), name: z.string(), avatarSeed: z.string().nullable() })
     .nullable(),
