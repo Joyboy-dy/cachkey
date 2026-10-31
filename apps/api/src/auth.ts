@@ -3,6 +3,7 @@ import {
   renderDeleteAccount,
   renderPasswordChanged,
   renderResetPassword,
+  renderTwoFactorChanged,
   renderVerifyEmail,
 } from "@cachkey/emails";
 import {
@@ -14,12 +15,13 @@ import {
 } from "@cachkey/shared";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
-import { bearer, deviceAuthorization, organization } from "better-auth/plugins";
+import { bearer, deviceAuthorization, organization, twoFactor } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./db";
 import { sendEmail } from "./email";
 import { env } from "./env";
 import { afterMembershipChange, organizationHooks, sendInvitation } from "./organization-events";
+import { twoFactorIssuer } from "./two-factor-issuer";
 
 const ONE_HOUR = 60 * 60;
 
@@ -162,10 +164,20 @@ export const auth = betterAuth({
       "/delete-user": { window: 60, max: 3 },
       "/request-password-reset": { window: 60, max: 3 },
       "/send-verification-email": { window: 60, max: 3 },
+      // The twoFactor plugin already limits /two-factor/* (3 requests per 10 seconds) and
+      // locks an account for 15 minutes after 10 wrong codes in a row.
     },
   },
 
   plugins: [
+    // Second factor at email + password sign-in: authenticator app (TOTP) and single-use
+    // backup codes, both encrypted with BETTER_AUTH_SECRET. Enabling, disabling and new
+    // backup codes need the password. Google / GitHub sign-ins rely on the provider's own
+    // protection; `cachkey login` is approved from a browser session, so it inherits 2FA.
+    twoFactor({
+      issuer: twoFactorIssuer(env.APP_URL, env.NODE_ENV),
+      trustDeviceMaxAge: 30 * 24 * ONE_HOUR,
+    }),
     // `cachkey login`: the CLI shows a code, the user approves it on /device, the CLI receives
     // a session of its own (sent as a Bearer token, revocable from « Appareils connectés »).
     deviceAuthorization({
@@ -189,6 +201,24 @@ export const auth = betterAuth({
   ],
 
   databaseHooks: {
+    user: {
+      update: {
+        // The twoFactor plugin turns `twoFactorEnabled` on when the first code is checked
+        // (verify-totp) and off on disable: tell the owner of the account.
+        after: async (user, ctx) => {
+          if (ctx?.path !== "/two-factor/verify-totp" && ctx?.path !== "/two-factor/disable")
+            return;
+          await sendEmail(
+            user.email,
+            await renderTwoFactorChanged({
+              appUrl: env.APP_URL,
+              name: user.name,
+              reason: user.twoFactorEnabled ? "enabled" : "disabled",
+            }),
+          );
+        },
+      },
+    },
     session: {
       create: {
         // Open each new session on the user's first organisation (if any).
@@ -219,8 +249,8 @@ export const auth = betterAuth({
         throw new APIError("BAD_REQUEST", { code: "UNREADABLE_TEXT", message: "UNREADABLE_TEXT" });
       }
     }),
-    // Notify the owner whenever their password changes from the account settings, and
-    // follow membership changes (see organization-events.ts).
+    // Notify the owner whenever their password changes from the account settings or new
+    // backup codes are generated, and follow membership changes (see organization-events.ts).
     after: createAuthMiddleware(async (ctx) => {
       if (ctx.path.startsWith("/organization/")) {
         // Audit and access clean-up for role changes, removals and departures.
@@ -230,6 +260,19 @@ export const auth = betterAuth({
           // The session is not attached to the context for these endpoints: read it.
           (await getSessionFromCtx(ctx))?.user,
           ctx.request,
+        );
+        return;
+      }
+      if (ctx.path === "/two-factor/generate-backup-codes") {
+        const user = ctx.context.session?.user;
+        if (!user || ctx.context.returned instanceof Error) return;
+        await sendEmail(
+          user.email,
+          await renderTwoFactorChanged({
+            appUrl: env.APP_URL,
+            name: user.name,
+            reason: "backup-codes",
+          }),
         );
         return;
       }

@@ -25,6 +25,7 @@ import { Route as GuestCheckEmailRouteImport } from './routes/_guest/check-email
 import { Route as GuestForgotPasswordRouteImport } from './routes/_guest/forgot-password'
 import { Route as GuestSignInRouteImport } from './routes/_guest/sign-in'
 import { Route as GuestSignUpRouteImport } from './routes/_guest/sign-up'
+import { Route as GuestTwoFactorRouteImport } from './routes/_guest/two-factor'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as InvitationIdRouteImport } from './routes/invitation.$id'
 import { Route as AuthenticatedAccountIndexRouteImport } from './routes/_authenticated/account/index'
@@ -114,6 +115,11 @@ const GuestSignUpRoute = GuestSignUpRouteImport.update({
   path: '/sign-up',
   getParentRoute: () => GuestRoute,
 } as any)
+const GuestTwoFactorRoute = GuestTwoFactorRouteImport.update({
+  id: '/two-factor',
+  path: '/two-factor',
+  getParentRoute: () => GuestRoute,
+} as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof GuestForgotPasswordRoute
   '/sign-in': typeof GuestSignInRoute
   '/sign-up': typeof GuestSignUpRoute
+  '/two-factor': typeof GuestTwoFactorRoute
   '/api/$': typeof ApiSplatRoute
   '/invitation/$id': typeof InvitationIdRoute
   '/account/security': typeof AuthenticatedAccountSecurityRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof GuestForgotPasswordRoute
   '/sign-in': typeof GuestSignInRoute
   '/sign-up': typeof GuestSignUpRoute
+  '/two-factor': typeof GuestTwoFactorRoute
   '/api/$': typeof ApiSplatRoute
   '/invitation/$id': typeof InvitationIdRoute
   '/account/security': typeof AuthenticatedAccountSecurityRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/_guest/forgot-password': typeof GuestForgotPasswordRoute
   '/_guest/sign-in': typeof GuestSignInRoute
   '/_guest/sign-up': typeof GuestSignUpRoute
+  '/_guest/two-factor': typeof GuestTwoFactorRoute
   '/api/$': typeof ApiSplatRoute
   '/invitation/$id': typeof InvitationIdRoute
   '/_authenticated/account/security': typeof AuthenticatedAccountSecurityRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/sign-up'
+    | '/two-factor'
     | '/api/$'
     | '/invitation/$id'
     | '/account/security'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/sign-in'
     | '/sign-up'
+    | '/two-factor'
     | '/api/$'
     | '/invitation/$id'
     | '/account/security'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/_guest/forgot-password'
     | '/_guest/sign-in'
     | '/_guest/sign-up'
+    | '/_guest/two-factor'
     | '/api/$'
     | '/invitation/$id'
     | '/_authenticated/account/security'
@@ -447,6 +459,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestSignUpRouteImport
       parentRoute: typeof GuestRoute
     }
+    '/_guest/two-factor': {
+      id: '/_guest/two-factor'
+      path: '/two-factor'
+      fullPath: '/two-factor'
+      preLoaderRoute: typeof GuestTwoFactorRouteImport
+      parentRoute: typeof GuestRoute
+    }
     '/api/$': {
       id: '/api/$'
       path: '/api/$'
@@ -574,6 +593,7 @@ interface GuestRouteChildren {
   GuestForgotPasswordRoute: typeof GuestForgotPasswordRoute
   GuestSignInRoute: typeof GuestSignInRoute
   GuestSignUpRoute: typeof GuestSignUpRoute
+  GuestTwoFactorRoute: typeof GuestTwoFactorRoute
 }
 
 const GuestRouteChildren: GuestRouteChildren = {
@@ -581,6 +601,7 @@ const GuestRouteChildren: GuestRouteChildren = {
   GuestForgotPasswordRoute: GuestForgotPasswordRoute,
   GuestSignInRoute: GuestSignInRoute,
   GuestSignUpRoute: GuestSignUpRoute,
+  GuestTwoFactorRoute: GuestTwoFactorRoute,
 }
 
 const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren)

@@ -2,6 +2,7 @@ import {
   deviceAuthorizationClient,
   inferAdditionalFields,
   organizationClient,
+  twoFactorClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
@@ -13,6 +14,9 @@ export const authClient = createAuthClient({
     organizationClient(),
     // `cachkey login` approval page (/device).
     deviceAuthorizationClient(),
+    // Second factor (apps/api/src/auth.ts → `twoFactor()`); the sign-in page handles the
+    // redirection to /two-factor itself.
+    twoFactorClient(),
     // Mirrors `user.additionalFields` in apps/api/src/auth.ts.
     inferAdditionalFields({
       user: {

@@ -26,6 +26,16 @@ conservez-la hors du serveur et séparément des sauvegardes de la base.
 
 - Mots de passe hachés (Better Auth) ; adresse email confirmée avant la première connexion.
 - Sessions de 7 jours, renouvelées à l'usage, révocables depuis Appareils connectés.
+- **Double authentification** (Mon compte → Sécurité) : application d'authentification
+  (Google Authenticator, 1Password, Aegis…) et 10 codes de secours à usage unique, affichés une
+  seule fois. Le secret et les codes sont chiffrés en base. Activer, désactiver ou renouveler
+  les codes demande le mot de passe et déclenche un email de notification. Un appareil peut
+  être marqué « de confiance » pendant 30 jours. Après 10 codes faux d'affilée, le compte est
+  bloqué 15 minutes. Une instance de développement ou locale apparaît dans l'application sous
+  « Cachkey (dev) », jamais sous le même nom que la production.
+- La double authentification protège la connexion par email et mot de passe. Les connexions
+  par Google ou GitHub s'appuient sur la protection de ces comptes : activez-la chez eux aussi.
+  `cachkey login` étant autorisé depuis une session du navigateur, il en bénéficie.
 - Limitation du nombre de tentatives sur les routes d'authentification, par adresse IP. Derrière
   un reverse proxy, seule l'adresse ajoutée par celui-ci à `X-Forwarded-For` est retenue :
   une adresse inventée par le client ne permet pas de contourner la limite.
@@ -49,6 +59,19 @@ conservez-la hors du serveur et séparément des sauvegardes de la base.
   révélée.
 - Affichages, copies, exports et lectures par jeton sont notés dans le journal d'activité,
   sans jamais la valeur.
+
+## Récupérer un compte sans second facteur
+
+Téléphone et codes de secours perdus : l'administrateur de l'instance peut désactiver la
+double authentification du compte, directement en base, après avoir vérifié l'identité de la
+personne :
+
+```sql
+DELETE FROM two_factors WHERE user_id = (SELECT id FROM users WHERE email = 'alex@exemple.com');
+UPDATE users SET two_factor_enabled = false WHERE email = 'alex@exemple.com';
+```
+
+La personne se connecte ensuite avec son mot de passe et réactive la double authentification.
 
 ## À votre charge (auto-hébergement)
 

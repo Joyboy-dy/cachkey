@@ -8,6 +8,12 @@ Toutes les évolutions visibles de Cachkey. Format inspiré de
 
 ### Ajouté
 
+- Double authentification (Mon compte → Sécurité) : application d'authentification avec QR
+  code, 10 codes de secours à usage unique (copie, téléchargement, renouvellement), appareil
+  de confiance pendant 30 jours, email à chaque activation, désactivation ou renouvellement.
+  S'applique à la connexion par email et mot de passe. Une instance de développement ou
+  locale apparaît dans l'application sous « Cachkey (dev) » pour ne pas la confondre avec la
+  production.
 - Templates de déploiement : Dokploy (`deploy/templates/dokploy/cachkey/`, prêt pour leur
   catalogue) et Coolify (« Docker Compose Empty »), guide `docs/one-click-deployment.md`.
 

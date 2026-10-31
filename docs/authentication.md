@@ -26,6 +26,7 @@ Navigateur ──▶ apps/web (TanStack Start, APP_URL)
 | ------------------ | --------- | --------------------------------------------------------------- |
 | `/`                | tous      | Redirige vers `/dashboard` ou `/sign-in`                        |
 | `/sign-in`         | invité    | Email + mot de passe, Google, GitHub                            |
+| `/two-factor`      | invité    | Second facteur après le mot de passe (code ou code de secours)  |
 | `/sign-up`         | invité    | Création de compte                                              |
 | `/forgot-password` | invité    | Demande de lien de réinitialisation                             |
 | `/check-email`     | invité    | Confirmation d'envoi (`reason=verify` ou `reset`) + renvoi      |
@@ -36,7 +37,7 @@ Navigateur ──▶ apps/web (TanStack Start, APP_URL)
 | `/projects`        | connecté  | Projets de l'organisation active ; `/projects/$slug` : détail   |
 | `/organization`    | connecté  | Nom, membres et rôles, quitter / supprimer l'organisation       |
 | `/account`         | connecté  | Profil : avatar, nom, email, suppression du compte              |
-| `/account/security`| connecté  | Mot de passe, méthodes de connexion (Google, GitHub)            |
+| `/account/security`| connecté  | Mot de passe, double authentification, méthodes de connexion    |
 | `/account/sessions`| connecté  | Appareils connectés et révocation                               |
 
 Les pages invité redirigent vers `/dashboard` (ou `?redirect=`) si une session existe.
@@ -58,6 +59,20 @@ Lien expiré (1 h) ou invalide → `/verify-email?error=…` avec formulaire de 
 **Connexion** — `signIn.email`. Compte non vérifié → Better Auth renvoie un lien
 (`sendOnSignIn`) et l'utilisateur est dirigé vers `/check-email`. Ce lien utilise le callback
 par défaut `/`, qui transmet une éventuelle erreur à `/verify-email`.
+
+**Double authentification** — plugin `twoFactor` (TOTP + codes de secours, table
+`two_factors`). Si le compte l'a activée, `signIn.email` ne crée pas de session : il renvoie
+`twoFactorRedirect` et pose un cookie de 10 minutes ; `/sign-in` mène alors à `/two-factor`
+(en gardant `?redirect=`), qui appelle `twoFactor.verifyTotp` ou `twoFactor.verifyBackupCode`
+(option `trustDevice` : 30 jours). Activation depuis `/account/security` : `twoFactor.enable`
+(mot de passe) → QR code (`otpauth://`, rendu local avec `uqr`) → `twoFactor.verifyTotp`
+(passe `twoFactorEnabled` à vrai) → codes de secours affichés une fois. `twoFactor.disable` et
+`twoFactor.generateBackupCodes` demandent le mot de passe. Chaque activation, désactivation et
+renouvellement envoie un email (hooks dans `auth.ts`). Les connexions Google / GitHub ne
+passent pas par le second facteur (confiance au fournisseur). Le nom affiché par l'application
+d'authentification (`issuer`) est « Cachkey » en production et « Cachkey (dev) » en
+développement ou sur une adresse locale (`apps/api/src/two-factor-issuer.ts`), pour ne jamais
+confondre les codes d'une instance de test avec ceux de la production.
 
 **OAuth (Google, GitHub)** — `signIn.social` ; en cas d'échec Better Auth revient sur la page
 d'origine avec `?error=`, traduit par `getOAuthErrorMessage`. Les comptes OAuth sont liés
@@ -98,7 +113,8 @@ redirige vers `/sign-in?deleted=1`.
 - Liens de vérification, de réinitialisation, de changement d'email et de suppression :
   1 heure.
 - Rate limiting : stocké en base (`rate_limits`), 100 requêtes / min par IP et par route,
-  3 à 5 / min pour les actions sensibles. Le serveur web transmet l'IP cliente
+  3 à 5 / min pour les actions sensibles, 3 / 10 s sur `/two-factor/*` ; 10 codes faux
+  d'affilée bloquent le compte 15 minutes. Le serveur web transmet l'IP cliente
   (`x-forwarded-for`), y compris pour la lecture de session côté serveur.
 - Avatar : DiceBear généré localement (`lib/avatar.ts`), style « Clay » uniquement ; seule la
   graine est stockée (`avatarSeed`, l'id de l'utilisateur par défaut). Les organisations
@@ -111,7 +127,8 @@ redirige vers `/sign-in?deleted=1`.
 ## Emails
 
 `packages/emails` contient les templates React Email (vérification, réinitialisation, mot de
-passe modifié / ajouté, confirmation de changement d'email, suppression de compte) et deux transports implémentant `EmailTransport` :
+passe modifié / ajouté, double authentification activée / désactivée / codes renouvelés,
+confirmation de changement d'email, suppression de compte) et deux transports implémentant `EmailTransport` :
 
 - `smtp` (nodemailer) — Mailpit en développement, ou tout relais SMTP ;
 - `resend` — API HTTP Resend, sélectionné avec `EMAIL_PROVIDER=resend`.

@@ -5,6 +5,7 @@ import DeleteAccount, { type DeleteAccountProps } from "./templates/delete-accou
 import Invitation, { type InvitationProps } from "./templates/invitation";
 import PasswordChanged, { type PasswordChangedProps } from "./templates/password-changed";
 import ResetPassword, { type ResetPasswordProps } from "./templates/reset-password";
+import TwoFactorChanged, { type TwoFactorChangedProps } from "./templates/two-factor-changed";
 import VerifyEmail, { type VerifyEmailProps } from "./templates/verify-email";
 
 export type RenderedEmail = {
@@ -39,6 +40,19 @@ export async function renderPasswordChanged(props: PasswordChangedProps): Promis
         ? "Un mot de passe a été ajouté à votre compte"
         : "Votre mot de passe a été modifié",
     ...(await renderBoth(<PasswordChanged {...props} />)),
+  };
+}
+
+const TWO_FACTOR_SUBJECTS: Record<TwoFactorChangedProps["reason"], string> = {
+  enabled: "La double authentification est activée",
+  disabled: "La double authentification est désactivée",
+  "backup-codes": "Vos codes de secours ont été renouvelés",
+};
+
+export async function renderTwoFactorChanged(props: TwoFactorChangedProps): Promise<RenderedEmail> {
+  return {
+    subject: TWO_FACTOR_SUBJECTS[props.reason],
+    ...(await renderBoth(<TwoFactorChanged {...props} />)),
   };
 }
 

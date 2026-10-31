@@ -15,26 +15,29 @@ datasource db {
 }
 
 model User {
-  id             String          @id
-  name           String
-  email          String          @unique
-  emailVerified  Boolean         @default(false) @map("email_verified")
-  image          String?
+  id               String          @id
+  name             String
+  email            String          @unique
+  emailVerified    Boolean         @default(false) @map("email_verified")
+  image            String?
   /// Seed of the DiceBear « Clay » avatar (see apps/web/src/lib/avatar.ts).
-  avatarSeed     String?         @map("avatar_seed")
-  createdAt      DateTime        @default(now()) @map("created_at")
-  updatedAt      DateTime        @updatedAt @map("updated_at")
-  sessions       Session[]
-  accounts       Account[]
-  memberships    Member[]
-  invitations    Invitation[]
-  projects       Project[]
-  secretChanges  Secret[]
-  secretVersions SecretVersion[]
-  projectAccess  ProjectAccess[] @relation("accessUser")
-  accessGrants   ProjectAccess[] @relation("accessGrantedBy")
-  auditEvents    AuditEvent[]
-  serviceTokens  ServiceToken[]  @relation("serviceTokenCreatedBy")
+  avatarSeed       String?         @map("avatar_seed")
+  /// Two-factor authentication (Better Auth twoFactor plugin): asked at email sign-in.
+  twoFactorEnabled Boolean         @default(false) @map("two_factor_enabled")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  sessions         Session[]
+  twoFactor        TwoFactor?
+  accounts         Account[]
+  memberships      Member[]
+  invitations      Invitation[]
+  projects         Project[]
+  secretChanges    Secret[]
+  secretVersions   SecretVersion[]
+  projectAccess    ProjectAccess[] @relation("accessUser")
+  accessGrants     ProjectAccess[] @relation("accessGrantedBy")
+  auditEvents      AuditEvent[]
+  serviceTokens    ServiceToken[]  @relation("serviceTokenCreatedBy")
 
   @@map("users")
 }
@@ -88,6 +91,21 @@ model Verification {
 
   @@index([identifier])
   @@map("verifications")
+}
+
+/// Authenticator app secret and backup codes of a user, both encrypted by Better Auth.
+/// `verified` stays false until the first code from the app has been checked.
+model TwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String    @map("backup_codes")
+  userId                  String    @unique @map("user_id")
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean   @default(true)
+  failedVerificationCount Int       @default(0) @map("failed_verification_count")
+  lockedUntil             DateTime? @map("locked_until")
+
+  @@map("two_factors")
 }
 
 /// Better Auth rate limiting, persisted in PostgreSQL (no Redis). One row per IP + route.

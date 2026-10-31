@@ -29,7 +29,7 @@ API keys and environment variables. UI language: **French**. Brand: Cachkey bran
 - `apps/web` — TanStack Start (Router, Query, Form), Tailwind CSS v4, shadcn/ui.
   The web server proxies every `/api/*` request to the API (`src/server/api.ts`):
   one public origin, first-party cookies, no CORS.
-- `apps/api` — Elysia + Better Auth (`src/auth.ts`, organization plugin), env validated by
+- `apps/api` — Elysia + Better Auth (`src/auth.ts`, organization + twoFactor), env validated by
   Zod (`src/env.ts`). Business routes are scoped to the session's active organisation;
   access checks live in `src/guards.ts` (`requireProject`): owner/admin manage everything,
   members only reach projects/environments granted to them (`ProjectAccess`). Every read or

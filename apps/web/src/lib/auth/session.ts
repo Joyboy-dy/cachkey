@@ -12,6 +12,7 @@ const sessionSchema = z.object({
     image: z.string().nullish(),
     emailVerified: z.boolean(),
     avatarSeed: z.string().nullish(),
+    twoFactorEnabled: z.boolean().nullish(),
     createdAt: z.string(),
   }),
   session: z.object({
